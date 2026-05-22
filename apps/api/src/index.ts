@@ -1,4 +1,4 @@
-import Build from "./app.js"
+import Build from "./app.ts"
 
 const server = Build()
 

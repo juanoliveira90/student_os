@@ -4,6 +4,8 @@ import fastifyJwt from "@fastify/jwt"
 
 import 'dotenv/config'
 
+import { AuthController } from "./modules/auth/auth.controller.ts"
+
 export default function Build() {
     const app = fastify()
 
@@ -14,5 +16,9 @@ export default function Build() {
         secret: process.env.JWT_SECRET!
     })
 
+    app.register(AuthController, {
+        prefix: '/auth'
+    })
+    
     return app
 }
