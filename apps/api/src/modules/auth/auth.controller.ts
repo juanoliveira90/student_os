@@ -60,8 +60,10 @@ export async function AuthController(app: FastifyInstance) {
             }
 
             const payload = app.jwt.verify(token)
+            const user = request.user as { email: string }
+            const info = await AuthService.userInformation(user)
 
-            return reply.send({ user: payload })
+            return reply.send({ user: info })
         } catch {
             return reply.code(401).send({ message: "not authenticated" })
         }

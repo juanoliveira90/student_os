@@ -1,7 +1,7 @@
 "use server"
 
 import { AuthQueries } from "./auth.queries.ts"
-import { type RegisterInput, type LoginInput } from "./auth.types.ts"
+import { type RegisterInput, type LoginInput, type getUserInput } from "./auth.types.ts"
 import * as bcrypt from "bcrypt"
 
 export const AuthService = {    
@@ -33,6 +33,19 @@ export const AuthService = {
             id: userExists.id,
             name: userExists.name,
             email: userExists.email,
+        }
+    },
+
+    async userInformation(data: getUserInput) {
+        console.log(data)
+        const getUser = await AuthQueries.getUserByEmail(data.email)
+        if (!getUser) {
+            throw { statusCode: 409, message: "user is not registered" }
+        }
+
+        return {
+            name: getUser.name,
+            email: getUser.email
         }
     }
 }

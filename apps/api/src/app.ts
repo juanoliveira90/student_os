@@ -13,12 +13,24 @@ export default function Build() {
         secret: process.env.COOKIE_SECRET! 
     })
     app.register(fastifyJwt, {
-        secret: process.env.JWT_SECRET!
+        secret: process.env.JWT_SECRET!,
+        cookie: {
+            cookieName: "access_token",
+            signed: false
+        }
     })
 
     app.register(AuthController, {
         prefix: '/auth'
     })
     
+    app.addHook("onRequest", async (request, reply) => {
+    try {
+        await request.jwtVerify({ onlyCookie: true })
+    } catch (err) {
+        reply.send(err)
+    }   
+    })
+
     return app
 }
