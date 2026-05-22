@@ -16,7 +16,11 @@ export default function App() {
   }, []);
 
   if (path === "/login") {
-    return <LoginPage />;
+    return <LoginPage mode="login" />;
+  }
+
+  if (path === "/signup") {
+    return <LoginPage mode="signup" />;
   }
 
   return <StudentOS />;

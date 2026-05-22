@@ -35,7 +35,54 @@ export const themes = {
     hover: "#f0f0f0",
     select: "#fafafa",
   },
+  collosDark: {
+    bg: "#121416",
+    bgAlt: "#1A1D21",
+    border: "#242A30",
+    borderAlt: "#303842",
+    borderLight: "#3B4652",
+    text: "#E4E7EB",
+    textMuted: "#94A3B8",
+    textMutedMore: "#6F7F91",
+    textMutedMost: "#4A5564",
+    accent: "#F59E0B",
+    accentDark: "#D97706",
+    accentLight: "#FBBF24",
+    card: "#1A1D21",
+    cardBorder: "#2A3138",
+    hover: "#20262C",
+    select: "#14181C",
+  },
+  collosLight: {
+    bg: "#F8FAF6",
+    bgAlt: "#FFFFFF",
+    border: "#E1E7DD",
+    borderAlt: "#CDD8C8",
+    borderLight: "#BDCBB8",
+    text: "#1E293B",
+    textMuted: "#64748B",
+    textMutedMore: "#7F8E72",
+    textMutedMost: "#A7B49D",
+    accent: "#D97706",
+    accentDark: "#B45309",
+    accentLight: "#F59E0B",
+    card: "#FFFFFF",
+    cardBorder: "#E2E8DD",
+    hover: "#EEF4EA",
+    select: "#F4F7F1",
+  },
 };
+
+export const THEME_ORDER = ["dark", "light", "collosDark", "collosLight"];
+
+export function getNextTheme(theme) {
+  const index = THEME_ORDER.indexOf(theme);
+  return THEME_ORDER[(index + 1) % THEME_ORDER.length] ?? THEME_ORDER[0];
+}
+
+export function isDarkTheme(theme) {
+  return theme === "dark" || theme === "collosDark";
+}
 
 export const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 export const DAY_LABELS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];

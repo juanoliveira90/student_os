@@ -7,7 +7,7 @@ import Schedule from "./Schedule.jsx";
 import Sidebar from "./Sidebar.jsx";
 import StudyPlans from "./StudyPlans.jsx";
 import { Icon } from "./icons.jsx";
-import { initDocs, initHabits, initSchedule, initSubjects, initTasks, NAV_ITEMS, themes } from "./data.js";
+import { getNextTheme, initDocs, initHabits, initSchedule, initSubjects, initTasks, isDarkTheme, NAV_ITEMS, themes } from "./data.js";
 
 export default function StudentOS() {
   const [active, setActive] = useState("dashboard");
@@ -17,6 +17,7 @@ export default function StudentOS() {
   const [habits, setHabits] = useState(initHabits);
   const [docs, setDocs] = useState(initDocs);
   const [theme, setTheme] = useState("dark");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const t = themes[theme];
   const isDoc = active === "documents";
 
@@ -33,19 +34,15 @@ export default function StudentOS() {
 
   useEffect(() => {
     const style = document.documentElement.style;
-    if (theme === "light") {
-      style.background = themes.light.bg;
-      style.color = themes.light.text;
-    } else {
-      style.background = themes.dark.bg;
-      style.color = themes.dark.text;
-    }
-  }, [theme]);
+    style.background = t.bg;
+    style.color = t.text;
+    style.setProperty("--sos-accent", t.accent);
+  }, [t]);
 
   return (
     <>
       <div style={{ display: "flex", minHeight: "100vh", background: t.bg, fontFamily: "'JetBrains Mono', monospace", color: t.text }}>
-        <Sidebar active={active} setActive={setActive} t={t} />
+        <Sidebar active={active} setActive={setActive} t={t} collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
           <div style={{ height: 40, borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative", background: t.bgAlt }}>
@@ -68,7 +65,7 @@ export default function StudentOS() {
       </div>
 
       <button
-        onClick={() => setTheme((curr) => (curr === "dark" ? "light" : "dark"))}
+        onClick={() => setTheme(getNextTheme)}
         style={{
           position: "fixed",
           bottom: 20,
@@ -89,9 +86,10 @@ export default function StudentOS() {
         }}
         onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.1)"; }}
         onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
-        aria-label="toggle theme"
+        aria-label="cycle theme"
+        title={`theme: ${theme}`}
       >
-        {theme === "dark" ? <Icon.sun /> : <Icon.moon />}
+        {isDarkTheme(theme) ? <Icon.sun /> : <Icon.moon />}
       </button>
     </>
   );
