@@ -40,21 +40,46 @@ export default function StudentOS() {
     saveStoredTheme(theme);
   }, [t, theme]);
 
+  const currentPage = NAV_ITEMS.find((n) => n.id === active);
+
   return (
     <>
-      <div style={{ display: "flex", minHeight: "100vh", background: t.bg, fontFamily: "'SN Pro', 'SF Pro Text', 'Segoe UI', system-ui, sans-serif", color: t.text }}>
+      <div style={{ display: "flex", minHeight: "100vh", background: t.bg, fontFamily: "'Inter', 'SF Pro Text', 'Segoe UI', system-ui, sans-serif", color: t.text }}>
         <Sidebar active={active} setActive={setActive} t={t} collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          <div style={{ height: 40, borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, position: "relative", background: t.bgAlt }}>
-            <span style={{ fontSize: 13, letterSpacing: "0.18em", color: t.textMutedMore }}>student_os</span>
-            <span style={{ position: "absolute", left: 16, fontSize: 10, color: t.textMutedMore }}>
-              {NAV_ITEMS.find((n) => n.id === active)?.label}
-            </span>
-            <span style={{ position: "absolute", right: 16, fontSize: 10, color: t.textMutedMore }}>v2.1.0</span>
+          <div style={{ minHeight: 72, borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexShrink: 0, background: t.bgAlt, padding: "0 28px" }}>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 750, color: t.text }}>{currentPage?.label}</div>
+              <div style={{ fontSize: 13, color: t.textMutedMore, marginTop: 3 }}>{currentPage?.description}</div>
+            </div>
+            <button
+              onClick={() => setTheme(getNextTheme)}
+              style={{
+                minWidth: 112,
+                height: 38,
+                borderRadius: 999,
+                background: t.hover,
+                border: `1px solid ${t.borderLight}`,
+                color: t.text,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 8,
+                fontSize: 13,
+                fontWeight: 650,
+                fontFamily: "inherit",
+              }}
+              aria-label="cycle theme"
+              title={`theme: ${theme}`}
+            >
+              {isDarkTheme(theme) ? <Icon.sun /> : <Icon.moon />}
+              {isDarkTheme(theme) ? "Light mode" : "Dark mode"}
+            </button>
           </div>
 
-          <div style={{ flex: 1, overflow: isDoc ? "hidden" : "auto", padding: isDoc ? 0 : "20px 24px", background: t.bg }}>
+          <div style={{ flex: 1, overflow: isDoc ? "hidden" : "auto", padding: isDoc ? 0 : "28px", background: t.bg }}>
             {active === "dashboard" && <Dashboard tasks={tasks} setTasks={setTasks} habits={habits} t={t} />}
             {active === "schedule" && <Schedule schedule={schedule} setSchedule={setSchedule} t={t} />}
             {active === "studyplans" && <StudyPlans subjects={subjects} setSubjects={setSubjects} t={t} />}
@@ -64,34 +89,6 @@ export default function StudentOS() {
           </div>
         </div>
       </div>
-
-      <button
-        onClick={() => setTheme(getNextTheme)}
-        style={{
-          position: "fixed",
-          bottom: 20,
-          right: 20,
-          width: 40,
-          height: 40,
-          borderRadius: "50%",
-          background: t.accent,
-          border: "none",
-          color: "#fff",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 9999,
-          transition: "all 0.2s",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.1)"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
-        aria-label="cycle theme"
-        title={`theme: ${theme}`}
-      >
-        {isDarkTheme(theme) ? <Icon.sun /> : <Icon.moon />}
-      </button>
     </>
   );
 }

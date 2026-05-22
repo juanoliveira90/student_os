@@ -116,12 +116,12 @@ export const initDocs = [
 export const productivityData = [6.5, 5, 8, 6, 4, 2.5, 2];
 
 export const NAV_ITEMS = [
-  { id: "dashboard", label: "dashboard", key: "1" },
-  { id: "schedule", label: "schedule", key: "2" },
-  { id: "studyplans", label: "study plans", key: "3" },
-  { id: "habits", label: "habits", key: "4" },
-  { id: "focustime", label: "focus time", key: "5" },
-  { id: "documents", label: "documents", key: "6" },
+  { id: "dashboard", label: "Home", description: "Your day at a glance", key: "1" },
+  { id: "schedule", label: "Schedule", description: "Classes and study blocks", key: "2" },
+  { id: "studyplans", label: "Study Plan", description: "Subjects and weekly goals", key: "3" },
+  { id: "habits", label: "Habits", description: "Daily routines", key: "4" },
+  { id: "focustime", label: "Focus", description: "Timer and sessions", key: "5" },
+  { id: "documents", label: "Notes", description: "Study documents", key: "6" },
 ];
 
 export const PRESETS = [

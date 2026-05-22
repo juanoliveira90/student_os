@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PRESETS } from "./data.js";
 import { Icon } from "./icons.jsx";
-import { getStyles, Kbd, Modal, PageHdr, SecHdr } from "./ui.jsx";
+import { getStyles, Modal, PageHdr, SecHdr } from "./ui.jsx";
 
 export default function FocusTime({ tasks, setTasks, t }) {
   const s = getStyles(t);
@@ -92,11 +92,11 @@ export default function FocusTime({ tasks, setTasks, t }) {
 
   return (
     <div>
-      <PageHdr label="focus time" t={t} />
+      <PageHdr label="Focus" description="Pick one task, set a timer, and log the session when you are done." t={t} />
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(280px, 340px)", gap: 16 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={s.card}>
-            <div style={{ fontSize: 11, color: t.textMutedMore, marginBottom: 10 }}>// duration preset</div>
+            <div style={{ fontSize: 15, color: t.text, marginBottom: 12, fontWeight: 750 }}>Choose a duration</div>
             <div style={{ display: "flex", gap: 8 }}>
               {PRESETS.map((p) => (
                 <button key={p.label} onClick={() => pickPreset(p.s)} style={{ ...(total === p.s ? s.btn : s.ghost), flex: 1, textAlign: "center" }}>
@@ -110,29 +110,24 @@ export default function FocusTime({ tasks, setTasks, t }) {
             <svg width="220" height="220" viewBox="0 0 220 220">
               <circle cx="110" cy="110" r={r} fill="none" stroke={t.borderLight} strokeWidth="8" />
               <circle cx="110" cy="110" r={r} fill="none" stroke={t.accent} strokeWidth="8" strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round" transform="rotate(-90 110 110)" style={{ transition: running ? "stroke-dashoffset 1s linear" : "none" }} />
-              <text x="110" y="98" textAnchor="middle" fill={t.text} fontSize="38" fontFamily="SN Pro, SF Pro Text, Segoe UI, system-ui, sans-serif" fontWeight="300">{mm}:{ss}</text>
-              <text x="110" y="122" textAnchor="middle" fill={t.textMutedMore} fontSize="11" fontFamily="SN Pro, SF Pro Text, Segoe UI, system-ui, sans-serif">{running ? "running..." : rem === total ? "ready" : rem === 0 ? "done" : "paused"}</text>
-              {selTask && <text x="110" y="146" textAnchor="middle" fill={t.accent} fontSize="10" fontFamily="SN Pro, SF Pro Text, Segoe UI, system-ui, sans-serif">{selTask.text.length > 24 ? `${selTask.text.slice(0, 24)}...` : selTask.text}</text>}
+              <text x="110" y="98" textAnchor="middle" fill={t.text} fontSize="38" fontFamily="Inter, SF Pro Text, Segoe UI, system-ui, sans-serif" fontWeight="400">{mm}:{ss}</text>
+              <text x="110" y="122" textAnchor="middle" fill={t.textMutedMore} fontSize="11" fontFamily="Inter, SF Pro Text, Segoe UI, system-ui, sans-serif">{running ? "Focusing" : rem === total ? "Ready" : rem === 0 ? "Done" : "Paused"}</text>
+              {selTask && <text x="110" y="146" textAnchor="middle" fill={t.accent} fontSize="10" fontFamily="Inter, SF Pro Text, Segoe UI, system-ui, sans-serif">{selTask.text.length > 24 ? `${selTask.text.slice(0, 24)}...` : selTask.text}</text>}
             </svg>
 
             <div style={{ display: "flex", gap: 10, marginTop: 16, alignItems: "center" }}>
-              <button onClick={reset} title="reset [R]" style={{ ...s.ghost, display: "flex", alignItems: "center", gap: 6 }}><Icon.reset /> reset</button>
-              <button onClick={() => setRunning((isRunning) => !isRunning)} title="play/pause [Space]" style={{ ...s.btn, padding: "10px 30px", display: "flex", alignItems: "center", gap: 8 }}>
-                {running ? <><Icon.pause /> pause</> : <><Icon.play /> start</>}
+              <button onClick={reset} title="Reset timer" style={{ ...s.ghost, display: "flex", alignItems: "center", gap: 6 }}><Icon.reset /> Reset</button>
+              <button onClick={() => setRunning((isRunning) => !isRunning)} title="Start or pause timer" style={{ ...s.btn, padding: "10px 30px", display: "flex", alignItems: "center", gap: 8 }}>
+                {running ? <><Icon.pause /> Pause</> : <><Icon.play /> Start</>}
               </button>
-              <button onClick={logSession} title="log current session" style={{ ...s.ghost, display: "flex", alignItems: "center", gap: 6 }}><Icon.log /> log</button>
-            </div>
-
-            <div style={{ marginTop: 12, display: "flex", gap: 12, fontSize: 10, color: t.textMutedMost }}>
-              <span><Kbd k="Space" t={t} /> play/pause</span>
-              <span><Kbd k="R" t={t} /> reset</span>
+              <button onClick={logSession} title="Log current session" style={{ ...s.ghost, display: "flex", alignItems: "center", gap: 6 }}><Icon.log /> Log</button>
             </div>
           </div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div style={s.card}>
-            <SecHdr icon={<Icon.zap />} label="focus target" t={t} />
+            <SecHdr icon={<Icon.zap />} label="Focus Task" t={t} />
             <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 6 }}>
               {tasks.map((task) => (
                 <button key={task.id} onClick={() => { if (!task.done) setSelTask(task); }} style={{ display: "flex", alignItems: "center", gap: 10, background: selTask?.id === task.id ? t.hover : "none", border: `1px solid ${selTask?.id === task.id ? t.accent : t.border}`, borderRadius: 4, cursor: task.done ? "not-allowed" : "pointer", padding: "8px 10px", textAlign: "left", color: task.done ? t.textMutedMost : selTask?.id === task.id ? t.text : t.textMuted, fontSize: 12, textDecoration: task.done ? "line-through" : "none", transition: "all 0.12s", fontFamily: "inherit" }}>
@@ -141,13 +136,13 @@ export default function FocusTime({ tasks, setTasks, t }) {
                 </button>
               ))}
             </div>
-            <button onClick={() => { setNewText(""); setNewModal(true); }} style={{ ...s.ghost, width: "100%", marginTop: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}><Icon.zap /> + new task</button>
+            <button onClick={() => { setNewText(""); setNewModal(true); }} style={{ ...s.ghost, width: "100%", marginTop: 10, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}><Icon.zap /> New task</button>
           </div>
 
           <div style={{ ...s.card, flex: 1 }}>
-            <SecHdr icon={<Icon.terminal />} label="session log" t={t} />
+            <SecHdr icon={<Icon.clock />} label="Session History" t={t} />
             {sessions.length === 0 ? (
-              <div style={{ marginTop: 12, fontSize: 11, color: t.textMutedMost }}>// no sessions yet</div>
+              <div style={{ marginTop: 12, fontSize: 13, color: t.textMutedMore }}>No sessions logged yet</div>
             ) : (
               <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6, maxHeight: 240, overflowY: "auto" }}>
                 {[...sessions].reverse().map((ses, i) => (
@@ -163,21 +158,21 @@ export default function FocusTime({ tasks, setTasks, t }) {
       </div>
 
       {newModal && (
-        <Modal onClose={() => setNewModal(false)} title="new focus task" t={t}>
-          <label style={s.label}>what are you working on?</label>
+        <Modal onClose={() => setNewModal(false)} title="New focus task" t={t}>
+          <label style={s.label}>What are you working on?</label>
           <input value={newText} onChange={(e) => setNewText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submitNewTask()} placeholder="e.g. review chapter 4 notes" style={s.input} autoFocus />
-          <button onClick={submitNewTask} style={s.btn}>continue</button>
+          <button onClick={submitNewTask} style={s.btn}>Continue</button>
         </Modal>
       )}
 
       {saveModal && (
-        <Modal onClose={() => setSaveModal(null)} title="save this task?" t={t}>
-          <div style={{ fontSize: 13, color: t.textMuted, marginBottom: 4 }}>task created:</div>
+        <Modal onClose={() => setSaveModal(null)} title="Save this task?" t={t}>
+          <div style={{ fontSize: 13, color: t.textMuted, marginBottom: 4 }}>Task created</div>
           <div style={{ fontSize: 13, color: t.text, background: t.hover, border: `1px solid ${t.cardBorder}`, borderRadius: 4, padding: "8px 12px", marginBottom: 16 }}>"{saveModal.text}"</div>
-          <div style={{ fontSize: 12, color: t.textMutedMore, marginBottom: 20, lineHeight: 1.7 }}>do you want this task to be used<br />only here, or saved to your tasks list?</div>
+          <div style={{ fontSize: 13, color: t.textMutedMore, marginBottom: 20, lineHeight: 1.6 }}>Use it only for this focus session, or save it to your task list.</div>
           <div style={{ display: "flex", gap: 10 }}>
-            <button onClick={() => handleSaveChoice("here")} style={{ ...s.ghost, flex: 1, textAlign: "center" }}>only here</button>
-            <button onClick={() => handleSaveChoice("save")} style={{ ...s.btn, flex: 1, textAlign: "center" }}>save to tasks</button>
+            <button onClick={() => handleSaveChoice("here")} style={{ ...s.ghost, flex: 1, textAlign: "center" }}>Only here</button>
+            <button onClick={() => handleSaveChoice("save")} style={{ ...s.btn, flex: 1, textAlign: "center" }}>Save task</button>
           </div>
         </Modal>
       )}

@@ -15,13 +15,13 @@ const ghostButton = (loading, t) => ({
   width: "100%",
   background: t.hover,
   border: `1px solid ${t.borderLight}`,
-  borderRadius: 4,
+  borderRadius: 8,
   color: t.text,
-  fontSize: 12,
-  padding: "10px 14px",
+  fontSize: 13,
+  padding: "12px 14px",
   cursor: loading ? "not-allowed" : "pointer",
   fontFamily: "inherit",
-  letterSpacing: "0.03em",
+  fontWeight: 650,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -85,16 +85,16 @@ export default function LoginPage({ mode = "login" }) {
   if (!mounted) return null;
 
   return (
-    <div style={{ minHeight: "100vh", background: t.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'SN Pro', 'SF Pro Text', 'Segoe UI', system-ui, sans-serif", color: t.text, transition: "background 0.2s, color 0.2s" }}>
+    <div style={{ minHeight: "100vh", background: t.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', 'SF Pro Text', 'Segoe UI', system-ui, sans-serif", color: t.text, transition: "background 0.2s, color 0.2s" }}>
       <div style={{ width: "100%", maxWidth: 420, padding: "20px" }}>
-        <div style={{ marginBottom: 40, textAlign: "center" }}>
-          <div style={{ fontSize: 32, color: t.accent, marginBottom: 8, fontWeight: 400, letterSpacing: "0.05em" }}>student_os</div>
-          <div style={{ fontSize: 12, color: t.textMutedMore, letterSpacing: "0.08em" }}>
-            {isSignup ? "// create your workspace" : "// authenticate to continue"}
+        <div style={{ marginBottom: 34, textAlign: "center" }}>
+          <div style={{ fontSize: 34, color: t.text, marginBottom: 8, fontWeight: 800 }}>Student OS</div>
+          <div style={{ fontSize: 14, color: t.textMutedMore }}>
+            {isSignup ? "Create your study workspace" : "Sign in to continue planning"}
           </div>
         </div>
 
-        <div style={{ background: t.card, border: `1px solid ${t.cardBorder}`, borderRadius: 8, padding: 28 }}>
+        <div style={{ background: t.card, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 28, boxShadow: "0 18px 48px rgba(0,0,0,0.08)" }}>
           <form onSubmit={handleEmailSubmit} style={{ marginBottom: isSignup ? 0 : 24 }}>
             {isSignup && (
               <Field label="name" icon={<Icon.user />} t={t}>
@@ -109,8 +109,8 @@ export default function LoginPage({ mode = "login" }) {
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="password" minLength={isSignup ? 8 : undefined} required style={inputStyle(t)} />
             </Field>
 
-            <button type="submit" disabled={loading} style={{ width: "100%", background: t.accent, border: "none", borderRadius: 4, color: "#fff", fontSize: 12, padding: "10px 14px", cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", letterSpacing: "0.03em", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: loading ? 0.7 : 1, transition: "all 0.12s" }}>
-              {loading ? "connecting..." : <>{isSignup ? "create account" : "sign in"} <Icon.arrow /></>}
+            <button type="submit" disabled={loading} style={{ width: "100%", background: t.accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, padding: "12px 14px", cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: loading ? 0.7 : 1, transition: "all 0.12s" }}>
+              {loading ? "Connecting..." : <>{isSignup ? "Create account" : "Sign in"} <Icon.arrow /></>}
             </button>
           </form>
 
@@ -123,8 +123,8 @@ export default function LoginPage({ mode = "login" }) {
               </div>
 
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <button onClick={() => handleOAuthLogin("github")} disabled={loading} style={ghostButton(loading, t)}><Icon.github /> continue with github</button>
-                <button onClick={() => handleOAuthLogin("google")} disabled={loading} style={ghostButton(loading, t)}><Icon.google /> continue with google</button>
+                <button onClick={() => handleOAuthLogin("github")} disabled={loading} style={ghostButton(loading, t)}><Icon.github /> Continue with GitHub</button>
+                <button onClick={() => handleOAuthLogin("google")} disabled={loading} style={ghostButton(loading, t)}><Icon.google /> Continue with Google</button>
               </div>
             </>
           )}
@@ -132,12 +132,12 @@ export default function LoginPage({ mode = "login" }) {
 
         <div style={{ marginTop: 24, textAlign: "center", fontSize: 11, color: t.textMutedMore }}>
           <div style={{ marginBottom: 8 }}>
-            {isSignup ? "already have an account? " : "new here? "}
+            {isSignup ? "Already have an account? " : "New here? "}
             <a href={isSignup ? "/login" : "/signup"} style={{ color: t.accent, textDecoration: "none" }}>
-              {isSignup ? "sign in" : "create account"}
+              {isSignup ? "Sign in" : "Create account"}
             </a>
           </div>
-          {!isSignup && <div><a href="#" style={{ color: t.accent, textDecoration: "none" }}>forgot password?</a></div>}
+          {!isSignup && <div><a href="#" style={{ color: t.accent, textDecoration: "none" }}>Forgot password?</a></div>}
         </div>
       </div>
 
@@ -174,7 +174,7 @@ function Field({ label, icon, children, t }) {
   return (
     <div style={{ marginBottom: label === "password" ? 20 : 16 }}>
       <label style={{ fontSize: 11, color: t.textMutedMore, display: "block", marginBottom: 6 }}>{label}</label>
-      <div style={{ display: "flex", alignItems: "center", background: t.select, border: `1px solid ${t.borderAlt}`, borderRadius: 4, padding: "0 10px", color: t.textMuted }}>
+      <div style={{ display: "flex", alignItems: "center", background: t.select, border: `1px solid ${t.borderAlt}`, borderRadius: 8, padding: "0 10px", color: t.textMuted }}>
         {icon}
         {children}
       </div>
