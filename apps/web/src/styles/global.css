@@ -1,0 +1,67 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap");
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: "JetBrains Mono", monospace;
+  background: #0d0d0d;
+  color: #ccc;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 2px;
+  background: #333;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button:focus-visible {
+  outline: 1px solid #e53e3e;
+  outline-offset: 2px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #e53e3e !important;
+  box-shadow: 0 0 0 1px #e53e3e22;
+}
+
+.sos-md h1,
+.sos-md h2,
+.sos-md h3 {
+  font-weight: 400;
+  color: inherit;
+}
+
+.sos-md pre {
+  overflow: auto;
+  padding: 12px;
+  border-radius: 6px;
+  background: #0d0d0d;
+}
+
+.sos-md code {
+  color: #ff6b6b;
+}
