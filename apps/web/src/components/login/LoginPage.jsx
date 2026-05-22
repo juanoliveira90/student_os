@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getNextTheme, isDarkTheme, themes } from "../student-os/data.js";
+import { getNextTheme, getStoredTheme, isDarkTheme, saveStoredTheme, themes } from "../student-os/data.js";
 import { Icon as AppIcon } from "../student-os/icons.jsx";
 
 const Icon = {
@@ -37,7 +37,7 @@ export default function LoginPage({ mode = "login" }) {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState("dark");
+  const [theme, setTheme] = useState(getStoredTheme);
   const t = themes[theme];
 
   useEffect(() => {
@@ -49,7 +49,8 @@ export default function LoginPage({ mode = "login" }) {
     style.background = t.bg;
     style.color = t.text;
     style.setProperty("--sos-accent", t.accent);
-  }, [t]);
+    saveStoredTheme(theme);
+  }, [t, theme]);
 
   async function handleEmailSubmit(e) {
     e.preventDefault();
@@ -84,7 +85,7 @@ export default function LoginPage({ mode = "login" }) {
   if (!mounted) return null;
 
   return (
-    <div style={{ minHeight: "100vh", background: t.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'JetBrains Mono', monospace", color: t.text, transition: "background 0.2s, color 0.2s" }}>
+    <div style={{ minHeight: "100vh", background: t.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'SN Pro', 'SF Pro Text', 'Segoe UI', system-ui, sans-serif", color: t.text, transition: "background 0.2s, color 0.2s" }}>
       <div style={{ width: "100%", maxWidth: 420, padding: "20px" }}>
         <div style={{ marginBottom: 40, textAlign: "center" }}>
           <div style={{ fontSize: 32, color: t.accent, marginBottom: 8, fontWeight: 400, letterSpacing: "0.05em" }}>student_os</div>

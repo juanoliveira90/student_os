@@ -110,9 +110,9 @@ export default function FocusTime({ tasks, setTasks, t }) {
             <svg width="220" height="220" viewBox="0 0 220 220">
               <circle cx="110" cy="110" r={r} fill="none" stroke={t.borderLight} strokeWidth="8" />
               <circle cx="110" cy="110" r={r} fill="none" stroke={t.accent} strokeWidth="8" strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round" transform="rotate(-90 110 110)" style={{ transition: running ? "stroke-dashoffset 1s linear" : "none" }} />
-              <text x="110" y="98" textAnchor="middle" fill={t.text} fontSize="38" fontFamily="JetBrains Mono,monospace" fontWeight="300">{mm}:{ss}</text>
-              <text x="110" y="122" textAnchor="middle" fill={t.textMutedMore} fontSize="11" fontFamily="JetBrains Mono,monospace">{running ? "running..." : rem === total ? "ready" : rem === 0 ? "done" : "paused"}</text>
-              {selTask && <text x="110" y="146" textAnchor="middle" fill={t.accent} fontSize="10" fontFamily="JetBrains Mono,monospace">{selTask.text.length > 24 ? `${selTask.text.slice(0, 24)}...` : selTask.text}</text>}
+              <text x="110" y="98" textAnchor="middle" fill={t.text} fontSize="38" fontFamily="SN Pro, SF Pro Text, Segoe UI, system-ui, sans-serif" fontWeight="300">{mm}:{ss}</text>
+              <text x="110" y="122" textAnchor="middle" fill={t.textMutedMore} fontSize="11" fontFamily="SN Pro, SF Pro Text, Segoe UI, system-ui, sans-serif">{running ? "running..." : rem === total ? "ready" : rem === 0 ? "done" : "paused"}</text>
+              {selTask && <text x="110" y="146" textAnchor="middle" fill={t.accent} fontSize="10" fontFamily="SN Pro, SF Pro Text, Segoe UI, system-ui, sans-serif">{selTask.text.length > 24 ? `${selTask.text.slice(0, 24)}...` : selTask.text}</text>}
             </svg>
 
             <div style={{ display: "flex", gap: 10, marginTop: 16, alignItems: "center" }}>

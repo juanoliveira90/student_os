@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap");
-
 *,
 *::before,
 *::after {
@@ -14,9 +12,9 @@ body,
 }
 
 body {
-  font-family: "JetBrains Mono", monospace;
-  background: #0d0d0d;
-  color: #ccc;
+  font-family: "SN Pro", "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  background: #1c1a18;
+  color: #f3eee8;
 }
 
 ::-webkit-scrollbar {
@@ -26,7 +24,7 @@ body {
 
 ::-webkit-scrollbar-thumb {
   border-radius: 2px;
-  background: #333;
+  background: #6f665d;
 }
 
 button,
@@ -37,15 +35,15 @@ textarea {
 }
 
 button:focus-visible {
-  outline: 1px solid var(--sos-accent, #e53e3e);
+  outline: 1px solid var(--sos-accent, #f28c28);
   outline-offset: 2px;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: var(--sos-accent, #e53e3e) !important;
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--sos-accent, #e53e3e) 18%, transparent);
+  border-color: var(--sos-accent, #f28c28) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--sos-accent, #f28c28) 18%, transparent);
 }
 
 .sos-md h1,
@@ -59,9 +57,9 @@ textarea:focus {
   overflow: auto;
   padding: 12px;
   border-radius: 6px;
-  background: #0d0d0d;
+  background: color-mix(in srgb, var(--sos-accent, #f28c28) 4%, #1c1a18);
 }
 
 .sos-md code {
-  color: var(--sos-accent, #ff6b6b);
+  color: var(--sos-accent, #f28c28);
 }

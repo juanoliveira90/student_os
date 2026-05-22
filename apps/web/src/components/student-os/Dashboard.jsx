@@ -1,6 +1,7 @@
 import { DAYS, productivityData } from "./data.js";
 import { Icon } from "./icons.jsx";
 import { Divider, getStyles, MiniStat, SecHdr, Stat } from "./ui.jsx";
+import { useEffect, useState } from "react" 
 
 export default function Dashboard({ tasks, setTasks, habits, t }) {
   const s = getStyles(t);
@@ -10,10 +11,18 @@ export default function Dashboard({ tasks, setTasks, habits, t }) {
   const maxH = Math.max(...productivityData);
   const doneh = habits.filter((h) => h.done).length;
 
+  const [user, setUser] = useState(null)
+
+  useEffect(() => {
+    fetch("/auth/me")
+      .then(res => res.json())
+      .then(data => setUser(data))
+  }, [])
+
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
       <div style={s.card}>
-        <div style={{ fontSize: 11, color: t.accent, marginBottom: 14, letterSpacing: "0.1em" }}>// user_005</div>
+        <div style={{ fontSize: 11, color: t.accent, marginBottom: 14, letterSpacing: "0.1em" }}>// {user?.user?.name}</div>
         <div style={{ fontSize: 12, color: t.textMutedMore, marginBottom: 2 }}>student os user</div>
         <Divider t={t} />
         <Stat label="hours this week" value="7h" accent t={t} />
@@ -40,7 +49,7 @@ export default function Dashboard({ tasks, setTasks, habits, t }) {
             </button>
           ))}
         </div>
-        <div style={{ marginTop: 12, fontSize: 11, color: t.accent }}>$ ls -la ./tasks -&gt;</div>
+        <div style={{ marginTop: 12, fontSize: 11, color: t.accent, visibility: "hidden" }}>$ ls -la ./tasks -&gt;</div>
       </div>
 
       <div style={s.card}>

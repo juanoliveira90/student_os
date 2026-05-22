@@ -1,12 +1,37 @@
 import { NAV_ITEMS } from "./data.js";
 import { Icon } from "./icons.jsx";
+import { useEffect, useRef, useState } from "react";
 
 export default function Sidebar({ active, setActive, t, collapsed, setCollapsed }) {
   const icons = { dashboard: Icon.grid, schedule: Icon.cal, studyplans: Icon.book, habits: Icon.target, focustime: Icon.timer, documents: Icon.file };
   const width = collapsed ? 64 : 216;
 
+  const [user, setUser] = useState(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef(null);
+  const profile = user?.user ?? user ?? {};
+  const displayName = profile.name || profile.email || "student";
+  const avatarUrl = profile.picture || profile.avatar || profile.avatarUrl || profile.image;
+  const initial = displayName.trim().charAt(0).toUpperCase() || "U";
+
+  useEffect(() => {
+    fetch("/auth/me")
+      .then(res => res.json())
+      .then(data => setUser(data))
+      .catch(() => setUser(null));
+  }, []);
+
+  useEffect(() => {
+    function onPointerDown(e) {
+      if (!profileRef.current?.contains(e.target)) setProfileOpen(false);
+    }
+
+    window.addEventListener("pointerdown", onPointerDown);
+    return () => window.removeEventListener("pointerdown", onPointerDown);
+  }, []);
+
   return (
-    <aside style={{ width, minHeight: "100vh", background: t.bg, borderRight: `1px solid ${t.border}`, display: "flex", flexDirection: "column", flexShrink: 0, transition: "width 0.22s ease" }}>
+    <aside style={{ width, minHeight: "100vh", background: t.bg, borderRight: `1px solid ${t.border}`, display: "flex", flexDirection: "column", flexShrink: 0, transition: "width 0.22s ease", position: "relative" }}>
       <div style={{ padding: collapsed ? "12px 10px" : "14px 12px 10px 16px", borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", gap: 8, transition: "padding 0.22s ease" }}>
         {!collapsed && (
           <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
@@ -83,13 +108,62 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed 
         })}
       </nav>
 
-      <div style={{ padding: collapsed ? "12px 10px" : "12px 16px", borderTop: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", gap: 10, transition: "padding 0.22s ease" }}>
-        <div style={{ width: 28, height: 28, borderRadius: "50%", background: t.bgAlt, border: `1px solid ${t.borderLight}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: t.textMuted }}>U</div>
-        <div style={{ maxWidth: collapsed ? 0 : 120, opacity: collapsed ? 0 : 1, overflow: "hidden", whiteSpace: "nowrap", transition: "max-width 0.2s ease, opacity 0.16s ease" }}>
-          <div style={{ fontSize: 12, color: t.text }}>user_005</div>
-          <div style={{ fontSize: 11, color: t.textMutedMore }}>student</div>
-        </div>
+      <div ref={profileRef} style={{ padding: collapsed ? "12px 10px" : "12px 16px", borderTop: `1px solid ${t.border}`, transition: "padding 0.22s ease", position: "relative" }}>
+        {profileOpen && (
+          <div style={{ position: "absolute", left: collapsed ? 10 : 16, bottom: "calc(100% + 8px)", width: collapsed ? 180 : 184, background: t.card, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: 6, boxShadow: "0 14px 36px rgba(0,0,0,0.22)", zIndex: 40 }}>
+            <button type="button" style={profileMenuItem(t)}>
+              <Icon.settings />
+              <span>settings</span>
+            </button>
+            <button type="button" style={{ ...profileMenuItem(t), color: t.accent }}>
+              <Icon.logout />
+              <span>logout</span>
+            </button>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setProfileOpen((value) => !value)}
+          aria-haspopup="menu"
+          aria-expanded={profileOpen}
+          title={collapsed ? displayName : undefined}
+          style={{ width: "100%", height: 40, padding: collapsed ? 0 : "0 2px", border: "none", background: "transparent", color: t.text, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", gap: 10, borderRadius: 6, fontFamily: "inherit", transition: "background 0.16s ease" }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = t.hover;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+          }}
+        >
+          <span style={{ width: 28, height: 28, borderRadius: "50%", background: t.bgAlt, border: `1px solid ${t.borderLight}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: t.textMuted, overflow: "hidden", flexShrink: 0 }}>
+            {avatarUrl ? <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initial}
+          </span>
+          <span style={{ maxWidth: collapsed ? 0 : 120, opacity: collapsed ? 0 : 1, overflow: "hidden", whiteSpace: "nowrap", transition: "max-width 0.2s ease, opacity 0.16s ease", textAlign: "left" }}>
+            <span style={{ display: "block", fontSize: 12, color: t.text, overflow: "hidden", textOverflow: "ellipsis" }}>{displayName}</span>
+            <span style={{ display: "block", fontSize: 11, color: t.textMutedMore }}>student</span>
+          </span>
+        </button>
       </div>
     </aside>
   );
+}
+
+function profileMenuItem(t) {
+  return {
+    width: "100%",
+    height: 34,
+    border: "none",
+    borderRadius: 6,
+    background: "transparent",
+    color: t.textMuted,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    padding: "0 10px",
+    fontSize: 12,
+    fontFamily: "inherit",
+    textAlign: "left",
+  };
 }

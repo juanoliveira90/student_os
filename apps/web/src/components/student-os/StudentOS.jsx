@@ -7,7 +7,7 @@ import Schedule from "./Schedule.jsx";
 import Sidebar from "./Sidebar.jsx";
 import StudyPlans from "./StudyPlans.jsx";
 import { Icon } from "./icons.jsx";
-import { getNextTheme, initDocs, initHabits, initSchedule, initSubjects, initTasks, isDarkTheme, NAV_ITEMS, themes } from "./data.js";
+import { getNextTheme, getStoredTheme, initDocs, initHabits, initSchedule, initSubjects, initTasks, isDarkTheme, NAV_ITEMS, saveStoredTheme, themes } from "./data.js";
 
 export default function StudentOS() {
   const [active, setActive] = useState("dashboard");
@@ -16,7 +16,7 @@ export default function StudentOS() {
   const [subjects, setSubjects] = useState(initSubjects);
   const [habits, setHabits] = useState(initHabits);
   const [docs, setDocs] = useState(initDocs);
-  const [theme, setTheme] = useState("dark");
+  const [theme, setTheme] = useState(getStoredTheme);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const t = themes[theme];
   const isDoc = active === "documents";
@@ -37,11 +37,12 @@ export default function StudentOS() {
     style.background = t.bg;
     style.color = t.text;
     style.setProperty("--sos-accent", t.accent);
-  }, [t]);
+    saveStoredTheme(theme);
+  }, [t, theme]);
 
   return (
     <>
-      <div style={{ display: "flex", minHeight: "100vh", background: t.bg, fontFamily: "'JetBrains Mono', monospace", color: t.text }}>
+      <div style={{ display: "flex", minHeight: "100vh", background: t.bg, fontFamily: "'SN Pro', 'SF Pro Text', 'Segoe UI', system-ui, sans-serif", color: t.text }}>
         <Sidebar active={active} setActive={setActive} t={t} collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>

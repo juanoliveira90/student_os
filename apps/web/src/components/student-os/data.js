@@ -1,79 +1,57 @@
 export const themes = {
   dark: {
-    bg: "#0d0d0d",
-    bgAlt: "#141414",
-    border: "#1a1a1a",
-    borderAlt: "#252525",
-    borderLight: "#2a2a2a",
-    text: "#ccc",
-    textMuted: "#888",
-    textMutedMore: "#555",
-    textMutedMost: "#333",
-    accent: "#e53e3e",
-    accentDark: "#cc3333",
-    accentLight: "#ff4d4d",
-    card: "#141414",
-    cardBorder: "#1e1e1e",
-    hover: "#1a1a1a",
-    select: "#0d0d0d",
+    bg: "#1c1a18",
+    bgAlt: "#24211f",
+    border: "#302c28",
+    borderAlt: "#403a34",
+    borderLight: "#4a433d",
+    text: "#f3eee8",
+    textMuted: "#c2b8ae",
+    textMutedMore: "#8f857c",
+    textMutedMost: "#625950",
+    accent: "#f28c28",
+    accentDark: "#c86815",
+    accentLight: "#ffad5c",
+    card: "#24211f",
+    cardBorder: "#342f2a",
+    hover: "#2b2723",
+    select: "#191715",
   },
   light: {
-    bg: "#f5f5f5",
-    bgAlt: "#ffffff",
-    border: "#e0e0e0",
-    borderAlt: "#d0d0d0",
-    borderLight: "#c5c5c5",
-    text: "#222",
-    textMuted: "#666",
-    textMutedMore: "#999",
-    textMutedMost: "#ccc",
-    accent: "#e53e3e",
-    accentDark: "#cc3333",
-    accentLight: "#ff4d4d",
-    card: "#ffffff",
-    cardBorder: "#e5e5e5",
-    hover: "#f0f0f0",
-    select: "#fafafa",
-  },
-  collosDark: {
-    bg: "#121416",
-    bgAlt: "#1A1D21",
-    border: "#242A30",
-    borderAlt: "#303842",
-    borderLight: "#3B4652",
-    text: "#E4E7EB",
-    textMuted: "#94A3B8",
-    textMutedMore: "#6F7F91",
-    textMutedMost: "#4A5564",
-    accent: "#F59E0B",
-    accentDark: "#D97706",
-    accentLight: "#FBBF24",
-    card: "#1A1D21",
-    cardBorder: "#2A3138",
-    hover: "#20262C",
-    select: "#14181C",
-  },
-  collosLight: {
-    bg: "#F8FAF6",
-    bgAlt: "#FFFFFF",
-    border: "#E1E7DD",
-    borderAlt: "#CDD8C8",
-    borderLight: "#BDCBB8",
-    text: "#1E293B",
-    textMuted: "#64748B",
-    textMutedMore: "#7F8E72",
-    textMutedMost: "#A7B49D",
-    accent: "#D97706",
-    accentDark: "#B45309",
-    accentLight: "#F59E0B",
-    card: "#FFFFFF",
-    cardBorder: "#E2E8DD",
-    hover: "#EEF4EA",
-    select: "#F4F7F1",
+    bg: "#f7f4ef",
+    bgAlt: "#fffdf9",
+    border: "#e6ded4",
+    borderAlt: "#d8cec1",
+    borderLight: "#c9bdae",
+    text: "#25211d",
+    textMuted: "#6f665d",
+    textMutedMore: "#968b80",
+    textMutedMost: "#c8beb2",
+    accent: "#e77918",
+    accentDark: "#b85b0f",
+    accentLight: "#ff9d42",
+    card: "#fffdf9",
+    cardBorder: "#e9e1d7",
+    hover: "#eee8df",
+    select: "#fbf8f3",
   },
 };
 
-export const THEME_ORDER = ["dark", "light", "collosDark", "collosLight"];
+export const THEME_ORDER = ["dark", "light"];
+export const THEME_STORAGE_KEY = "student_os_theme";
+
+export function getStoredTheme() {
+  if (typeof window === "undefined") return "dark";
+
+  const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+  return THEME_ORDER.includes(storedTheme) ? storedTheme : "dark";
+}
+
+export function saveStoredTheme(theme) {
+  if (typeof window === "undefined" || !THEME_ORDER.includes(theme)) return;
+
+  window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+}
 
 export function getNextTheme(theme) {
   const index = THEME_ORDER.indexOf(theme);
@@ -81,7 +59,7 @@ export function getNextTheme(theme) {
 }
 
 export function isDarkTheme(theme) {
-  return theme === "dark" || theme === "collosDark";
+  return theme === "dark";
 }
 
 export const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
