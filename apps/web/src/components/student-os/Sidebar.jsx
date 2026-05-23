@@ -26,10 +26,21 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed 
       if (!profileRef.current?.contains(e.target)) setProfileOpen(false);
     }
 
+    
     window.addEventListener("pointerdown", onPointerDown);
     return () => window.removeEventListener("pointerdown", onPointerDown);
   }, []);
-
+  
+  function callLogout() {
+    fetch("auth/logout", {
+      method: 'POST',
+      credentials: 'include'
+    })
+      .then(res => res.json())
+      .then(data => console.log(data))
+      .catch(err => console.error("logout failed:", err))
+  }
+  
   return (
     <aside style={{ width, minHeight: "100vh", background: t.bg, borderRight: `1px solid ${t.border}`, display: "flex", flexDirection: "column", flexShrink: 0, transition: "width 0.22s ease", position: "relative" }}>
       <button
@@ -61,7 +72,7 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed 
               <Icon.settings />
               <span>Settings</span>
             </button>
-            <button type="button" style={{ ...profileMenuItem(t), color: t.accent }}>
+            <button type="button" style={{ ...profileMenuItem(t), color: t.accent }} onClick={callLogout}>
               <Icon.logout />
               <span>Log out</span>
             </button>

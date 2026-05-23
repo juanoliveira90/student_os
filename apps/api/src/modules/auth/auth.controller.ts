@@ -68,4 +68,20 @@ export async function AuthController(app: FastifyInstance) {
             return reply.code(401).send({ message: "not authenticated" })
         }
     })
+
+    app.post('/logout', async (request, reply) => {
+        try {
+            const token = request.cookies.access_token
+            if (!token) {
+                return reply.code(401).send({ message: "not authenticated" })
+            }
+
+            reply.clearCookie('access_token', { path: '/' })
+
+            return reply.send({ message: 'you logged out.' })
+        } catch (error) {
+            console.error(error)
+            return reply.code(401).send({ message: "not authenticated" })
+        }
+    })
 }
