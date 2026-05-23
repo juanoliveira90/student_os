@@ -75,7 +75,7 @@ export default function LoginPage({ mode = "login" }) {
         throw new Error(responseMessage || "Something went wrong. Please try again.");
       }
 
-      window.location.assign(isSignup ? "/login" : "/");
+      window.location.assign(isSignup ? "/login" : "/app");
     } catch (err) {
       console.error(err);
       setServerError(err instanceof Error ? err.message : "Something went wrong. Please try again.");

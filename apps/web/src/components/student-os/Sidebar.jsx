@@ -39,6 +39,8 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed 
       .then(res => res.json())
       .then(data => console.log(data))
       .catch(err => console.error("logout failed:", err))
+
+    window.location.assign("/login");
   }
   
   return (
