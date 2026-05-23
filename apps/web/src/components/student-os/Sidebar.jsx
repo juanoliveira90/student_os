@@ -1,19 +1,113 @@
 import { NAV_ITEMS } from "./data.js";
 import { Icon } from "./icons.jsx";
-import { Kbd } from "./ui.jsx";
+import { useEffect, useRef, useState } from "react";
 
-export default function Sidebar({ active, setActive, t }) {
+export default function Sidebar({ active, setActive, t, collapsed, setCollapsed }) {
   const icons = { dashboard: Icon.grid, schedule: Icon.cal, studyplans: Icon.book, habits: Icon.target, focustime: Icon.timer, documents: Icon.file };
+  const width = collapsed ? 64 : 216;
 
+  const [user, setUser] = useState(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef(null);
+  const profile = user?.user ?? user ?? {};
+  const displayName = profile.name || profile.email || "student";
+  const avatarUrl = profile.picture || profile.avatar || profile.avatarUrl || profile.image;
+  const initial = displayName.trim().charAt(0).toUpperCase() || "U";
+
+  useEffect(() => {
+    fetch("/auth/me")
+      .then(res => res.json())
+      .then(data => setUser(data))
+      .catch(() => setUser(null));
+  }, []);
+
+  useEffect(() => {
+    function onPointerDown(e) {
+      if (!profileRef.current?.contains(e.target)) setProfileOpen(false);
+    }
+
+    
+    window.addEventListener("pointerdown", onPointerDown);
+    return () => window.removeEventListener("pointerdown", onPointerDown);
+  }, []);
+  
+  function callLogout() {
+    fetch("auth/logout", {
+      method: 'POST',
+      credentials: 'include'
+    })
+      .then(res => res.json())
+      .then(data => console.log(data))
+      .catch(err => console.error("logout failed:", err))
+
+    window.location.assign("/login");
+  }
+  
   return (
-    <aside style={{ width: 216, minHeight: "100vh", background: t.bg, borderRight: `1px solid ${t.border}`, display: "flex", flexDirection: "column", flexShrink: 0 }}>
-      <div style={{ padding: "14px 16px 10px", borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ width: 8, height: 8, borderRadius: "50%", background: t.accent, display: "inline-block" }} />
-        <span style={{ fontSize: 11, color: t.textMutedMore, letterSpacing: "0.08em" }}>menu</span>
+    <aside style={{ width, minHeight: "100vh", background: t.bg, borderRight: `1px solid ${t.border}`, display: "flex", flexDirection: "column", flexShrink: 0, transition: "width 0.22s ease", position: "relative" }}>
+      <button
+        type="button"
+        onClick={() => setCollapsed((value) => !value)}
+        aria-label={collapsed ? "expand sidebar" : "collapse sidebar"}
+        title={collapsed ? "expand sidebar" : "collapse sidebar"}
+        style={{ position: "absolute", top: collapsed ? 18 : 22, right: -17, width: 34, height: 34, border: `1px solid ${t.borderLight}`, borderRadius: 999, background: t.bgAlt, color: t.textMuted, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.16s ease, color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease", zIndex: 60, boxShadow: "0 8px 20px rgba(0,0,0,0.10)" }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = t.hover;
+          e.currentTarget.style.color = t.text;
+          e.currentTarget.style.borderColor = t.borderLight;
+          e.currentTarget.style.boxShadow = "0 10px 24px rgba(0,0,0,0.14)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = t.bgAlt;
+          e.currentTarget.style.color = t.textMuted;
+          e.currentTarget.style.borderColor = t.borderLight;
+          e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.10)";
+        }}
+      >
+        <Icon.panelSoft />
+      </button>
+
+      <div ref={profileRef} style={{ padding: collapsed ? "12px 10px" : "16px 12px", borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", gap: 10, transition: "padding 0.22s ease", position: "relative" }}>
+        {profileOpen && (
+          <div style={{ position: "absolute", left: collapsed ? 10 : 12, top: "calc(100% + 8px)", width: collapsed ? 180 : 190, background: t.card, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: 6, boxShadow: "0 14px 36px rgba(0,0,0,0.22)", zIndex: 40 }}>
+            <button type="button" style={profileMenuItem(t)}>
+              <Icon.settings />
+              <span>Settings</span>
+            </button>
+            <button type="button" style={{ ...profileMenuItem(t), color: t.accent }} onClick={callLogout}>
+              <Icon.logout />
+              <span>Log out</span>
+            </button>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setProfileOpen((value) => !value)}
+          aria-haspopup="menu"
+          aria-expanded={profileOpen}
+          title={collapsed ? displayName : undefined}
+          style={{ minWidth: 0, flex: collapsed ? "0 0 auto" : 1, height: 44, padding: collapsed ? 0 : "0 8px", border: "none", background: "transparent", color: t.text, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", gap: 10, borderRadius: 8, fontFamily: "inherit", transition: "background 0.16s ease" }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = t.hover;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "transparent";
+          }}
+        >
+          <span style={{ width: 32, height: 32, borderRadius: "50%", background: t.bgAlt, border: `1px solid ${t.borderLight}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: t.textMuted, overflow: "hidden", flexShrink: 0, fontWeight: 750 }}>
+            {avatarUrl ? <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initial}
+          </span>
+          <span style={{ maxWidth: collapsed ? 0 : 116, opacity: collapsed ? 0 : 1, overflow: "hidden", whiteSpace: "nowrap", transition: "max-width 0.2s ease, opacity 0.16s ease", textAlign: "left" }}>
+            <span style={{ display: "block", fontSize: 13, color: t.text, overflow: "hidden", textOverflow: "ellipsis", fontWeight: 750 }}>{displayName}</span>
+            <span style={{ display: "block", fontSize: 11, color: t.textMutedMore }}>Student</span>
+          </span>
+        </button>
+
       </div>
 
-      <nav style={{ flex: 1, padding: "8px 0" }}>
-        {NAV_ITEMS.map(({ id, label, key }) => {
+      <nav style={{ flex: 1, padding: collapsed ? "12px 8px" : "14px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
+        {NAV_ITEMS.map(({ id, label, description }) => {
           const Ic = icons[id];
           const on = active === id;
           return (
@@ -23,19 +117,23 @@ export default function Sidebar({ active, setActive, t }) {
               style={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "space-between",
+                justifyContent: collapsed ? "center" : "flex-start",
                 width: "100%",
-                padding: "9px 16px",
+                minHeight: collapsed ? 42 : 54,
+                padding: collapsed ? "0" : "0 12px",
                 border: "none",
                 cursor: "pointer",
                 textAlign: "left",
-                background: on ? t.accent : "transparent",
-                color: on ? "#fff" : t.textMuted,
-                fontSize: 13,
-                letterSpacing: "0.02em",
+                background: on ? t.hover : "transparent",
+                color: on ? t.text : t.textMuted,
+                fontSize: 14,
+                fontWeight: on ? 750 : 600,
                 transition: "all 0.12s",
-                borderRadius: 0,
+                borderRadius: 8,
+                borderLeft: collapsed ? "none" : `3px solid ${on ? t.accent : "transparent"}`,
+                fontFamily: "inherit",
               }}
+              title={collapsed ? label : undefined}
               onMouseEnter={(e) => {
                 if (!on) {
                   e.currentTarget.style.background = t.hover;
@@ -49,36 +147,37 @@ export default function Sidebar({ active, setActive, t }) {
                 }
               }}
             >
-              <span style={{ display: "flex", alignItems: "center", gap: 10 }}><Ic /> {label}</span>
-              <kbd style={{ fontSize: 9, opacity: 0.45, background: "transparent", border: "1px solid currentColor", borderRadius: 2, padding: "0 3px", fontFamily: "inherit" }}>{key}</kbd>
+              <span style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", gap: collapsed ? 0 : 12, width: "100%", minWidth: 0 }}>
+                <span style={{ color: on ? t.accent : t.textMuted, display: "flex" }}><Ic /></span>
+                <span style={{ maxWidth: collapsed ? 0 : 140, opacity: collapsed ? 0 : 1, overflow: "hidden", whiteSpace: "nowrap", transition: "max-width 0.2s ease, opacity 0.16s ease" }}>
+                  <span style={{ display: "block" }}>{label}</span>
+                  <span style={{ display: "block", fontSize: 11, color: t.textMutedMore, fontWeight: 500, marginTop: 2 }}>{description}</span>
+                </span>
+              </span>
             </button>
           );
         })}
       </nav>
 
-      <div style={{ padding: "10px 16px", borderTop: `1px solid ${t.border}` }}>
-        <div style={{ fontSize: 10, color: t.textMutedMost, marginBottom: 6 }}>// shortcuts</div>
-        {[
-          { keys: ["1-6"], desc: "navigate" },
-          { keys: ["Space"], desc: "play/pause" },
-          { keys: ["R"], desc: "reset timer" },
-          { keys: ["Esc"], desc: "close modal" },
-          { keys: ["Ctrl", "S"], desc: "save doc" },
-        ].map(({ keys, desc }) => (
-          <div key={desc} style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
-            {keys.map((k) => <Kbd key={k} k={k} t={t} />)}
-            <span style={{ fontSize: 10, color: t.textMutedMost }}>{desc}</span>
-          </div>
-        ))}
-      </div>
-
-      <div style={{ padding: "12px 16px", borderTop: `1px solid ${t.border}`, display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{ width: 28, height: 28, borderRadius: "50%", background: t.bgAlt, border: `1px solid ${t.borderLight}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, color: t.textMuted }}>U</div>
-        <div>
-          <div style={{ fontSize: 12, color: t.text }}>user_005</div>
-          <div style={{ fontSize: 11, color: t.textMutedMore }}>student</div>
-        </div>
-      </div>
     </aside>
   );
+}
+
+function profileMenuItem(t) {
+  return {
+    width: "100%",
+    height: 34,
+    border: "none",
+    borderRadius: 6,
+    background: "transparent",
+    color: t.textMuted,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    padding: "0 10px",
+    fontSize: 12,
+    fontFamily: "inherit",
+    textAlign: "left",
+  };
 }

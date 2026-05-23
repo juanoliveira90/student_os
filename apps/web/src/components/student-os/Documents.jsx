@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Icon } from "./icons.jsx";
 import { renderMarkdown } from "./markdown.js";
-import { getStyles, Kbd, SecHdr } from "./ui.jsx";
+import { getStyles } from "./ui.jsx";
 
 export default function Documents({ docs, setDocs, t }) {
   const s = getStyles(t);
@@ -13,7 +13,7 @@ export default function Documents({ docs, setDocs, t }) {
   const filtered = docs.filter((d) => d.title.includes(search.toLowerCase()));
 
   function newDoc() {
-    const doc = { id: Date.now(), title: "untitled", date: new Date().toLocaleDateString("en-US"), content: "# untitled\n\nstart writing..." };
+    const doc = { id: Date.now(), title: "Untitled note", date: new Date().toLocaleDateString("en-US"), content: "# Untitled note\n\nStart writing..." };
     setDocs((items) => [doc, ...items]);
     setSel(doc);
     setEContent(doc.content);
@@ -48,12 +48,12 @@ export default function Documents({ docs, setDocs, t }) {
   }, [editing, eContent, eTitle, sel]);
 
   return (
-    <div style={{ display: "flex", height: "calc(100vh - 40px)" }}>
-      <div style={{ width: 280, borderRight: `1px solid ${t.border}`, display: "flex", flexDirection: "column", flexShrink: 0, background: t.bgAlt }}>
-        <button onClick={newDoc} style={{ ...s.btn, margin: 12, marginBottom: 8 }}>+ new document</button>
+    <div style={{ display: "flex", height: "calc(100vh - 72px)" }}>
+      <div style={{ width: 300, borderRight: `1px solid ${t.border}`, display: "flex", flexDirection: "column", flexShrink: 0, background: t.bgAlt }}>
+        <button onClick={newDoc} style={{ ...s.btn, margin: 14, marginBottom: 10 }}>New note</button>
         <div style={{ position: "relative", margin: "0 12px 8px" }}>
           <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: t.textMutedMore }}><Icon.search /></span>
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="search documents" style={{ ...s.input, paddingLeft: 30, marginBottom: 0 }} />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search notes" style={{ ...s.input, paddingLeft: 30, marginBottom: 0 }} />
         </div>
         <div style={{ flex: 1, overflowY: "auto" }}>
           {filtered.map((doc) => (
@@ -61,9 +61,9 @@ export default function Documents({ docs, setDocs, t }) {
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
                   <span style={{ color: t.accent }}><Icon.file /></span>
-                  <span style={{ fontSize: 13, color: t.text }}>{doc.title}</span>
+                  <span style={{ fontSize: 14, color: t.text, fontWeight: 650 }}>{doc.title}</span>
                 </div>
-                <div style={{ fontSize: 11, color: t.textMutedMore }}>{doc.date}</div>
+                <div style={{ fontSize: 12, color: t.textMutedMore }}>{doc.date}</div>
               </div>
               <button onClick={(e) => { e.stopPropagation(); setDocs((items) => items.filter((x) => x.id !== doc.id)); if (sel?.id === doc.id) setSel(null); }} style={{ background: "none", border: "none", cursor: "pointer", color: t.textMutedMost, flexShrink: 0 }}><Icon.x /></button>
             </div>
@@ -74,29 +74,28 @@ export default function Documents({ docs, setDocs, t }) {
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: t.bgAlt }}>
         {sel ? (
           <>
-            <div style={{ padding: "10px 20px", borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ padding: "14px 24px", borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               {editing ? (
-                <input value={eTitle} onChange={(e) => setETitle(e.target.value)} style={{ ...s.input, marginBottom: 0, fontSize: 14, flex: 1, marginRight: 12 }} />
+                <input value={eTitle} onChange={(e) => setETitle(e.target.value)} style={{ ...s.input, marginBottom: 0, fontSize: 16, flex: 1, marginRight: 12, fontWeight: 750 }} />
               ) : (
-                <span style={{ fontSize: 14, color: t.text }}>{sel.title}</span>
+                <span style={{ fontSize: 18, color: t.text, fontWeight: 750 }}>{sel.title}</span>
               )}
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                {editing && <span style={{ fontSize: 10, color: t.textMutedMost }}><Kbd k="Ctrl+S" t={t} /> save</span>}
-                {editing ? <button onClick={save} style={s.btn}>save</button> : <button onClick={() => { setEditing(true); setEContent(sel.content); setETitle(sel.title); }} style={s.btn}>edit</button>}
+                {editing ? <button onClick={save} style={s.btn}>Save</button> : <button onClick={() => { setEditing(true); setEContent(sel.content); setETitle(sel.title); }} style={s.btn}>Edit note</button>}
               </div>
             </div>
             <div style={{ flex: 1, overflow: "auto", padding: 24 }}>
               {editing ? (
-                <textarea value={eContent} onChange={(e) => setEContent(e.target.value)} style={{ width: "100%", height: "100%", background: "none", border: "none", outline: "none", color: t.text, fontSize: 13, lineHeight: 1.7, resize: "none", fontFamily: "inherit" }} />
+                <textarea value={eContent} onChange={(e) => setEContent(e.target.value)} style={{ width: "100%", height: "100%", background: "none", border: "none", outline: "none", color: t.text, fontSize: 15, lineHeight: 1.7, resize: "none", fontFamily: "inherit" }} />
               ) : (
-                <div className="sos-md" style={{ color: t.text, fontSize: 13, lineHeight: 1.8, maxWidth: 720 }} dangerouslySetInnerHTML={{ __html: renderMarkdown(sel.content) }} />
+                <div className="sos-md" style={{ color: t.text, fontSize: 15, lineHeight: 1.8, maxWidth: 760 }} dangerouslySetInnerHTML={{ __html: renderMarkdown(sel.content) }} />
               )}
             </div>
           </>
         ) : (
           <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12, color: t.textMutedMost }}>
             <Icon.file />
-            <span style={{ fontSize: 13 }}>// select a document to view</span>
+            <span style={{ fontSize: 14 }}>Select a note to read or edit</span>
           </div>
         )}
       </div>
