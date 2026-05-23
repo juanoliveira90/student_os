@@ -37,7 +37,6 @@ export const AuthService = {
     },
 
     async userInformation(data: getUserInput) {
-        console.log(data)
         const getUser = await AuthQueries.getUserByEmail(data.email)
         if (!getUser) {
             throw { statusCode: 409, message: "user is not registered" }
@@ -47,5 +46,5 @@ export const AuthService = {
             name: getUser.name,
             email: getUser.email
         }
-    }
+    },
 }

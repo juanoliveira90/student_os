@@ -10,7 +10,6 @@ export const AuthQueries = {
     },
     
     async getUserByEmail(email: string) {
-        console.log(email)
         return await db.query.Users.findFirst({
             where: eq(Users.email, email) 
         })
