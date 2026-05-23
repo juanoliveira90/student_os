@@ -28,12 +28,12 @@ const loginSchema = {
 
 
 export async function AuthController(app: FastifyInstance) {
-    app.post('/register', { schema: registerSchema }, async (request, reply) => {
+    app.post('/register', { schema: registerSchema, config: { public: true } }, async (request, reply) => {
         const result = await AuthService.register(request.body as any)
         return reply.code(201).send(result)
     })
 
-    app.post('/login', { schema: loginSchema } ,async (request, reply) => {
+    app.post('/login', { schema: loginSchema, config: { public: true } } ,async (request, reply) => {
         const user = await AuthService.login(request.body as any)
         const token = app.jwt.sign({
             sub: user.id,
@@ -52,30 +52,14 @@ export async function AuthController(app: FastifyInstance) {
     })
 
     app.get('/me', async (request, reply) => {
-        try {
-            const token = request.cookies.access_token
+        const user = request.user as { email: string }
+        const info = await AuthService.userInformation(user)
 
-            if (!token) {
-                return reply.code(401).send({ message: "not authenticated" })
-            }
-
-            const payload = app.jwt.verify(token)
-            const user = request.user as { email: string }
-            const info = await AuthService.userInformation(user)
-
-            return reply.send({ user: info })
-        } catch {
-            return reply.code(401).send({ message: "not authenticated" })
-        }
+        return reply.send({ user: info })
     })
 
     app.post('/logout', async (request, reply) => {
         try {
-            const token = request.cookies.access_token
-            if (!token) {
-                return reply.code(401).send({ message: "not authenticated" })
-            }
-
             reply.clearCookie('access_token', { path: '/' })
 
             return reply.send({ message: 'you logged out.' })
