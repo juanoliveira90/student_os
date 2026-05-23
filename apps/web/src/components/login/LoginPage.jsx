@@ -36,6 +36,7 @@ export default function LoginPage({ mode = "login" }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState("");
   const [mounted, setMounted] = useState(false);
   const [theme, setTheme] = useState(getStoredTheme);
   const t = themes[theme];
@@ -55,6 +56,7 @@ export default function LoginPage({ mode = "login" }) {
   async function handleEmailSubmit(e) {
     e.preventDefault();
     setLoading(true);
+    setServerError("");
 
     try {
       const endpoint = isSignup ? "/auth/register" : "/auth/login";
@@ -66,11 +68,17 @@ export default function LoginPage({ mode = "login" }) {
         credentials: "include",
       });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
+      const data = await response.json().catch(() => null);
+      const responseMessage = getServerMessage(data);
+
+      if (!response.ok || data?.error) {
+        throw new Error(responseMessage || "Something went wrong. Please try again.");
+      }
+
       window.location.assign(isSignup ? "/login" : "/");
     } catch (err) {
       console.error(err);
+      setServerError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -108,6 +116,12 @@ export default function LoginPage({ mode = "login" }) {
             <Field label="password" icon={<Icon.lock />} t={t}>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="password" minLength={isSignup ? 8 : undefined} required style={inputStyle(t)} />
             </Field>
+
+            {serverError && (
+              <div role="alert" style={{ background: t.hover, border: `1px solid ${t.danger || "#dc2626"}`, borderRadius: 8, color: t.danger || "#dc2626", fontSize: 12, lineHeight: 1.4, marginBottom: 16, padding: "10px 12px" }}>
+                {serverError}
+              </div>
+            )}
 
             <button type="submit" disabled={loading} style={{ width: "100%", background: t.accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, padding: "12px 14px", cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: loading ? 0.7 : 1, transition: "all 0.12s" }}>
               {loading ? "Connecting..." : <>{isSignup ? "Create account" : "Sign in"} <Icon.arrow /></>}
@@ -168,6 +182,13 @@ export default function LoginPage({ mode = "login" }) {
       </button>
     </div>
   );
+}
+
+function getServerMessage(data) {
+  if (!data) return "";
+  if (typeof data.message === "string") return data.message;
+  if (typeof data.error === "string") return data.error;
+  return "";
 }
 
 function Field({ label, icon, children, t }) {
