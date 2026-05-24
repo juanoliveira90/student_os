@@ -1,6 +1,6 @@
 import { 
-    pgTable, 
-    integer, varchar, text, timestamp, uuid, bigserial, bigint,
+    pgTable, pgEnum, 
+    integer, varchar, text, time, timestamp, uuid, bigserial, bigint,
     index, unique 
 } from "drizzle-orm/pg-core"
 
@@ -25,3 +25,27 @@ export const Accounts = pgTable("accounts", {
 }, (t) => [
     unique().on(t.provider, t.provider_account_id)
 ])
+
+export const Schedule = pgTable("schedule", {
+    id: bigserial({ mode: "number" }).primaryKey(),
+    user_id: bigint({ mode: "number" }).references(() => Users.id, {
+        onDelete: 'cascade'
+    }),
+    created_at: timestamp({ precision: 0, withTimezone: true }).defaultNow(),
+    updated_at: timestamp({ precision: 0, withTimezone: true }).defaultNow()    
+})
+
+export const dayOfWeekEnum = pgEnum("day_of_week", [
+    "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"
+])
+
+export const ScheduleItems = pgTable("schedule_items", {
+    id: bigserial({ mode: "number" }).primaryKey(),
+    schedule_id: bigint({ mode: "number" }).references(() => Schedule.id, {
+        onDelete: 'cascade'
+    }),
+    day_of_week: dayOfWeekEnum().notNull(),
+    title: text().notNull(),
+    start_time: time().notNull(),
+    end_time: time().notNull()
+})
