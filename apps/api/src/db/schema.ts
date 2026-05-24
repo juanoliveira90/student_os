@@ -35,16 +35,16 @@ export const Schedule = pgTable("schedule", {
     updated_at: timestamp({ precision: 0, withTimezone: true }).defaultNow()    
 })
 
-export const dayOfWeekEnum = pgEnum("day_of_week", [
+/*export const dayOfWeekEnum = pgEnum("day_of_week", [
     "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"
-])
+])*/
 
 export const ScheduleItems = pgTable("schedule_items", {
     id: bigserial({ mode: "number" }).primaryKey(),
     schedule_id: bigint({ mode: "number" }).references(() => Schedule.id, {
         onDelete: 'cascade'
     }),
-    day_of_week: dayOfWeekEnum().notNull(),
+    day_of_week: /*dayOfWeekEnum()*/varchar({ length: 10 }).notNull(),
     title: text().notNull(),
     start_time: time().notNull(),
     end_time: time().notNull()
