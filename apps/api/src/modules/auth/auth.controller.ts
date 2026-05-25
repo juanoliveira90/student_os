@@ -2,7 +2,6 @@ import type { FastifyInstance } from "fastify";
 import { AuthService } from "./auth.service.ts";
 import { registerSchema, loginSchema } from "./auth.schemas.ts";
 
-
 export async function AuthController(app: FastifyInstance) {
     app.post('/register', { schema: registerSchema, config: { public: true } }, async (request, reply) => {
         const result = await AuthService.register(request.body as any)

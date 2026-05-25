@@ -5,6 +5,7 @@ import fastifyJwt from "@fastify/jwt"
 import 'dotenv/config'
 
 import { AuthController } from "./modules/auth/auth.controller.ts"
+import { ScheduleController } from "./modules/schedule/schedule.controller.ts"
 
 export default function Build() {
     const app = fastify()
@@ -36,6 +37,10 @@ export default function Build() {
 
     app.register(AuthController, {
         prefix: '/auth'
+    })
+
+    app.register(ScheduleController, {
+        prefix: '/schedule'
     })
     
 
