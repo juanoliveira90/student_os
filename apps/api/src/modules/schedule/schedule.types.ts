@@ -1,7 +1,12 @@
 export interface add {
-    scheduleId: number,
-    dayOfWeek: string,
-    title: string, 
-    startTime: string, 
-    endTime: string
+    events: Array<
+        {
+            day_of_week: string,
+            title: string,
+            start_time: string,
+            start_period: string,
+            end_time: string,
+            end_period: string,
+        }
+    >
 }
