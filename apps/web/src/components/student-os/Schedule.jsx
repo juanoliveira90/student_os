@@ -3,10 +3,102 @@ import { DAY_LABELS } from "./data.js";
 import { Icon } from "./icons.jsx";
 import { getStyles, Modal } from "./ui.jsx";
 
+const PERIODS = ["AM", "PM"];
+const TIME_SUGGESTIONS = Array.from({ length: 24 * 12 }, (_, index) => {
+  const hour = Math.floor(index / 12) % 12 || 12;
+  const minute = (index % 12) * 5;
+  const period = index < 12 * 12 ? "AM" : "PM";
+
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} ${period}`;
+});
+
+function normalizeTimeInput(value, fallbackPeriod = "AM") {
+  const rawValue = String(value || "").trim();
+  const periodMatch = rawValue.match(/\s*(am|pm)\s*$/i);
+  const period = periodMatch?.[1]?.toUpperCase() || fallbackPeriod;
+  const rawTime = rawValue.replace(/\s*(am|pm)\s*$/i, "").trim();
+  const hasColon = rawTime.includes(":");
+  const digits = rawTime.replace(/\D/g, "");
+  const match = rawTime.match(/^(\d{1,2})(?::(\d{1,2}))?$/);
+
+  if (!digits) return { time: rawValue, period };
+
+  const hourValue = hasColon || digits.length <= 2 ? match?.[1] : digits.slice(0, -2);
+  const minuteValue = hasColon ? match?.[2] ?? "0" : digits.length <= 2 ? "0" : digits.slice(-2);
+  const hour = Math.min(Math.max(Number(hourValue), 1), 12);
+  const minute = Math.min(Math.max(Number(minuteValue), 0), 59);
+
+  return {
+    time: `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
+    period,
+  };
+}
+
+function TimeField({ id, label, value, period, onChange, onPeriodChange, onEnter, s, t }) {
+  function handleChange(nextValue) {
+    const parsed = normalizeTimeInput(nextValue, period);
+    const nextPeriod = /(?:am|pm)\s*$/i.test(nextValue) ? parsed.period : period;
+
+    onChange(nextValue.replace(/\s*(am|pm)\s*$/i, ""));
+    if (nextPeriod !== period) onPeriodChange(nextPeriod);
+  }
+
+  function handleBlur() {
+    const parsed = normalizeTimeInput(value, period);
+
+    onChange(parsed.time);
+    onPeriodChange(parsed.period);
+  }
+
+  return (
+    <>
+      <label style={s.label}>{label}</label>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, marginBottom: 12 }}>
+        <input
+          value={value}
+          onChange={(e) => handleChange(e.target.value)}
+          onBlur={handleBlur}
+          onKeyDown={(e) => e.key === "Enter" && onEnter()}
+          placeholder="09:32"
+          list={`${id}-suggestions`}
+          style={{ ...s.input, marginBottom: 0 }}
+        />
+        <datalist id={`${id}-suggestions`}>
+          {TIME_SUGGESTIONS.map((time) => (
+            <option key={time} value={time} />
+          ))}
+        </datalist>
+        <div style={{ display: "flex", background: t.select, border: `1px solid ${t.borderAlt}`, borderRadius: 8, overflow: "hidden", height: 42 }}>
+          {PERIODS.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => onPeriodChange(item)}
+              style={{
+                minWidth: 44,
+                border: "none",
+                borderLeft: item === "PM" ? `1px solid ${t.borderAlt}` : "none",
+                background: period === item ? t.accent : "transparent",
+                color: period === item ? "#fff" : t.textMuted,
+                cursor: "pointer",
+                fontFamily: "inherit",
+                fontSize: 12,
+                fontWeight: 750,
+              }}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function Schedule({ schedule, setSchedule, t }) {
   const s = getStyles(t);
   const [modal, setModal] = useState(false);
-  const emptyForm = { day: "monday", title: "", start_time: "", end_time: "", id: null, originalDay: null };
+  const emptyForm = { day: "monday", title: "", start_time: "", start_period: "AM", end_time: "", end_period: "AM", id: null, originalDay: null };
   const [form, setForm] = useState(emptyForm);
   const [hasChanges, setHasChanges] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -14,29 +106,40 @@ export default function Schedule({ schedule, setSchedule, t }) {
 
   function getEventTimes(event) {
     if (event.start_time || event.end_time) {
-      return { start_time: event.start_time || "", end_time: event.end_time || "" };
+      const start = normalizeTimeInput(event.start_time || "", event.start_period || "AM");
+      const end = normalizeTimeInput(event.end_time || "", event.end_period || "AM");
+
+      return { start_time: start.time, start_period: start.period, end_time: end.time, end_period: end.period };
     }
 
     const [start_time = "", end_time = ""] = (event.time || "").split(/\s*-\s*/);
-    return { start_time, end_time };
+    const start = normalizeTimeInput(start_time, "AM");
+    const end = normalizeTimeInput(end_time, start.period);
+
+    return { start_time: start.time, start_period: start.period, end_time: end.time, end_period: end.period };
   }
 
   function formatEventTime(event) {
-    const { start_time, end_time } = getEventTimes(event);
-    return [start_time, end_time].filter(Boolean).join(" - ");
+    const { start_time, start_period, end_time, end_period } = getEventTimes(event);
+    const start = start_time ? `${start_time} ${start_period}` : "";
+    const end = end_time ? `${end_time} ${end_period}` : "";
+
+    return [start, end].filter(Boolean).join(" - ");
   }
 
   function formatScheduleEvents() {
     return Object.entries(schedule).flatMap(([day, events]) =>
       (events || []).map((event) => {
-        const { start_time, end_time } = getEventTimes(event);
+        const { start_time, start_period, end_time, end_period } = getEventTimes(event);
 
         return {
           id: event.id,
           day_of_week: day,
           title: event.title,
           start_time,
+          start_period,
           end_time,
+          end_period,
         };
       })
     );
@@ -48,8 +151,8 @@ export default function Schedule({ schedule, setSchedule, t }) {
   }
 
   function openEditModal(day, event) {
-    const { start_time, end_time } = getEventTimes(event);
-    setForm({ day, title: event.title, start_time, end_time, id: event.id, originalDay: day });
+    const { start_time, start_period, end_time, end_period } = getEventTimes(event);
+    setForm({ day, title: event.title, start_time, start_period, end_time, end_period, id: event.id, originalDay: day });
     setModal(true);
   }
 
@@ -59,12 +162,15 @@ export default function Schedule({ schedule, setSchedule, t }) {
   }
 
   function add() {
-    if (!form.title || !form.start_time || !form.end_time) return;
+    const start = normalizeTimeInput(form.start_time, form.start_period);
+    const end = normalizeTimeInput(form.end_time, form.end_period);
+
+    if (!form.title || !start.time || !end.time) return;
     setSchedule((sch) => ({
       ...sch,
       [form.day]: [
         ...(sch[form.day] || []),
-        { id: Date.now(), title: form.title.toLowerCase(), start_time: form.start_time, end_time: form.end_time },
+        { id: Date.now(), title: form.title.toLowerCase(), start_time: start.time, start_period: start.period, end_time: end.time, end_period: end.period },
       ],
     }));
     markChanged();
@@ -73,13 +179,16 @@ export default function Schedule({ schedule, setSchedule, t }) {
   }
 
   function update() {
-    if (!form.title || !form.start_time || !form.end_time) return;
+    const start = normalizeTimeInput(form.start_time, form.start_period);
+    const end = normalizeTimeInput(form.end_time, form.end_period);
+
+    if (!form.title || !start.time || !end.time) return;
     setSchedule((sch) => {
       const next = { ...sch };
       next[form.originalDay] = (next[form.originalDay] || []).filter((event) => event.id !== form.id);
       next[form.day] = [
         ...(next[form.day] || []),
-        { id: form.id, title: form.title.toLowerCase(), start_time: form.start_time, end_time: form.end_time },
+        { id: form.id, title: form.title.toLowerCase(), start_time: start.time, start_period: start.period, end_time: end.time, end_period: end.period },
       ];
       return next;
     });
@@ -164,10 +273,28 @@ export default function Schedule({ schedule, setSchedule, t }) {
           </select>
           <label style={s.label}>Title</label>
           <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && (form.id ? update() : add())} placeholder="event name" style={s.input} autoFocus />
-          <label style={s.label}>Start time</label>
-          <input value={form.start_time} onChange={(e) => setForm((f) => ({ ...f, start_time: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && (form.id ? update() : add())} placeholder="09:00" style={s.input} />
-          <label style={s.label}>End time</label>
-          <input value={form.end_time} onChange={(e) => setForm((f) => ({ ...f, end_time: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && (form.id ? update() : add())} placeholder="10:30" style={s.input} />
+          <TimeField
+            id="start-time"
+            label="Start time"
+            value={form.start_time}
+            period={form.start_period}
+            onChange={(start_time) => setForm((f) => ({ ...f, start_time }))}
+            onPeriodChange={(start_period) => setForm((f) => ({ ...f, start_period }))}
+            onEnter={form.id ? update : add}
+            s={s}
+            t={t}
+          />
+          <TimeField
+            id="end-time"
+            label="End time"
+            value={form.end_time}
+            period={form.end_period}
+            onChange={(end_time) => setForm((f) => ({ ...f, end_time }))}
+            onPeriodChange={(end_period) => setForm((f) => ({ ...f, end_period }))}
+            onEnter={form.id ? update : add}
+            s={s}
+            t={t}
+          />
           <button onClick={form.id ? update : add} style={s.btn}>{form.id ? "Save changes" : "Add event"}</button>
         </Modal>
       )}
