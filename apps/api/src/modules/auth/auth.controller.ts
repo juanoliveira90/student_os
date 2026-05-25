@@ -33,10 +33,13 @@ export async function AuthController(app: FastifyInstance) {
         return reply.code(201).send(result)
     })
 
-    app.post('/login', { schema: loginSchema, config: { public: true } } ,async (request, reply) => {
+    app.post('/login', { schema: loginSchema, config: { public: true } }, async (request, reply) => {
         const user = await AuthService.login(request.body as any)
+        if (!user.id || !user.email) {
+            throw new Error("missing id")
+        }
         const token = app.jwt.sign({
-            sub: user.id,
+            sub: user.id?.toString(),
             email: user.email,
         })
 
@@ -52,8 +55,8 @@ export async function AuthController(app: FastifyInstance) {
     })
 
     app.get('/me', async (request, reply) => {
-        const user = request.user as { email: string }
-        const info = await AuthService.userInformation(user)
+        const user = request.user
+        const info = await AuthService.userInformation(user as { email: string })
 
         return reply.send({ user: info })
     })
