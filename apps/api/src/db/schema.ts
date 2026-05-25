@@ -47,5 +47,7 @@ export const ScheduleItems = pgTable("schedule_items", {
     day_of_week: /*dayOfWeekEnum()*/varchar({ length: 10 }).notNull(),
     title: text().notNull(),
     start_time: time().notNull(),
-    end_time: time().notNull()
+    start_period: varchar({ length: 2 }).notNull(),
+    end_time: time().notNull(),
+    end_period: varchar({ length: 2 }).notNull()
 })
