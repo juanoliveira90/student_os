@@ -33,7 +33,9 @@ export const Schedule = pgTable("schedule", {
     }),
     created_at: timestamp({ precision: 0, withTimezone: true }).defaultNow(),
     updated_at: timestamp({ precision: 0, withTimezone: true }).defaultNow()    
-})
+}, (t) => [
+    unique().on(t.user_id)
+])
 
 /*export const dayOfWeekEnum = pgEnum("day_of_week", [
     "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"
