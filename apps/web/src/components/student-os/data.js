@@ -66,12 +66,8 @@ export const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 export const DAY_LABELS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
 export const initSchedule = {
-  monday: [
-    { id: 1, title: "calculus ii", time: "09:00 - 10:30" },
-    { id: 2, title: "data structures", time: "11:00 - 12:30" },
-    { id: 3, title: "study session", time: "14:00 - 16:00" },
-  ],
-  tuesday: [{ id: 4, title: "physics lab", time: "10:00 - 13:00" }],
+  monday: [],
+  tuesday: [],
   wednesday: [],
   thursday: [],
   friday: [],

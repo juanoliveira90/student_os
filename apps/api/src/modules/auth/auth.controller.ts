@@ -1,31 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { AuthService } from "./auth.service.ts";
-
-const registerSchema = {
-  body: {
-    type: "object",
-    required: ["email", "password", "name"],
-    properties: {
-        name:     { type: "string" },
-        email:    { type: "string", format: "email" },
-        password: { type: "string", minLength: 8 },
-    },
-    additionalProperties: false,
-  },
-} as const
-
-const loginSchema = {
-  body: {
-    type: "object",
-    required: ["email", "password"],
-    properties: {
-      email:    { type: "string", format: "email" },
-      password: { type: "string" },
-    },
-    additionalProperties: false,
-  },
-} as const
-
+import { registerSchema, loginSchema } from "./auth.schemas.ts";
 
 export async function AuthController(app: FastifyInstance) {
     app.post('/register', { schema: registerSchema, config: { public: true } }, async (request, reply) => {
@@ -33,10 +8,13 @@ export async function AuthController(app: FastifyInstance) {
         return reply.code(201).send(result)
     })
 
-    app.post('/login', { schema: loginSchema, config: { public: true } } ,async (request, reply) => {
+    app.post('/login', { schema: loginSchema, config: { public: true } }, async (request, reply) => {
         const user = await AuthService.login(request.body as any)
+        if (!user.id || !user.email) {
+            throw new Error("missing id")
+        }
         const token = app.jwt.sign({
-            sub: user.id,
+            sub: user.id?.toString(),
             email: user.email,
         })
 
@@ -52,8 +30,8 @@ export async function AuthController(app: FastifyInstance) {
     })
 
     app.get('/me', async (request, reply) => {
-        const user = request.user as { email: string }
-        const info = await AuthService.userInformation(user)
+        const user = request.user
+        const info = await AuthService.userInformation(user as { email: string })
 
         return reply.send({ user: info })
     })
