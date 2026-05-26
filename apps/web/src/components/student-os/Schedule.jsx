@@ -248,12 +248,12 @@ export default function Schedule({ schedule, setSchedule, t }) {
     const removedItem = eventToRemove
       ? {
           id: eventToRemove.id,
-          day_of_week: day,
+          /*day_of_week: day,
           title: eventToRemove.title,
           start_time,
           start_period,
           end_time,
-          end_period,
+          end_period,*/
         }
       : { id: eventId, day_of_week: day };
 
