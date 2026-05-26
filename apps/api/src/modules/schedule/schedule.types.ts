@@ -11,3 +11,11 @@ export interface add {
         }
     >
 }
+
+export interface remove {
+    events: Array<
+        {
+             id: string,
+        }
+    >
+}
