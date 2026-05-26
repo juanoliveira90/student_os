@@ -4,15 +4,15 @@ import { ScheduleQueries } from "./schedule.queries.ts"
 import type { add } from "./schedule.types.ts"
 
 export const ScheduleService = {
-    async addEvent(userId: number, data: add) {        
+    async updateSchedule(userId: number, data: add) {        
         try {
             const schedule = await ScheduleQueries.createScheduleReturningId(userId)
-            await ScheduleQueries.addEvent(data, schedule[0]!.id)
+            await ScheduleQueries.createOrUpdateEvent(data, schedule[0]!.id)
         } catch (error) {
             console.error(error)
-            return { message: "event was not added" }
+            return { message: "nothing was changed" }
         }
 
-        return { message: "event added!" }
-    }
+        return { message: "schedule updated!" }
+    },
 }

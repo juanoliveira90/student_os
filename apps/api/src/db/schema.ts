@@ -42,7 +42,7 @@ export const Schedule = pgTable("schedule", {
 ])*/
 
 export const ScheduleItems = pgTable("schedule_items", {
-    id: bigserial({ mode: "number" }).primaryKey(),
+    id: uuid("id").primaryKey(),
     schedule_id: bigint({ mode: "number" }).references(() => Schedule.id, {
         onDelete: 'cascade'
     }),

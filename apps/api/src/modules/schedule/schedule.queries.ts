@@ -16,16 +16,30 @@ export const ScheduleQueries = {
         })
         .returning({ id: Schedule.id })
     },
-
-    async addEvent(data: add, scheduleId: number) {
-        await db.insert(ScheduleItems).values({ 
-            schedule_id: scheduleId, 
-            day_of_week: data.events[0]!.day_of_week, 
-            title: data.events[0]!.title, 
-            end_time: data.events[0]!.end_time, 
-            start_time: data.events[0]!.start_time,
-            start_period: data.events[0]!.start_period,
-            end_period: data.events[0]!.end_period 
-        })
-    }
+  
+  async createOrUpdateEvent(data: add, scheduleId: number) {
+    await db.insert(ScheduleItems).values(
+        data.events.map((event) => ({
+            id: event.id,
+            schedule_id: scheduleId,
+            day_of_week: event.day_of_week,
+            title: event.title,
+            end_time: event.end_time,
+            start_time: event.start_time,
+            start_period: event.start_period,
+            end_period: event.end_period
+        }))
+    )
+    .onConflictDoUpdate({
+        target: ScheduleItems.id,
+        set: {
+            day_of_week: sql`excluded.day_of_week`,
+            title: sql`excluded.title`,
+            end_time: sql`excluded.end_time`,
+            start_time: sql`excluded.start_time`,
+            start_period: sql`excluded.start_period`,
+            end_period: sql`excluded.end_period`
+        }
+    })
+  }
 }

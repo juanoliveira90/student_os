@@ -1,0 +1,1 @@
+ALTER TABLE "schedule_items" ALTER COLUMN "id" SET DATA TYPE bigint;

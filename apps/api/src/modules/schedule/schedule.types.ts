@@ -1,6 +1,7 @@
 export interface add {
     events: Array<
         {
+            id: string,
             day_of_week: string,
             title: string,
             start_time: string,
