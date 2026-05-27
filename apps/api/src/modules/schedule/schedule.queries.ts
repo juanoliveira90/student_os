@@ -33,6 +33,7 @@ export const ScheduleQueries = {
                 schedule_id: scheduleId,
                 day_of_week: event.day_of_week,
                 title: event.title,
+                description: event.description ?? null,
                 end_time: event.end_time,
                 start_time: event.start_time,
                 start_period: event.start_period,
@@ -45,6 +46,7 @@ export const ScheduleQueries = {
             set: {
                 day_of_week: sql`excluded.day_of_week`,
                 title: sql`excluded.title`,
+                description: sql`excluded.description`,
                 end_time: sql`excluded.end_time`,
                 start_time: sql`excluded.start_time`,
                 start_period: sql`excluded.start_period`,

@@ -4,6 +4,7 @@ export interface add {
             id: string,
             day_of_week: string,
             title: string,
+            description?: string | null,
             start_time: string,
             start_period: string,
             end_time: string,
