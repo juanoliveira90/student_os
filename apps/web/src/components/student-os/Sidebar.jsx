@@ -1,8 +1,11 @@
 import { NAV_ITEMS } from "./data.js";
 import { Icon } from "./icons.jsx";
+import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { getAuthenticatedUser, logout } from "../../fetchs/authFetchs";
 
-export default function Sidebar({ active, setActive, t, collapsed, setCollapsed }) {
+export default function Sidebar({ active, setActive, t, collapsed, setCollapsed, onLogout }) {
+  const navigate = useNavigate();
   const icons = { dashboard: Icon.grid, schedule: Icon.cal, studyplans: Icon.book, habits: Icon.target, focustime: Icon.timer, documents: Icon.file };
   const width = collapsed ? 64 : 216;
 
@@ -15,9 +18,8 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed 
   const initial = displayName.trim().charAt(0).toUpperCase() || "U";
 
   useEffect(() => {
-    fetch("/auth/me")
-      .then(res => res.json())
-      .then(data => setUser(data))
+    getAuthenticatedUser()
+      .then(setUser)
       .catch(() => setUser(null));
   }, []);
 
@@ -31,16 +33,16 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed 
     return () => window.removeEventListener("pointerdown", onPointerDown);
   }, []);
   
-  function callLogout() {
-    fetch("auth/logout", {
-      method: 'POST',
-      credentials: 'include'
-    })
-      .then(res => res.json())
-      .then(data => console.log(data))
-      .catch(err => console.error("logout failed:", err))
-
-    window.location.assign("/login");
+  async function callLogout() {
+    try {
+      const data = await logout();
+      console.log(data);
+    } catch (err) {
+      console.error("logout failed:", err);
+    } finally {
+      onLogout?.();
+      navigate({ to: "/login" });
+    }
   }
   
   return (

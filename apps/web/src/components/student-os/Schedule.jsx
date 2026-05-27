@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { DAY_LABELS } from "./data.js";
 import { Icon } from "./icons.jsx";
 import { getStyles, Modal } from "./ui.jsx";
+import { deleteScheduleEvents, saveScheduleEvents, scheduleQueryKey } from "../../fetchs/scheduleFetchs";
 
 const PERIODS = ["AM", "PM"];
 const TIME_SUGGESTIONS = Array.from({ length: 24 * 12 }, (_, index) => {
@@ -95,8 +97,9 @@ function TimeField({ id, label, value, period, onChange, onPeriodChange, onEnter
   );
 }
 
-export default function Schedule({ schedule, setSchedule, t }) {
+export default function Schedule({ schedule, setSchedule, isLoading, isError, t }) {
   const s = getStyles(t);
+  const queryClient = useQueryClient();
   const [modal, setModal] = useState(false);
   const emptyForm = { day: "monday", title: "", start_time: "", start_period: "AM", end_time: "", end_period: "AM", id: null, originalDay: null };
   const [form, setForm] = useState(emptyForm);
@@ -129,24 +132,6 @@ export default function Schedule({ schedule, setSchedule, t }) {
     const end = end_time ? `${end_time} ${end_period}` : "";
 
     return [start, end].filter(Boolean).join(" - ");
-  }
-
-  function formatScheduleEvents() {
-    return Object.entries(schedule).flatMap(([day, events]) =>
-      (events || []).map((event) => {
-        const { start_time, start_period, end_time, end_period } = getEventTimes(event);
-
-        return {
-          id: event.id,
-          day_of_week: day,
-          title: event.title,
-          start_time,
-          start_period,
-          end_time,
-          end_period,
-        };
-      })
-    );
   }
 
   function toScheduleItem({ id, day, title, start, end }) {
@@ -201,7 +186,6 @@ export default function Schedule({ schedule, setSchedule, t }) {
     markChanged();
     setModal(false);
     setForm(emptyForm);
-    // craete.push(thisEvent)
     setPendingChanges(prev => ({
       ...prev,
       createOrUpdate: [...prev.createOrUpdate, newItem]
@@ -235,7 +219,6 @@ export default function Schedule({ schedule, setSchedule, t }) {
     setModal(false);
     setForm(emptyForm);
 
-    // update.push(thisEvent)
     setPendingChanges(prev => ({
       ...prev,
       createOrUpdate: [...prev.createOrUpdate.filter((item) => item.id !== updatedItem.id), updatedItem]
@@ -248,18 +231,11 @@ export default function Schedule({ schedule, setSchedule, t }) {
     const removedItem = eventToRemove
       ? {
           id: eventToRemove.id,
-          /*day_of_week: day,
-          title: eventToRemove.title,
-          start_time,
-          start_period,
-          end_time,
-          end_period,*/
         }
       : { id: eventId, day_of_week: day };
 
     setSchedule((sch) => ({ ...sch, [day]: sch[day].filter((event) => event.id !== eventId) }));
     markChanged();
-    // delete.push(thisEvent)
     setPendingChanges(prev => ({
       ...prev,
       createOrUpdate: prev.createOrUpdate.filter((item) => item.id !== eventId),
@@ -271,51 +247,26 @@ export default function Schedule({ schedule, setSchedule, t }) {
     setSaving(true);
     setSaveMessage("");
 
-    const events = formatScheduleEvents();
-
-    //console.log(JSON.stringify({ events }))
-    //console.log(schedule)
-
-    if (pendingChanges.createOrUpdate.length > 0) {
-      try {
-        const response = await fetch("/schedule", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ events: pendingChanges.createOrUpdate }),
-        });
-  
-        if (!response.ok) throw new Error("Schedule save failed");
-  
-        setHasChanges(false);
-        setSaveMessage("Saved.");
-      } catch {
-        setSaveMessage("Could not save. Try again.");
-      } finally {
-        //setSchedule('')
-        setSaving(false);
+    try {
+      if (pendingChanges.createOrUpdate.length > 0) {
+        await saveScheduleEvents(pendingChanges.createOrUpdate);
       }
-    } 
-    
-    if (pendingChanges.delete.length > 0) {
-      try {
-        const response = await fetch("/schedule/delete", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ events: pendingChanges.delete }),
-        });
-  
-        if (!response.ok) throw new Error("Schedule save failed");
-  
-        setHasChanges(false);
-        setSaveMessage("Saved.");
-      } catch {
-        setSaveMessage("Could not save. Try again.");
-      } finally {
-        //setSchedule('')
-        setSaving(false);
+
+      if (pendingChanges.delete.length > 0) {
+        await deleteScheduleEvents(pendingChanges.delete);
       }
-    } 
+
+      setPendingChanges({ createOrUpdate: [], delete: [] });
+      setHasChanges(false);
+      setSaveMessage("Saved.");
+      queryClient.invalidateQueries({ queryKey: scheduleQueryKey });
+    } catch {
+      setSaveMessage("Could not save. Try again.");
+    } finally {
+      setSaving(false);
     }
+  }
+
     return (
       <div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
@@ -323,6 +274,7 @@ export default function Schedule({ schedule, setSchedule, t }) {
             <h1 style={{ fontSize: 28, lineHeight: 1.1, fontWeight: 750, color: t.text, margin: 0 }}>Schedule</h1>
             <div style={{ fontSize: 14, color: t.textMutedMore, marginTop: 6 }}>Add classes, deadlines, and study blocks for each day.</div>
             {saveMessage && <div style={{ fontSize: 12, color: saveMessage === "Saved." ? t.accent : t.textMutedMore, marginTop: 8 }}>{saveMessage}</div>}
+            {isError && <div style={{ fontSize: 12, color: t.textMutedMore, marginTop: 8 }}>Could not load your saved schedule.</div>}
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
             <button
@@ -335,6 +287,7 @@ export default function Schedule({ schedule, setSchedule, t }) {
             <button onClick={openAddModal} style={s.btn}>Add event</button>
           </div>
         </div>
+        {isLoading && <div style={{ fontSize: 13, color: t.textMutedMore, marginBottom: 12 }}>Loading schedule...</div>}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
           {DAY_LABELS.map((day) => (
             <div key={day} style={s.card}>

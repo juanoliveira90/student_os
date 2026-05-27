@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+import { flushSync } from "react-dom";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { getNextTheme, getStoredTheme, isDarkTheme, saveStoredTheme, themes } from "../student-os/data.js";
 import { Icon as AppIcon } from "../student-os/icons.jsx";
+import { getAuthenticatedUser, loginWithEmail, registerWithEmail } from "../../fetchs/authFetchs";
 
 const Icon = {
   github: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v 3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>,
@@ -30,8 +33,9 @@ const ghostButton = (loading, t) => ({
   opacity: loading ? 0.7 : 1,
 });
 
-export default function LoginPage({ mode = "login" }) {
+export default function LoginPage({ mode = "login", onAuthenticated }) {
   const isSignup = mode === "signup";
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -59,23 +63,18 @@ export default function LoginPage({ mode = "login" }) {
     setServerError("");
 
     try {
-      const endpoint = isSignup ? "/auth/register" : "/auth/login";
-      const body = isSignup ? { name, email, password } : { email, password };
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-        credentials: "include",
-      });
-
-      const data = await response.json().catch(() => null);
-      const responseMessage = getServerMessage(data);
-
-      if (!response.ok || data?.error) {
-        throw new Error(responseMessage || "Something went wrong. Please try again.");
+      if (isSignup) {
+        await registerWithEmail({ name, email, password });
+        navigate({ to: "/login" });
+        return;
       }
 
-      window.location.assign(isSignup ? "/login" : "/app");
+      const data = await loginWithEmail({ email, password });
+      const authenticatedUser = data?.email ? data : await getAuthenticatedUser();
+      flushSync(() => {
+        onAuthenticated?.(authenticatedUser);
+      });
+      navigate({ to: "/app" });
     } catch (err) {
       console.error(err);
       setServerError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -147,9 +146,9 @@ export default function LoginPage({ mode = "login" }) {
         <div style={{ marginTop: 24, textAlign: "center", fontSize: 11, color: t.textMutedMore }}>
           <div style={{ marginBottom: 8 }}>
             {isSignup ? "Already have an account? " : "New here? "}
-            <a href={isSignup ? "/login" : "/signup"} style={{ color: t.accent, textDecoration: "none" }}>
+            <Link to={isSignup ? "/login" : "/signup"} style={{ color: t.accent, textDecoration: "none" }}>
               {isSignup ? "Sign in" : "Create account"}
-            </a>
+            </Link>
           </div>
           {!isSignup && <div><a href="#" style={{ color: t.accent, textDecoration: "none" }}>Forgot password?</a></div>}
         </div>
@@ -182,13 +181,6 @@ export default function LoginPage({ mode = "login" }) {
       </button>
     </div>
   );
-}
-
-function getServerMessage(data) {
-  if (!data) return "";
-  if (typeof data.message === "string") return data.message;
-  if (typeof data.error === "string") return data.error;
-  return "";
 }
 
 function Field({ label, icon, children, t }) {

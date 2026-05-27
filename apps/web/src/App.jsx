@@ -1,58 +1,98 @@
 import { useEffect, useState } from "react";
+import {
+  Outlet,
+  RouterProvider,
+  createRootRoute,
+  createRoute,
+  createRouter,
+  redirect,
+} from "@tanstack/react-router";
+import { QueryClientProvider } from "@tanstack/react-query";
 import LoginPage from "./components/login/LoginPage.jsx";
 import StudentOS from "./components/student-os/MainAppPage.jsx";
+import { getAuthenticatedUser } from "./fetchs/authFetchs";
+import { scheduleQueryOptions } from "./fetchs/scheduleFetchs";
+import { queryClient } from "./lib/queryClient";
 
-function getPath() {
-  return window.location.pathname;
-}
+const rootRoute = createRootRoute({
+  component: () => <Outlet />,
+});
+
+const indexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/",
+  beforeLoad: ({ context }) => {
+    throw redirect({ to: context.user ? "/app" : "/login", replace: true });
+  },
+});
+
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/login",
+  component: LoginRoute,
+});
+
+const signupRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/signup",
+  component: SignupRoute,
+});
+
+const appRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/app",
+  beforeLoad: async ({ context }) => {
+    if (!context.user) {
+      throw redirect({ to: "/login", replace: true });
+    }
+
+    await context.queryClient.prefetchQuery(scheduleQueryOptions());
+  },
+  component: AppRoute,
+});
+
+const routeTree = rootRoute.addChildren([indexRoute, loginRoute, signupRoute, appRoute]);
+
+const router = createRouter({
+  routeTree,
+  defaultPreload: "intent",
+});
 
 export default function App() {
-  const [path, setPath] = useState(getPath);
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const onPopState = () => setPath(getPath());
-    window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
+    getAuthenticatedUser()
+      .then(setUser)
+      .catch(() => {
+        setUser(null);
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
-  useEffect(() => {
-    fetch('/auth/me')
-      .then((res) => {
-        if (!res.ok) throw new Error("unauthorized")
-        return res.json()
-      })
-      .then((data) => {
-        setUser(data.user)
-      })
-      .catch(() => {
-        setUser(null)
-      })
-      .finally(() => setIsLoading(false))
-  }, [])
-
   if (isLoading) {
-    return <div>Checking authentication...</div>; 
+    return <div>Checking authentication...</div>;
   }
 
-  if (!user && path === "/app") {
-    /*if (path !== "/login") {
-      window.history.replaceState({}, "", "/login")
-    }*/
-    window.history.replaceState({}, "", "/login")
-    return <LoginPage mode="login" />
-  }
+  return (
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} context={{ user, setUser, queryClient }} />
+    </QueryClientProvider>
+  );
+}
 
-  if (path === "/login") {
-    return <LoginPage mode="login" />;
-  }
+function LoginRoute() {
+  const { setUser } = rootRoute.useRouteContext();
+  return <LoginPage mode="login" onAuthenticated={setUser} />;
+}
 
-  if (path === "/signup") {
-    return <LoginPage mode="signup" />;
-  }
+function SignupRoute() {
+  const { setUser } = rootRoute.useRouteContext();
+  return <LoginPage mode="signup" onAuthenticated={setUser} />;
+}
 
-  if (path === "/app") {
-    return <StudentOS />;
-  }
+function AppRoute() {
+  const { setUser } = rootRoute.useRouteContext();
+  return <StudentOS onLogout={() => setUser(null)} />;
 }
