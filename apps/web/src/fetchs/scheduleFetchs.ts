@@ -48,10 +48,11 @@ export async function fetchSchedule() {
   return toSchedule(data.events);
 }
 
-export function scheduleQueryOptions() {
+export function scheduleQueryOptions(userId) {
   return {
-    queryKey: scheduleQueryKey,
+    queryKey: [...scheduleQueryKey, userId],
     queryFn: fetchSchedule,
+    enabled: Boolean(userId),
   };
 }
 

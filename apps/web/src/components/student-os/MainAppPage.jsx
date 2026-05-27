@@ -11,7 +11,7 @@ import { Icon } from "./icons.jsx";
 import { getNextTheme, getStoredTheme, initDocs, initHabits, initSchedule, initSubjects, initTasks, isDarkTheme, NAV_ITEMS, saveStoredTheme, themes } from "./data.js";
 import { scheduleQueryOptions } from "../../fetchs/scheduleFetchs";
 
-export default function StudentOS({ onLogout }) {
+export default function StudentOS({ user, onLogout }) {
   const [active, setActive] = useState("dashboard");
   const [tasks, setTasks] = useState(initTasks);
   const [schedule, setSchedule] = useState(initSchedule);
@@ -23,7 +23,7 @@ export default function StudentOS({ onLogout }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const t = themes[theme];
   const isDoc = active === "documents";
-  const scheduleQuery = useQuery(scheduleQueryOptions());
+  const scheduleQuery = useQuery(scheduleQueryOptions(user?.id));
 
   useEffect(() => {
     function onKey(e) {

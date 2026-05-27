@@ -46,7 +46,7 @@ const appRoute = createRoute({
       throw redirect({ to: "/login", replace: true });
     }
 
-    await context.queryClient.prefetchQuery(scheduleQueryOptions());
+    await context.queryClient.prefetchQuery(scheduleQueryOptions(context.user.id));
   },
   component: AppRoute,
 });
@@ -83,8 +83,16 @@ export default function App() {
 }
 
 function LoginRoute() {
-  const { setUser } = rootRoute.useRouteContext();
-  return <LoginPage mode="login" onAuthenticated={setUser} />;
+  const { setUser, queryClient } = rootRoute.useRouteContext();
+  return (
+    <LoginPage
+      mode="login"
+      onAuthenticated={(authenticatedUser) => {
+        queryClient.clear();
+        setUser(authenticatedUser);
+      }}
+    />
+  );
 }
 
 function SignupRoute() {
@@ -93,6 +101,14 @@ function SignupRoute() {
 }
 
 function AppRoute() {
-  const { setUser } = rootRoute.useRouteContext();
-  return <StudentOS onLogout={() => setUser(null)} />;
+  const { user, setUser, queryClient } = rootRoute.useRouteContext();
+  return (
+    <StudentOS
+      user={user}
+      onLogout={() => {
+        queryClient.clear();
+        setUser(null);
+      }}
+    />
+  );
 }
