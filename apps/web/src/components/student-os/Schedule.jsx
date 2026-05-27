@@ -101,7 +101,7 @@ export default function Schedule({ schedule, setSchedule, isLoading, isError, t 
   const s = getStyles(t);
   const queryClient = useQueryClient();
   const [modal, setModal] = useState(false);
-  const emptyForm = { day: "monday", title: "", start_time: "", start_period: "AM", end_time: "", end_period: "AM", id: null, originalDay: null };
+  const emptyForm = { day: "monday", title: "", description: "", start_time: "", start_period: "AM", end_time: "", end_period: "AM", id: null, originalDay: null };
   const [form, setForm] = useState(emptyForm);
   const [hasChanges, setHasChanges] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -134,11 +134,12 @@ export default function Schedule({ schedule, setSchedule, isLoading, isError, t 
     return [start, end].filter(Boolean).join(" - ");
   }
 
-  function toScheduleItem({ id, day, title, start, end }) {
+  function toScheduleItem({ id, day, title, description, start, end }) {
     return {
       id,
       day_of_week: day,
       title: title.toLowerCase(),
+      description: description.trim() || null,
       start_time: start.time,
       start_period: start.period,
       end_time: end.time,
@@ -153,7 +154,7 @@ export default function Schedule({ schedule, setSchedule, isLoading, isError, t 
 
   function openEditModal(day, event) {
     const { start_time, start_period, end_time, end_period } = getEventTimes(event);
-    setForm({ day, title: event.title, start_time, start_period, end_time, end_period, id: event.id, originalDay: day });
+    setForm({ day, title: event.title, description: event.description || "", start_time, start_period, end_time, end_period, id: event.id, originalDay: day });
     setModal(true);
   }
 
@@ -167,7 +168,7 @@ export default function Schedule({ schedule, setSchedule, isLoading, isError, t 
     const end = normalizeTimeInput(form.end_time, form.end_period);
 
     if (!form.title || !start.time || !end.time) return;
-    const newItem = toScheduleItem({ id: crypto.randomUUID(), day: form.day, title: form.title, start, end });
+    const newItem = toScheduleItem({ id: crypto.randomUUID(), day: form.day, title: form.title, description: form.description, start, end });
 
     setSchedule((sch) => ({
       ...sch,
@@ -176,6 +177,7 @@ export default function Schedule({ schedule, setSchedule, isLoading, isError, t 
         {
           id: newItem.id,
           title: newItem.title,
+          description: newItem.description,
           start_time: newItem.start_time,
           start_period: newItem.start_period,
           end_time: newItem.end_time,
@@ -197,7 +199,7 @@ export default function Schedule({ schedule, setSchedule, isLoading, isError, t 
     const end = normalizeTimeInput(form.end_time, form.end_period);
 
     if (!form.title || !start.time || !end.time) return;
-    const updatedItem = toScheduleItem({ id: form.id, day: form.day, title: form.title, start, end });
+    const updatedItem = toScheduleItem({ id: form.id, day: form.day, title: form.title, description: form.description, start, end });
 
     setSchedule((sch) => {
       const next = { ...sch };
@@ -207,6 +209,7 @@ export default function Schedule({ schedule, setSchedule, isLoading, isError, t 
         {
           id: updatedItem.id,
           title: updatedItem.title,
+          description: updatedItem.description,
           start_time: updatedItem.start_time,
           start_period: updatedItem.start_period,
           end_time: updatedItem.end_time,
@@ -298,6 +301,22 @@ export default function Schedule({ schedule, setSchedule, isLoading, isError, t 
                 <div key={ev.id} style={{ background: t.hover, border: `1px solid ${t.borderAlt}`, borderLeft: `4px solid ${t.accent}`, borderRadius: 8, padding: "12px 14px", marginBottom: 8, position: "relative" }}>
                   <button onClick={() => remove(day, ev.id)} style={{ position: "absolute", top: 6, right: 6, background: "none", border: "none", cursor: "pointer", color: t.textMutedMore, padding: 2 }}><Icon.x /></button>
                   <div style={{ fontSize: 14, color: t.text, fontWeight: 650 }}>{ev.title}</div>
+                  {ev.description && (
+                    <div
+                      title={ev.description}
+                      style={{
+                        fontSize: 12,
+                        color: t.textMutedMore,
+                        marginTop: 6,
+                        paddingRight: 12,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {ev.description}
+                    </div>
+                  )}
                   <div style={{ fontSize: 12, color: t.textMutedMore, marginTop: 6, display: "flex", alignItems: "center", gap: 5 }}><Icon.clock /> {formatEventTime(ev)}</div>
                   <button onClick={() => openEditModal(day, ev)} style={{ ...s.ghost, padding: "6px 9px", fontSize: 11, marginTop: 10 }}>Edit</button>
                 </div>
@@ -313,6 +332,14 @@ export default function Schedule({ schedule, setSchedule, isLoading, isError, t 
             </select>
             <label style={s.label}>Title</label>
             <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && (form.id ? update() : add())} placeholder="event name" style={s.input} autoFocus />
+            <label style={s.label}>Description</label>
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              placeholder="optional notes"
+              rows={3}
+              style={{ ...s.input, minHeight: 82, resize: "vertical", lineHeight: 1.4 }}
+            />
             <TimeField
               id="start-time"
               label="Start time"
