@@ -6,6 +6,10 @@ import type { remove, add } from "./schedule.types.ts"
 import { and, sql, inArray, eq } from "drizzle-orm"
 
 export const ScheduleQueries = {
+    async getScheduleItems(scheduleId: number) {
+        return await db.select().from(ScheduleItems).where(eq(ScheduleItems.schedule_id, scheduleId))
+    },
+
     async getScheduleId(userId: number) {
         return await db.select({ id: Schedule.id })
         .from(Schedule).where(eq(Schedule.user_id, userId))
