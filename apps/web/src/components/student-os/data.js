@@ -76,9 +76,9 @@ export const initSchedule = {
 };
 
 export const initSubjects = [
-  { id: 1, name: "data structures & algorithms", difficulty: "hard", progress: 65, importance: 5, difficultyDots: 4, hoursPerWeek: 10 },
-  { id: 2, name: "calculus ii", difficulty: "very hard", progress: 45, importance: 4, difficultyDots: 5, hoursPerWeek: 8 },
-  { id: 3, name: "physics", difficulty: "hard", progress: 70, importance: 3, difficultyDots: 4, hoursPerWeek: 6 },
+  { id: 1, name: "data structures & algorithms", progress: 65, importance: 5, scheduleBlockId: "", subtasks: [{ id: 101, text: "binary tree traversals", done: false }, { id: 102, text: "hash table exercises", done: true }] },
+  { id: 2, name: "calculus ii", progress: 45, importance: 4, scheduleBlockId: "", subtasks: [{ id: 201, text: "integration by parts", done: false }, { id: 202, text: "series convergence practice", done: false }] },
+  { id: 3, name: "physics", progress: 70, importance: 3, scheduleBlockId: "", subtasks: [{ id: 301, text: "kinematics problem set", done: true }, { id: 302, text: "electric fields review", done: false }] },
 ];
 
 export const initHabits = [

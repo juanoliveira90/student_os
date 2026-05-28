@@ -96,14 +96,16 @@ export default function StudentOS({ user, onLogout }) {
               <Schedule
                 schedule={schedule}
                 setSchedule={setSchedule}
+                subjects={subjects}
+                setSubjects={setSubjects}
                 isLoading={scheduleQuery.isLoading && !hasLoadedSchedule}
                 isError={scheduleQuery.isError}
                 t={t}
               />
             )}
-            {active === "studyplans" && <StudyPlans subjects={subjects} setSubjects={setSubjects} t={t} />}
+            {active === "studyplans" && <StudyPlans subjects={subjects} setSubjects={setSubjects} schedule={schedule} setSchedule={setSchedule} t={t} />}
             {active === "habits" && <Habits habits={habits} setHabits={setHabits} t={t} />}
-            {active === "focustime" && <FocusTime tasks={tasks} setTasks={setTasks} t={t} />}
+            {active === "focustime" && <FocusTime tasks={tasks} setTasks={setTasks} subjects={subjects} schedule={schedule} t={t} />}
             {active === "documents" && <Documents docs={docs} setDocs={setDocs} t={t} />}
           </div>
         </div>
