@@ -43,6 +43,7 @@ export const AuthService = {
         }
 
         return {
+            id: getUser.id,
             name: getUser.name,
             email: getUser.email
         }

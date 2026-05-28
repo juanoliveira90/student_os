@@ -2,6 +2,7 @@ import { DAYS, productivityData } from "./data.js";
 import { Icon } from "./icons.jsx";
 import { getStyles, MiniStat, SecHdr } from "./ui.jsx";
 import { useEffect, useState } from "react";
+import { getAuthenticatedUser } from "../../fetchs/authFetchs";
 
 export default function Dashboard({ tasks, setTasks, habits, t }) {
   const s = getStyles(t);
@@ -20,9 +21,8 @@ export default function Dashboard({ tasks, setTasks, habits, t }) {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    fetch("/auth/me")
-      .then((res) => res.json())
-      .then((data) => setUser(data))
+    getAuthenticatedUser()
+      .then(setUser)
       .catch(() => setUser(null));
   }, []);
 
@@ -31,7 +31,7 @@ export default function Dashboard({ tasks, setTasks, habits, t }) {
       <div style={{ ...s.card, gridColumn: "1 / -1", padding: "26px" }}>
         <div style={{ fontSize: 14, color: t.textMutedMore, marginBottom: 8 }}>{dateStr}</div>
         <div style={{ fontSize: 34, lineHeight: 1.1, color: t.text, fontWeight: 800, marginBottom: 8 }}>
-          Good to see you{user?.user?.name ? `, ${user.user.name}` : ""}.
+          Good to see you{user?.name ? `, ${user.name}` : ""}.
         </div>
         <div style={{ fontSize: 15, color: t.textMuted, maxWidth: 560 }}>
           Choose a goal, check your schedule, or start a focus session. Everything important for today is right here.

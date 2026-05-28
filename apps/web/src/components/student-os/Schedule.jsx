@@ -1,9 +1,12 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { DAY_LABELS } from "./data.js";
 import { Icon } from "./icons.jsx";
 import { getStyles, Modal } from "./ui.jsx";
+import { deleteScheduleEvents, saveScheduleEvents, scheduleQueryKey } from "../../fetchs/scheduleFetchs";
 
 const PERIODS = ["AM", "PM"];
+const DEFAULT_TAGS = ["study block", "task", "hobby"];
 const TIME_SUGGESTIONS = Array.from({ length: 24 * 12 }, (_, index) => {
   const hour = Math.floor(index / 12) % 12 || 12;
   const minute = (index % 12) * 5;
@@ -95,10 +98,11 @@ function TimeField({ id, label, value, period, onChange, onPeriodChange, onEnter
   );
 }
 
-export default function Schedule({ schedule, setSchedule, t }) {
+export default function Schedule({ schedule, setSchedule, subjects, setSubjects, isLoading, isError, t }) {
   const s = getStyles(t);
+  const queryClient = useQueryClient();
   const [modal, setModal] = useState(false);
-  const emptyForm = { day: "monday", title: "", start_time: "", start_period: "AM", end_time: "", end_period: "AM", id: null, originalDay: null };
+  const emptyForm = { day: "monday", title: "", description: "", tag: "study block", customTag: "", studyPlanId: "", start_time: "", start_period: "AM", end_time: "", end_period: "AM", id: null, originalDay: null };
   const [form, setForm] = useState(emptyForm);
   const [hasChanges, setHasChanges] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -131,33 +135,31 @@ export default function Schedule({ schedule, setSchedule, t }) {
     return [start, end].filter(Boolean).join(" - ");
   }
 
-  function formatScheduleEvents() {
-    return Object.entries(schedule).flatMap(([day, events]) =>
-      (events || []).map((event) => {
-        const { start_time, start_period, end_time, end_period } = getEventTimes(event);
-
-        return {
-          id: event.id,
-          day_of_week: day,
-          title: event.title,
-          start_time,
-          start_period,
-          end_time,
-          end_period,
-        };
-      })
-    );
-  }
-
-  function toScheduleItem({ id, day, title, start, end }) {
+  function toScheduleItem({ id, day, title, description, tag, studyPlanId, start, end }) {
     return {
       id,
       day_of_week: day,
       title: title.toLowerCase(),
+      description: description.trim() || null,
+      tag,
+      studyPlanId,
       start_time: start.time,
       start_period: start.period,
       end_time: end.time,
       end_period: end.period,
+    };
+  }
+
+  function toPersistedItem(item) {
+    return {
+      id: item.id,
+      day_of_week: item.day_of_week,
+      title: item.title,
+      description: item.description,
+      start_time: item.start_time,
+      start_period: item.start_period,
+      end_time: item.end_time,
+      end_period: item.end_period,
     };
   }
 
@@ -166,10 +168,26 @@ export default function Schedule({ schedule, setSchedule, t }) {
     setModal(true);
   }
 
+  function openStudyBlockModal() {
+    setForm({ ...emptyForm, tag: "study block", title: "study block" });
+    setModal(true);
+  }
+
   function openEditModal(day, event) {
     const { start_time, start_period, end_time, end_period } = getEventTimes(event);
-    setForm({ day, title: event.title, start_time, start_period, end_time, end_period, id: event.id, originalDay: day });
+    const tag = event.tag || "";
+    setForm({ day, title: event.title, description: event.description || "", tag: DEFAULT_TAGS.includes(tag) ? tag : "custom", customTag: DEFAULT_TAGS.includes(tag) ? "" : tag, studyPlanId: event.studyPlanId || "", start_time, start_period, end_time, end_period, id: event.id, originalDay: day });
     setModal(true);
+  }
+
+  function syncLinkedSubject(blockId, studyPlanId) {
+    setSubjects((items) =>
+      items.map((item) => {
+        if (item.id === studyPlanId) return { ...item, scheduleBlockId: blockId };
+        if (item.scheduleBlockId === blockId) return { ...item, scheduleBlockId: "" };
+        return item;
+      })
+    );
   }
 
   function markChanged() {
@@ -182,7 +200,9 @@ export default function Schedule({ schedule, setSchedule, t }) {
     const end = normalizeTimeInput(form.end_time, form.end_period);
 
     if (!form.title || !start.time || !end.time) return;
-    const newItem = toScheduleItem({ id: crypto.randomUUID(), day: form.day, title: form.title, start, end });
+    const tag = form.tag === "custom" ? form.customTag.trim().toLowerCase() : form.tag;
+    const studyPlanId = tag === "study block" ? Number(form.studyPlanId) || "" : "";
+    const newItem = toScheduleItem({ id: crypto.randomUUID(), day: form.day, title: form.title, description: form.description, tag, studyPlanId, start, end });
 
     setSchedule((sch) => ({
       ...sch,
@@ -191,20 +211,23 @@ export default function Schedule({ schedule, setSchedule, t }) {
         {
           id: newItem.id,
           title: newItem.title,
+          description: newItem.description,
           start_time: newItem.start_time,
           start_period: newItem.start_period,
           end_time: newItem.end_time,
           end_period: newItem.end_period,
+          tag: newItem.tag,
+          studyPlanId: newItem.studyPlanId,
         },
       ],
     }));
+    if (studyPlanId) syncLinkedSubject(newItem.id, studyPlanId);
     markChanged();
     setModal(false);
     setForm(emptyForm);
-    // craete.push(thisEvent)
     setPendingChanges(prev => ({
       ...prev,
-      createOrUpdate: [...prev.createOrUpdate, newItem]
+      createOrUpdate: [...prev.createOrUpdate, toPersistedItem(newItem)]
     }))
   }
 
@@ -213,7 +236,9 @@ export default function Schedule({ schedule, setSchedule, t }) {
     const end = normalizeTimeInput(form.end_time, form.end_period);
 
     if (!form.title || !start.time || !end.time) return;
-    const updatedItem = toScheduleItem({ id: form.id, day: form.day, title: form.title, start, end });
+    const tag = form.tag === "custom" ? form.customTag.trim().toLowerCase() : form.tag;
+    const studyPlanId = tag === "study block" ? Number(form.studyPlanId) || "" : "";
+    const updatedItem = toScheduleItem({ id: form.id, day: form.day, title: form.title, description: form.description, tag, studyPlanId, start, end });
 
     setSchedule((sch) => {
       const next = { ...sch };
@@ -223,43 +248,39 @@ export default function Schedule({ schedule, setSchedule, t }) {
         {
           id: updatedItem.id,
           title: updatedItem.title,
+          description: updatedItem.description,
           start_time: updatedItem.start_time,
           start_period: updatedItem.start_period,
           end_time: updatedItem.end_time,
           end_period: updatedItem.end_period,
+          tag: updatedItem.tag,
+          studyPlanId: updatedItem.studyPlanId,
         },
       ];
       return next;
     });
+    syncLinkedSubject(updatedItem.id, studyPlanId);
     markChanged();
     setModal(false);
     setForm(emptyForm);
 
-    // update.push(thisEvent)
     setPendingChanges(prev => ({
       ...prev,
-      createOrUpdate: [...prev.createOrUpdate.filter((item) => item.id !== updatedItem.id), updatedItem]
+      createOrUpdate: [...prev.createOrUpdate.filter((item) => item.id !== updatedItem.id), toPersistedItem(updatedItem)]
     }))
   }
 
   function remove(day, eventId) {
     const eventToRemove = schedule[day]?.find((event) => event.id === eventId);
-    const { start_time, start_period, end_time, end_period } = eventToRemove ? getEventTimes(eventToRemove) : {};
     const removedItem = eventToRemove
       ? {
           id: eventToRemove.id,
-          /*day_of_week: day,
-          title: eventToRemove.title,
-          start_time,
-          start_period,
-          end_time,
-          end_period,*/
         }
       : { id: eventId, day_of_week: day };
 
     setSchedule((sch) => ({ ...sch, [day]: sch[day].filter((event) => event.id !== eventId) }));
+    setSubjects((items) => items.map((item) => (item.scheduleBlockId === eventId ? { ...item, scheduleBlockId: "" } : item)));
     markChanged();
-    // delete.push(thisEvent)
     setPendingChanges(prev => ({
       ...prev,
       createOrUpdate: prev.createOrUpdate.filter((item) => item.id !== eventId),
@@ -271,51 +292,26 @@ export default function Schedule({ schedule, setSchedule, t }) {
     setSaving(true);
     setSaveMessage("");
 
-    const events = formatScheduleEvents();
-
-    //console.log(JSON.stringify({ events }))
-    //console.log(schedule)
-
-    if (pendingChanges.createOrUpdate.length > 0) {
-      try {
-        const response = await fetch("/schedule", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ events: pendingChanges.createOrUpdate }),
-        });
-  
-        if (!response.ok) throw new Error("Schedule save failed");
-  
-        setHasChanges(false);
-        setSaveMessage("Saved.");
-      } catch {
-        setSaveMessage("Could not save. Try again.");
-      } finally {
-        //setSchedule('')
-        setSaving(false);
+    try {
+      if (pendingChanges.createOrUpdate.length > 0) {
+        await saveScheduleEvents(pendingChanges.createOrUpdate);
       }
-    } 
-    
-    if (pendingChanges.delete.length > 0) {
-      try {
-        const response = await fetch("/schedule/delete", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ events: pendingChanges.delete }),
-        });
-  
-        if (!response.ok) throw new Error("Schedule save failed");
-  
-        setHasChanges(false);
-        setSaveMessage("Saved.");
-      } catch {
-        setSaveMessage("Could not save. Try again.");
-      } finally {
-        //setSchedule('')
-        setSaving(false);
+
+      if (pendingChanges.delete.length > 0) {
+        await deleteScheduleEvents(pendingChanges.delete);
       }
-    } 
+
+      setPendingChanges({ createOrUpdate: [], delete: [] });
+      setHasChanges(false);
+      setSaveMessage("Saved.");
+      queryClient.invalidateQueries({ queryKey: scheduleQueryKey });
+    } catch {
+      setSaveMessage("Could not save. Try again.");
+    } finally {
+      setSaving(false);
     }
+  }
+
     return (
       <div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
@@ -323,6 +319,7 @@ export default function Schedule({ schedule, setSchedule, t }) {
             <h1 style={{ fontSize: 28, lineHeight: 1.1, fontWeight: 750, color: t.text, margin: 0 }}>Schedule</h1>
             <div style={{ fontSize: 14, color: t.textMutedMore, marginTop: 6 }}>Add classes, deadlines, and study blocks for each day.</div>
             {saveMessage && <div style={{ fontSize: 12, color: saveMessage === "Saved." ? t.accent : t.textMutedMore, marginTop: 8 }}>{saveMessage}</div>}
+            {isError && <div style={{ fontSize: 12, color: t.textMutedMore, marginTop: 8 }}>Could not load your saved schedule.</div>}
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
             <button
@@ -332,9 +329,11 @@ export default function Schedule({ schedule, setSchedule, t }) {
             >
               {saving ? "Saving..." : "Save"}
             </button>
+            <button onClick={openStudyBlockModal} style={s.ghost}>Add study block</button>
             <button onClick={openAddModal} style={s.btn}>Add event</button>
           </div>
         </div>
+        {isLoading && <div style={{ fontSize: 13, color: t.textMutedMore, marginBottom: 12 }}>Loading schedule...</div>}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
           {DAY_LABELS.map((day) => (
             <div key={day} style={s.card}>
@@ -344,7 +343,31 @@ export default function Schedule({ schedule, setSchedule, t }) {
               ) : schedule[day].map((ev) => (
                 <div key={ev.id} style={{ background: t.hover, border: `1px solid ${t.borderAlt}`, borderLeft: `4px solid ${t.accent}`, borderRadius: 8, padding: "12px 14px", marginBottom: 8, position: "relative" }}>
                   <button onClick={() => remove(day, ev.id)} style={{ position: "absolute", top: 6, right: 6, background: "none", border: "none", cursor: "pointer", color: t.textMutedMore, padding: 2 }}><Icon.x /></button>
-                  <div style={{ fontSize: 14, color: t.text, fontWeight: 650 }}>{ev.title}</div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, paddingRight: 16, flexWrap: "wrap" }}>
+                    <div style={{ fontSize: 14, color: t.text, fontWeight: 650 }}>{ev.title}</div>
+                    <span style={{ border: `1px solid ${t.borderLight}`, background: ev.tag === "study block" ? t.accent : t.select, color: ev.tag === "study block" ? "#fff" : t.textMuted, borderRadius: 999, padding: "2px 7px", fontSize: 10, fontWeight: 750 }}>
+                      {ev.tag || "event"}
+                    </span>
+                  </div>
+                  {ev.description && (
+                    <div
+                      title={ev.description}
+                      style={{
+                        fontSize: 12,
+                        color: t.textMutedMore,
+                        marginTop: 6,
+                        paddingRight: 12,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {ev.description}
+                    </div>
+                  )}
+                  {ev.studyPlanId && (
+                    <div style={{ fontSize: 12, color: t.accent, marginTop: 6, display: "flex", alignItems: "center", gap: 5 }}><Icon.book /> {subjects.find((subject) => subject.id === ev.studyPlanId)?.name || "linked study plan"}</div>
+                  )}
                   <div style={{ fontSize: 12, color: t.textMutedMore, marginTop: 6, display: "flex", alignItems: "center", gap: 5 }}><Icon.clock /> {formatEventTime(ev)}</div>
                   <button onClick={() => openEditModal(day, ev)} style={{ ...s.ghost, padding: "6px 9px", fontSize: 11, marginTop: 10 }}>Edit</button>
                 </div>
@@ -360,6 +383,34 @@ export default function Schedule({ schedule, setSchedule, t }) {
             </select>
             <label style={s.label}>Title</label>
             <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && (form.id ? update() : add())} placeholder="event name" style={s.input} autoFocus />
+            <label style={s.label}>Description</label>
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+              placeholder="optional notes"
+              rows={3}
+              style={{ ...s.input, minHeight: 82, resize: "vertical", lineHeight: 1.4 }}
+            />
+            <label style={s.label}>Tag</label>
+            <select value={form.tag} onChange={(e) => setForm((f) => ({ ...f, tag: e.target.value, studyPlanId: e.target.value === "study block" ? f.studyPlanId : "" }))} style={s.input}>
+              {DEFAULT_TAGS.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
+              <option value="custom">custom tag</option>
+            </select>
+            {form.tag === "custom" && (
+              <>
+                <label style={s.label}>Custom tag</label>
+                <input value={form.customTag} onChange={(e) => setForm((f) => ({ ...f, customTag: e.target.value }))} placeholder="e.g. lab, exam prep" style={s.input} />
+              </>
+            )}
+            {form.tag === "study block" && (
+              <>
+                <label style={s.label}>Study plan</label>
+                <select value={form.studyPlanId} onChange={(e) => setForm((f) => ({ ...f, studyPlanId: e.target.value }))} style={s.input}>
+                  <option value="">No linked study plan</option>
+                  {subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}
+                </select>
+              </>
+            )}
             <TimeField
               id="start-time"
               label="Start time"

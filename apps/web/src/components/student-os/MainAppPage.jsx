@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Dashboard from "./Dashboard.jsx";
 import Documents from "./Documents.jsx";
 import FocusTime from "./FocusTime.jsx";
@@ -8,11 +9,13 @@ import Sidebar from "./Sidebar.jsx";
 import StudyPlans from "./StudyPlans.jsx";
 import { Icon } from "./icons.jsx";
 import { getNextTheme, getStoredTheme, initDocs, initHabits, initSchedule, initSubjects, initTasks, isDarkTheme, NAV_ITEMS, saveStoredTheme, themes } from "./data.js";
+import { scheduleQueryOptions } from "../../fetchs/scheduleFetchs";
 
-export default function StudentOS() {
+export default function StudentOS({ user, onLogout }) {
   const [active, setActive] = useState("dashboard");
   const [tasks, setTasks] = useState(initTasks);
   const [schedule, setSchedule] = useState(initSchedule);
+  const [hasLoadedSchedule, setHasLoadedSchedule] = useState(false);
   const [subjects, setSubjects] = useState(initSubjects);
   const [habits, setHabits] = useState(initHabits);
   const [docs, setDocs] = useState(initDocs);
@@ -20,6 +23,7 @@ export default function StudentOS() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const t = themes[theme];
   const isDoc = active === "documents";
+  const scheduleQuery = useQuery(scheduleQueryOptions(user?.id));
 
   useEffect(() => {
     function onKey(e) {
@@ -40,12 +44,19 @@ export default function StudentOS() {
     saveStoredTheme(theme);
   }, [t, theme]);
 
+  useEffect(() => {
+    if (hasLoadedSchedule || !scheduleQuery.data) return;
+
+    setSchedule(scheduleQuery.data);
+    setHasLoadedSchedule(true);
+  }, [hasLoadedSchedule, scheduleQuery.data]);
+
   const currentPage = NAV_ITEMS.find((n) => n.id === active);
 
   return (
     <>
       <div style={{ display: "flex", minHeight: "100vh", background: t.bg, fontFamily: "'Inter', 'SF Pro Text', 'Segoe UI', system-ui, sans-serif", color: t.text }}>
-        <Sidebar active={active} setActive={setActive} t={t} collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
+        <Sidebar active={active} setActive={setActive} t={t} collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} onLogout={onLogout} />
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
           <div style={{ minHeight: 72, borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexShrink: 0, background: t.bgAlt, padding: "0 28px" }}>
@@ -81,10 +92,20 @@ export default function StudentOS() {
 
           <div style={{ flex: 1, overflow: isDoc ? "hidden" : "auto", padding: isDoc ? 0 : "28px", background: t.bg }}>
             {active === "dashboard" && <Dashboard tasks={tasks} setTasks={setTasks} habits={habits} t={t} />}
-            {active === "schedule" && <Schedule schedule={schedule} setSchedule={setSchedule} t={t} />}
-            {active === "studyplans" && <StudyPlans subjects={subjects} setSubjects={setSubjects} t={t} />}
+            {active === "schedule" && (
+              <Schedule
+                schedule={schedule}
+                setSchedule={setSchedule}
+                subjects={subjects}
+                setSubjects={setSubjects}
+                isLoading={scheduleQuery.isLoading && !hasLoadedSchedule}
+                isError={scheduleQuery.isError}
+                t={t}
+              />
+            )}
+            {active === "studyplans" && <StudyPlans subjects={subjects} setSubjects={setSubjects} schedule={schedule} setSchedule={setSchedule} t={t} />}
             {active === "habits" && <Habits habits={habits} setHabits={setHabits} t={t} />}
-            {active === "focustime" && <FocusTime tasks={tasks} setTasks={setTasks} t={t} />}
+            {active === "focustime" && <FocusTime tasks={tasks} setTasks={setTasks} subjects={subjects} schedule={schedule} t={t} />}
             {active === "documents" && <Documents docs={docs} setDocs={setDocs} t={t} />}
           </div>
         </div>

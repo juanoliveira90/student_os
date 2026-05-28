@@ -1,6 +1,6 @@
 import { 
     pgTable, pgEnum, 
-    integer, varchar, text, time, timestamp, uuid, bigserial, bigint,
+    integer, varchar, text, time, timestamp, uuid, bigserial, bigint, boolean,
     index, unique 
 } from "drizzle-orm/pg-core"
 
@@ -48,8 +48,10 @@ export const ScheduleItems = pgTable("schedule_items", {
     }),
     day_of_week: /*dayOfWeekEnum()*/varchar({ length: 10 }).notNull(),
     title: text().notNull(),
+    description: text(),
     start_time: time().notNull(),
     start_period: varchar({ length: 2 }).notNull(),
     end_time: time().notNull(),
-    end_period: varchar({ length: 2 }).notNull()
+    end_period: varchar({ length: 2 }).notNull(),
+    //is_recurring: boolean().notNull()
 })
