@@ -1,7 +1,11 @@
-import { 
-    pgTable, pgEnum, 
-    integer, varchar, text, time, timestamp, uuid, bigserial, bigint, boolean,
-    index, unique 
+import {
+    bigint,
+    bigserial,
+    pgTable,
+    text, time, timestamp,
+    unique,
+    uuid,
+    varchar
 } from "drizzle-orm/pg-core"
 
 export const Users = pgTable("users", {
@@ -54,4 +58,40 @@ export const ScheduleItems = pgTable("schedule_items", {
     end_time: time().notNull(),
     end_period: varchar({ length: 2 }).notNull(),
     //is_recurring: boolean().notNull()
+})
+
+/* 
+study plan tem: 
+    id,
+    name
+    schedule block (opcional),
+
+study plan subtasks tem:
+    id,
+    study plan id,
+    name,
+    description
+ */
+
+
+export const StudyPlans = pgTable("study_plans", {
+    id: bigserial({ mode: "number" }).primaryKey(),
+    user_id: bigint({ mode: "number" }).references(() => Users.id),
+})
+
+export const Subjects = pgTable("subjects", {
+    id: uuid().primaryKey(),
+    name: varchar({ length: 50 }).notNull(),
+    schedule_block_id: uuid("schedule_block").references(() => ScheduleItems.id),
+    created_at: timestamp({ precision: 0, withTimezone: true }).defaultNow(),
+    updated_at: timestamp({ precision: 0, withTimezone: true }).defaultNow()    
+})
+
+export const SubjectSubtasks = pgTable("subjects_subtasks", {
+    id: uuid().primaryKey(),
+    subject_id: uuid().references(() => Subjects.id),
+    name: varchar({ length: 50 }).notNull(),
+    description: text(),
+    created_at: timestamp({ precision: 0, withTimezone: true }).defaultNow(),
+    updated_at: timestamp({ precision: 0, withTimezone: true }).defaultNow()
 })

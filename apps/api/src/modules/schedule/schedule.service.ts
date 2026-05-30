@@ -1,7 +1,7 @@
 "use server"
 
 import { ScheduleQueries } from "./schedule.queries.ts"
-import type { remove, add } from "./schedule.types.ts"
+import type { add, remove } from "./schedule.types.ts"
 
 export const ScheduleService = {
     async getSchedule(userId: number) {
@@ -20,7 +20,7 @@ export const ScheduleService = {
         }
     },
 
-    async updateSchedule(userId: number, data: add) {        
+    async updateSchedule(userId: number, data: add) {
         try {
             const schedule = await ScheduleQueries.createScheduleReturningId(userId)
             await ScheduleQueries.createOrUpdateEvent(data, schedule[0]!.id)

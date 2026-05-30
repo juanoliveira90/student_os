@@ -7,6 +7,7 @@ export default defineConfig({
     proxy: {
       "/auth": "http://localhost:3001",
       "/schedule": "http://localhost:3001",
+      "/plan": "http://localhost:3001"
     },
   },
 });

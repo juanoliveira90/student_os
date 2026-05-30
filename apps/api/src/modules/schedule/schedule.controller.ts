@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify"
-import { InsertSchema, DeleteSchema } from "./schedule.schema.ts"
+import { DeleteSchema, InsertSchema } from "./schedule.schema.ts"
 import { ScheduleService } from "./schedule.service.ts"
 
 export async function ScheduleController(app: FastifyInstance) {
@@ -17,7 +17,7 @@ export async function ScheduleController(app: FastifyInstance) {
         if (query.error) {
             return reply.code(500).send(query.error)
         }
-        
+
         return reply.code(201).send(query.message)
     })
 

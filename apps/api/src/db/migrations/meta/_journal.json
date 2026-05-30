@@ -57,6 +57,27 @@
       "when": 1779887232936,
       "tag": "0007_nasty_exiles",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1779968248888,
+      "tag": "0008_silent_vivisector",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1780142345658,
+      "tag": "0009_married_phalanx",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1780142568621,
+      "tag": "0010_fix_subject_subtasks_subject_id_uuid",
+      "breakpoints": true
     }
   ]
 }

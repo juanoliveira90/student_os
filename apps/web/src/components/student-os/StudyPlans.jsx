@@ -2,6 +2,7 @@ import { useState } from "react";
 import { DAY_LABELS } from "./data.js";
 import { Icon } from "./icons.jsx";
 import { getStyles, Modal, PageHdr } from "./ui.jsx";
+import { postPlanSubject } from "../../fetchs/studyPlanFetchs";
 
 function getStudyBlocks(schedule) {
   return DAY_LABELS.flatMap((day) =>
@@ -16,6 +17,7 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState({ name: "", scheduleBlockId: "", subtasks: [{ id: 1, name: "", description: "" }] });
   const [drafts, setDrafts] = useState({});
+  const [isAdding, setIsAdding] = useState(false);
   const studyBlocks = getStudyBlocks(schedule);
 
   function linkBlockToSubject(subjectId, blockId) {
@@ -34,18 +36,28 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     );
   }
 
-  function add() {
-    if (!form.name.trim()) return;
-    const id = Date.now();
+  async function add() {
+    if (!form.name.trim() || isAdding) return;
+    const id = crypto.randomUUID();
     const subtasks = form.subtasks
       .map((subtask) => ({ name: subtask.name.trim(), description: subtask.description.trim() }))
       .filter((subtask) => subtask.name)
-      .map((subtask, index) => ({ id: id + index + 1, text: subtask.name.toLowerCase(), description: subtask.description || "", done: false }));
+      .map((subtask) => ({ id: crypto.randomUUID(), text: subtask.name.toLowerCase(), description: subtask.description || "", done: false }));
 
-    setSubjects((items) => [...items, { id, name: form.name.trim().toLowerCase(), progress: 0, importance: 3, scheduleBlockId: form.scheduleBlockId, subtasks }]);
-    if (form.scheduleBlockId) linkBlockToSubject(id, form.scheduleBlockId);
-    setModal(false);
-    setForm({ name: "", scheduleBlockId: "", subtasks: [{ id: 1, name: "", description: "" }] });
+    const subject = { id, name: form.name.trim().toLowerCase(), progress: 0, importance: 3, scheduleBlockId: form.scheduleBlockId, subtasks };
+    setIsAdding(true);
+
+    try {
+      await postPlanSubject(subject);
+      setSubjects((items) => [...items, subject]);
+      if (form.scheduleBlockId) linkBlockToSubject(id, form.scheduleBlockId);
+      setModal(false);
+      setForm({ name: "", scheduleBlockId: "", subtasks: [{ id: 1, name: "", description: "" }] });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsAdding(false);
+    }
   }
 
   function addSubtask(subjectId, text) {
@@ -192,7 +204,7 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
             ))}
           </div>
           <button onClick={addFormSubtask} style={{ ...s.ghost, width: "100%", marginBottom: 12 }}>Add another subtask</button>
-          <button onClick={add} style={s.btn}>Add subject</button>
+          <button onClick={add} disabled={isAdding} style={{ ...s.btn, opacity: isAdding ? 0.65 : 1 }}>{isAdding ? "Adding..." : "Add subject"}</button>
         </Modal>
       )}
     </div>
