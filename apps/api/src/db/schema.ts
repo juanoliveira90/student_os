@@ -76,14 +76,18 @@ export const Subjects = pgTable("subjects", {
     }),
     name: varchar({ length: 50 }).notNull(),
     tag: text(),
-    schedule_block_id: uuid("schedule_block").references(() => ScheduleItems.id),
+    schedule_block_id: uuid("schedule_block").references(() => ScheduleItems.id, {
+        onDelete: 'cascade'
+    }),
     created_at: timestamp({ precision: 0, withTimezone: true }).defaultNow(),
     updated_at: timestamp({ precision: 0, withTimezone: true }).defaultNow()    
 })
 
 export const SubjectSubtasks = pgTable("subjects_subtasks", {
     id: uuid().primaryKey(),
-    subject_id: uuid().references(() => Subjects.id),
+    subject_id: uuid().references(() => Subjects.id, {
+        onDelete: 'cascade'
+    }),
     name: varchar({ length: 50 }).notNull(),
     description: text(),
     created_at: timestamp({ precision: 0, withTimezone: true }).defaultNow(),

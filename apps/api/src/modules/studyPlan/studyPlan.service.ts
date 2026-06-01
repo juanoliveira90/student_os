@@ -34,6 +34,16 @@ export const StudyPlanService = {
         }
     },
 
+    async deleteSubject(userId: number, subjectId: string) {
+        try {
+            await StudyPlanQueries.deleteSubject(userId, subjectId)
+            return { message: "subject deleted!" }
+        } catch (error) {
+            console.error(error)
+            return { error: "could not delete subject." }
+        }
+    },
+
     async addSubtask(userId: number, data: createSubtask) {
         try {
             await StudyPlanQueries.createSubtasks(userId, data)

@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify"
 //import { DeleteSchema, InsertSchema } from "./studyPlan.schema.ts"
 import { StudyPlanService } from "./studyPlan.service.ts"
-import { deleteSubtaskSchema, subjectInsertSchema, subjectUpdateSchema, subtaskInsertSchema, subtaskUpdateSchema } from "./studyPlan.schema.ts"
+import { deleteSubjectSchema, deleteSubtaskSchema, subjectInsertSchema, subjectUpdateSchema, subtaskInsertSchema, subtaskUpdateSchema } from "./studyPlan.schema.ts"
 
 export async function StudyPlanController(app: FastifyInstance) {
     app.get('/', async (request, reply) => {
@@ -34,6 +34,16 @@ export async function StudyPlanController(app: FastifyInstance) {
     app.delete('/subtask', { schema: deleteSubtaskSchema }, async (request, reply) => {
         const { id } = request.body as { id: string }
         const query = await StudyPlanService.deleteSubtask(parseInt(request.user.sub), id)
+        if (query.error) {
+            return reply.code(500).send(query.error)
+        }
+
+        return reply.code(200).send(query)
+    })
+
+    app.delete('/subject', { schema: deleteSubjectSchema }, async (request, reply) => {
+        const { id } = request.body as { id: string }
+        const query = await StudyPlanService.deleteSubject(parseInt(request.user.sub), id)
         if (query.error) {
             return reply.code(500).send(query.error)
         }

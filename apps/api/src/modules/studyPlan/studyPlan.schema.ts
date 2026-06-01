@@ -34,6 +34,16 @@ export const deleteSubtaskSchema = {
   }
 }
 
+export const deleteSubjectSchema = {
+  body: {
+    type: 'object',
+    required: ['id'],
+    properties: {
+      id: { type: 'string' }
+    }
+  }
+}
+
 export const subjectUpdateSchema = {
   body: {
     type: 'object',
