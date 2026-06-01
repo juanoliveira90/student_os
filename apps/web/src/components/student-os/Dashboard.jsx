@@ -1,107 +1,171 @@
-import { DAYS, productivityData } from "./data.js";
+import { DAY_LABELS } from "./data.js";
 import { Icon } from "./icons.jsx";
-import { getStyles, MiniStat, SecHdr } from "./ui.jsx";
-import { useEffect, useState } from "react";
-import { getAuthenticatedUser } from "../../fetchs/authFetchs";
+import { getStyles, SecHdr } from "./ui.jsx";
 
-export default function Dashboard({ tasks, setTasks, habits, t }) {
+function titleCase(value) {
+  return String(value || "")
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function getEventTime(event) {
+  if (event.start_time) return event.start_time;
+  return String(event.time || "").split("-")[0]?.trim() || "09:00";
+}
+
+function formatTime(time, period) {
+  const raw = String(time || "");
+  const match = raw.match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return raw;
+
+  if (period) {
+    const hour = Number(match[1]);
+    const isPm = String(period).toUpperCase() === "PM";
+    const hour24 = isPm && hour !== 12 ? hour + 12 : !isPm && hour === 12 ? 0 : hour;
+    return `${String(hour24).padStart(2, "0")}:${match[2]}`;
+  }
+
+  return `${match[1].padStart(2, "0")}:${match[2]}`;
+}
+
+function getSubjectStats(subject) {
+  const subtasks = subject.subtasks || [];
+  const total = subtasks.length || 1;
+  const done = subtasks.filter((task) => task.done).length;
+  const progress = Math.max(0, Math.min(100, Math.round((done / total) * 100)));
+
+  return { done, total, progress };
+}
+
+export default function Dashboard({ user, tasks, schedule, subjects, setActive, t }) {
   const s = getStyles(t);
-  const now = new Date();
-  const dateStr = now.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }).toLowerCase();
-  const timeStr = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
-  const maxH = Math.max(...productivityData);
-  const doneh = habits.filter((h) => h.done).length;
-  const doneTasks = tasks.filter((task) => task.done).length;
-  const habitChecks = habits.flatMap((habit) => habit.week);
-  const habitConsistency = habitChecks.length ? Math.round((habitChecks.filter(Boolean).length / habitChecks.length) * 100) : 0;
-  const taskCompletion = tasks.length ? Math.round((doneTasks / tasks.length) * 100) : 0;
-  const todayHabitCompletion = habits.length ? Math.round((doneh / habits.length) * 100) : 0;
-  const score = Math.round((habitConsistency * 0.6) + (taskCompletion * 0.25) + (todayHabitCompletion * 0.15));
+  const profile = user?.user ?? user ?? {};
+  const displayName = profile.name || profile.email?.split("@")[0] || "Juan";
+  const today = DAY_LABELS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
+  const todaySchedule = (schedule?.[today] || []).slice(0, 3);
+  const scheduleItems = todaySchedule;
+  const subjectItems = (subjects || []).slice(0, 3);
+  const pendingTasks = subjectItems.reduce((sum, subject) => sum + (subject.subtasks || []).filter((task) => !task.done).length, 0);
+  const continueSubject = subjectItems.find((subject) => (subject.subtasks || []).some((task) => !task.done)) || subjectItems[0];
+  const continuePending = continueSubject ? (continueSubject.subtasks || []).filter((task) => !task.done).length : tasks.filter((task) => !task.done).length;
 
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    getAuthenticatedUser()
-      .then(setUser)
-      .catch(() => setUser(null));
-  }, []);
+  const card = { ...s.card, boxShadow: "0 14px 42px rgba(102, 78, 50, 0.06)" };
+  const pillButton = { ...s.ghost, borderRadius: 999, padding: "7px 14px", background: t.hover };
+  const actionButton = {
+    ...s.ghost,
+    minHeight: 54,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    fontSize: 14,
+    color: t.text,
+    background: t.bgAlt,
+  };
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 18 }}>
-      <div style={{ ...s.card, gridColumn: "1 / -1", padding: "26px" }}>
-        <div style={{ fontSize: 14, color: t.textMutedMore, marginBottom: 8 }}>{dateStr}</div>
-        <div style={{ fontSize: 34, lineHeight: 1.1, color: t.text, fontWeight: 800, marginBottom: 8 }}>
-          Good to see you{user?.name ? `, ${user.name}` : ""}.
+    <div style={{ display: "grid", gap: 16 }}>
+      <section style={{ ...card, minHeight: 130, padding: "28px 30px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24 }}>
+        <div>
+          <h2 style={{ margin: 0, color: t.text, fontSize: 25, lineHeight: 1.15, fontWeight: 800 }}>Good to see you, {titleCase(displayName)}.</h2>
+          <p style={{ margin: "10px 0 0", color: t.textMuted, fontSize: 15 }}>Here's what's happening with your studies today.</p>
         </div>
-        <div style={{ fontSize: 15, color: t.textMuted, maxWidth: 560 }}>
-          Choose a goal, check your schedule, or start a focus session. Everything important for today is right here.
-        </div>
+      </section>
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
+        <section style={card}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 16 }}>
+            <SecHdr icon={<Icon.cal />} label="Today's Schedule" t={t} />
+            <button type="button" onClick={() => setActive("schedule")} style={pillButton}>View full schedule</button>
+          </div>
+
+          <div style={{ border: `1px solid ${t.border}`, borderRadius: 8, overflow: "hidden", background: t.bgAlt }}>
+            {scheduleItems.length ? (
+              scheduleItems.map((event, index) => (
+                <div key={event.id || `${event.title}-${index}`} style={{ display: "grid", gridTemplateColumns: "72px 24px 1fr", minHeight: 58, borderTop: index ? `1px solid ${t.border}` : "none" }}>
+                  <div style={{ color: t.accent, fontSize: 13, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{formatTime(getEventTime(event), event.start_period)}</div>
+                  <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <span style={{ position: "absolute", top: index === 0 ? "50%" : 0, bottom: index === scheduleItems.length - 1 ? "50%" : 0, width: 1, background: t.borderLight }} />
+                    <span style={{ width: 9, height: 9, borderRadius: "50%", background: index === 0 ? t.accent : t.accentLight, position: "relative" }} />
+                  </div>
+                  <div style={{ padding: "12px 14px" }}>
+                    <div style={{ color: t.text, fontSize: 14, fontWeight: 750 }}>{titleCase(event.title)}</div>
+                    <div style={{ color: t.textMutedMore, fontSize: 13, marginTop: 3 }}>{titleCase(event.description || event.tag || "Study block")}</div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <EmptyState t={t} label="No schedule blocks today" />
+            )}
+          </div>
+          <div style={{ color: t.text, fontSize: 13, marginTop: 16 }}>{scheduleItems.length} study blocks today</div>
+        </section>
+
+        <section style={card}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 16 }}>
+            <SecHdr icon={<Icon.book />} label="Study Plan Progress" t={t} />
+            <button type="button" onClick={() => setActive("studyplans")} style={pillButton}>View all</button>
+          </div>
+
+          <div style={{ border: `1px solid ${t.border}`, borderRadius: 8, overflow: "hidden", background: t.bgAlt }}>
+            {subjectItems.length ? (
+              subjectItems.map((subject, index) => {
+                const stats = getSubjectStats(subject);
+                return (
+                  <div key={subject.id || subject.name} style={{ display: "grid", gridTemplateColumns: "1fr minmax(120px, 44%)", gap: 16, alignItems: "center", padding: "12px 16px", borderTop: index ? `1px solid ${t.border}` : "none" }}>
+                    <div>
+                      <div style={{ color: t.text, fontSize: 14, fontWeight: 750 }}>{titleCase(subject.name)}</div>
+                      <div style={{ color: t.textMutedMore, fontSize: 13, marginTop: 3 }}>{titleCase(subject.tag || "Study Plan")}</div>
+                    </div>
+                    <div>
+                      <div style={{ color: t.textMuted, fontSize: 12, textAlign: "right", marginBottom: 9 }}>{stats.done} / {stats.total} tasks</div>
+                      <div style={{ height: 7, background: t.hover, borderRadius: 999, overflow: "hidden" }}>
+                        <div style={{ width: `${stats.progress}%`, height: "100%", background: t.accent, borderRadius: 999 }} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <EmptyState t={t} label="No study plans yet" />
+            )}
+          </div>
+          <div style={{ color: t.text, fontSize: 13, marginTop: 16 }}>{pendingTasks} tasks pending</div>
+        </section>
       </div>
 
-      <div style={s.card}>
-        <SecHdr icon={<Icon.check />} label="Today's Goals" t={t} />
-        <div style={{ marginTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
-          {tasks.map((task) => (
-            <button
-              key={task.id}
-              onClick={() => setTasks((items) => items.map((x) => (x.id === task.id ? { ...x, done: !x.done } : x)))}
-              style={{ display: "flex", alignItems: "center", gap: 12, background: t.hover, border: `1px solid ${task.done ? t.border : t.borderAlt}`, cursor: "pointer", padding: "12px", borderRadius: 8, textAlign: "left", color: task.done ? t.textMutedMore : t.text, fontSize: 14, textDecoration: task.done ? "line-through" : "none", transition: "background 0.1s", fontFamily: "inherit" }}
-            >
-              <span style={{ width: 20, height: 20, borderRadius: "50%", border: `1px solid ${task.done ? t.accent : t.borderLight}`, background: task.done ? t.accent : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#fff" }}>
-                {task.done && <Icon.check />}
-              </span>
-              {task.text}
-            </button>
-          ))}
+      <section style={card}>
+        <SecHdr icon={<Icon.clock />} label="Continue Studying" t={t} />
+        <div style={{ marginTop: 14, padding: "20px", borderRadius: 8, background: `linear-gradient(90deg, ${t.hover}, ${t.bgAlt})`, display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 18, alignItems: "center" }}>
+          <div style={{ width: 50, height: 50, borderRadius: 8, background: `linear-gradient(135deg, ${t.accentLight}, ${t.accentDark})`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontFamily: "Georgia, serif" }}>fx</div>
+          <div>
+            <div style={{ color: t.text, fontSize: 18, fontWeight: 800 }}>{continueSubject ? `${titleCase(continueSubject.name)}${continueSubject.tag ? ` - ${titleCase(continueSubject.tag)}` : ""}` : "No active study plan"}</div>
+            <div style={{ color: t.text, fontSize: 13, marginTop: 4 }}>{continueSubject ? titleCase(continueSubject.subtasks?.find((task) => !task.done)?.text || "All tasks complete") : "Create a study plan to start tracking progress."}</div>
+            <div style={{ color: t.textMutedMore, fontSize: 12, marginTop: 5 }}>{continuePending} tasks pending</div>
+          </div>
+          <button type="button" onClick={() => setActive("studyplans")} style={{ ...s.btn, minWidth: 92, height: 40 }}>Continue</button>
         </div>
-      </div>
+      </section>
 
-      <div style={s.card}>
-        <SecHdr icon={<Icon.clock />} label="Current Time & Score" t={t} />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 14 }}>
-          <MiniStat label="Current time" value={timeStr} accent t={t} />
-          <MiniStat label="Your score" value={`${score}/100`} ok={score >= 70} t={t} />
-          <MiniStat label="Habit consistency" value={`${habitConsistency}%`} t={t} />
-          <MiniStat label="Today's habits" value={`${doneh}/${habits.length}`} t={t} />
+      <section style={card}>
+        <SecHdr icon={<Icon.zap />} label="Quick Actions" t={t} />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 14, marginTop: 16 }}>
+          <button type="button" onClick={() => setActive("schedule")} style={actionButton}><Icon.plus />Add Schedule Block</button>
+          <button type="button" onClick={() => setActive("studyplans")} style={actionButton}><Icon.plus />Add Subject / Plan</button>
+          <button type="button" onClick={() => setActive("documents")} style={actionButton}><Icon.plus />Create Note</button>
+          <button type="button" onClick={() => setActive("documents")} style={actionButton}><Icon.upload />Upload Document</button>
         </div>
-      </div>
+      </section>
+    </div>
+  );
+}
 
-      <div style={s.card}>
-        <SecHdr icon={<Icon.grid />} label="Quick Overview" t={t} />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 14 }}>
-          <MiniStat label="Habits done" value={`${doneh}/${habits.length}`} t={t} />
-          <MiniStat label="Focus" value="Ready" accent t={t} />
-          <MiniStat label="Goals done" value={`${doneTasks}/${tasks.length}`} t={t} />
-          <MiniStat label="Week streak" value="22d" ok t={t} />
-        </div>
-      </div>
-
-      <div style={s.card}>
-        <SecHdr icon={<Icon.trend />} label="Weekly Study Time" t={t} />
-        <div style={{ marginTop: 16, display: "flex", alignItems: "flex-end", gap: 6, height: 100 }}>
-          {productivityData.map((v, i) => (
-            <div key={DAYS[i]} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-              <div style={{ width: "100%", height: `${(v / maxH) * 88}px`, background: t.accent, opacity: 0.7 + (v / maxH) * 0.3, borderRadius: "2px 2px 0 0" }} />
-              <span style={{ fontSize: 10, color: t.textMutedMore }}>{DAYS[i]}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div style={s.card}>
-        <SecHdr icon={<Icon.target />} label="Habits" t={t} />
-        <div style={{ marginTop: 12, display: "flex", flexDirection: "column", gap: 8 }}>
-          {habits.map((habit) => (
-            <div key={habit.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: `1px solid ${t.border}` }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ width: 14, height: 14, borderRadius: "50%", border: `1px solid ${habit.done ? t.accent : t.borderLight}`, background: habit.done ? t.accent : "transparent", display: "inline-block" }} />
-                <span style={{ fontSize: 14, color: habit.done ? t.text : t.textMutedMore }}>{habit.name}</span>
-              </div>
-              <span style={{ fontSize: 11, color: t.accent }}>{habit.streak}d</span>
-            </div>
-          ))}
-        </div>
-      </div>
+function EmptyState({ t, label }) {
+  return (
+    <div style={{ minHeight: 174, display: "flex", alignItems: "center", justifyContent: "center", color: t.textMutedMore, fontSize: 13 }}>
+      {label}
     </div>
   );
 }

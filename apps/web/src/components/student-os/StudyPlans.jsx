@@ -2,7 +2,7 @@ import { useState } from "react";
 import { DAY_LABELS } from "./data.js";
 import { Icon } from "./icons.jsx";
 import { getStyles, Modal, PageHdr } from "./ui.jsx";
-import { deleteSubtask, postPlanSubject, postSubtask, putPlanSubject, putSubtask } from "../../fetchs/studyPlanFetchs";
+import { deleteSubject as deleteSubjectFetch, deleteSubtask, postPlanSubject, postSubtask, putPlanSubject, putSubtask } from "../../fetchs/studyPlanFetchs";
 
 function getStudyBlocks(schedule) {
   return DAY_LABELS.flatMap((day) =>
@@ -98,6 +98,15 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     try {
       await deleteSubtask(subtaskId);
       setSubjects((items) => items.map((item) => (item.id === subjectId ? { ...item, subtasks: (item.subtasks || []).filter((subtask) => subtask.id !== subtaskId) } : item)));
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function deleteSubject(subjectId) {
+    try {
+      await deleteSubjectFetch(subjectId);
+      setSubjects((items) => items.filter((item) => item.id !== subjectId));
     } catch (error) {
       console.error(error);
     }
@@ -233,7 +242,7 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
                 </div>
                 <div style={{ display: "flex", gap: 6 }}>
                   <button onClick={() => startEdit(subj)} title="Update subject" style={{ background: "none", border: "none", cursor: "pointer", color: t.textMutedMost }}><Icon.settings /></button>
-                  <button onClick={() => setSubjects((subjs) => subjs.filter((x) => x.id !== subj.id))} style={{ background: "none", border: "none", cursor: "pointer", color: t.textMutedMost }}><Icon.x /></button>
+                  <button onClick={() => deleteSubject(subj.id)} style={{ background: "none", border: "none", cursor: "pointer", color: t.textMutedMost }}><Icon.x /></button>
                 </div>
               </div>
 

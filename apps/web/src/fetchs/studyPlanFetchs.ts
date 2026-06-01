@@ -129,3 +129,14 @@ export async function deleteSubtask(subtaskId) {
 
   return parseJsonResponse(response);
 }
+
+export async function deleteSubject(subjectId) {
+  const response = await fetch("/plan/subject", {
+    method: "DELETE",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: subjectId })
+  });
+
+  return parseJsonResponse(response);
+}

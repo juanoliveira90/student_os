@@ -77,35 +77,13 @@ export const initSchedule = {
 
 export const initSubjects = [];
 
-export const initHabits = [
-  { id: 1, name: "morning workout", category: "health", streak: 15, done: true, week: [1, 1, 1, 0, 1, 1, 1] },
-  { id: 2, name: "read 30 minutes", category: "learning", streak: 22, done: true, week: [1, 1, 1, 1, 1, 1, 1] },
-  { id: 3, name: "code practice", category: "skills", streak: 8, done: false, week: [1, 1, 0, 1, 1, 1, 0] },
-  { id: 4, name: "meditation 10min", category: "mindfulness", streak: 5, done: false, week: [1, 0, 1, 1, 1, 0, 0] },
-];
+export const initHabits = [];
 
-export const initTasks = [
-  { id: 1, text: "read 30min", done: true },
-  { id: 2, text: "study 6 hours", done: false },
-  { id: 3, text: "exercise 45min", done: true },
-];
+export const initTasks = [];
 
-export const initDocs = [
-  {
-    id: 1,
-    title: "calculus notes",
-    date: "5/15/2024",
-    content: "# calculus ii - week 3 notes\n\n## integration by parts\n\nFormula: **int u dv = uv - int v du**\n\nChoose u and dv using **LIATE** (Logarithmic, Inverse trig, Algebraic, Trig, Exponential).\n\n```\nint x*e^x dx\n  u = x,    dv = e^x dx\n  du = dx,  v  = e^x\n  -> x*e^x - int e^x dx = x*e^x - e^x + C\n```\n\n## key reminders\n\n- Always add + C for indefinite integrals\n- Check by differentiating the result\n- Practice the trig substitution identities",
-  },
-  {
-    id: 2,
-    title: "data structures summary",
-    date: "5/14/2024",
-    content: "# data structures - cheat sheet\n\n## big-o complexity\n\n| structure | access | search | insert | delete |\n|-----------|--------|--------|--------|--------|\n| array | O(1) | O(n) | O(n) | O(n) |\n| linked list | O(n) | O(n) | O(1) | O(1) |\n| hash map | O(1) | O(1) | O(1) | O(1) |\n| bst | O(log n) | O(log n) | O(log n) | O(log n) |\n\n## trees\n\n- **BST**: left < root < right\n- **AVL**: self-balancing BST, height diff <= 1\n- **Heap**: parent <= children (min-heap)\n\n## graph algorithms\n\n- BFS - shortest path in unweighted graph\n- DFS - cycle detection, topological sort\n- Dijkstra - shortest path weighted graph",
-  },
-];
+export const initDocs = [];
 
-export const productivityData = [6.5, 5, 8, 6, 4, 2.5, 2];
+export const productivityData = [];
 
 export const NAV_ITEMS = [
   { id: "dashboard", label: "Home", description: "Your day at a glance", key: "1" },

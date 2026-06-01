@@ -7,6 +7,8 @@ import { getAuthenticatedUser, logout } from "../../fetchs/authFetchs";
 export default function Sidebar({ active, setActive, t, collapsed, setCollapsed, onLogout }) {
   const navigate = useNavigate();
   const icons = { dashboard: Icon.grid, schedule: Icon.cal, studyplans: Icon.book, habits: Icon.target, focustime: Icon.timer, documents: Icon.file };
+  const readyItems = NAV_ITEMS.filter((item) => !["habits", "focustime"].includes(item.id));
+  const pendingItems = NAV_ITEMS.filter((item) => ["habits", "focustime"].includes(item.id));
   const width = collapsed ? 64 : 216;
 
   const [user, setUser] = useState(null);
@@ -109,7 +111,7 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed,
       </div>
 
       <nav style={{ flex: 1, padding: collapsed ? "12px 8px" : "14px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
-        {NAV_ITEMS.map(({ id, label, description }) => {
+        {readyItems.map(({ id, label, description }) => {
           const Ic = icons[id];
           const on = active === id;
           return (
@@ -159,6 +161,59 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed,
             </button>
           );
         })}
+        <div style={{ height: 1, background: t.border, margin: collapsed ? "12px 8px" : "18px 44px 14px" }} />
+        {!collapsed && (
+          <div style={{ display: "flex", alignItems: "center", gap: 10, color: t.textMutedMore, fontSize: 11, fontWeight: 750, letterSpacing: 2.4, textTransform: "uppercase", margin: "0 10px 10px" }}>
+            <span style={{ height: 1, flex: 1, background: t.border }} />
+            Pending Features
+            <span style={{ height: 1, flex: 1, background: t.border }} />
+          </div>
+        )}
+        {pendingItems.map(({ id, label, description }) => {
+          const Ic = icons[id];
+          return (
+            <button
+              key={id}
+              disabled
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: collapsed ? "center" : "flex-start",
+                width: "100%",
+                minHeight: collapsed ? 42 : 54,
+                padding: collapsed ? "0" : "0 12px",
+                border: "none",
+                cursor: "not-allowed",
+                textAlign: "left",
+                background: "transparent",
+                color: t.textMutedMore,
+                fontSize: 14,
+                fontWeight: 650,
+                borderRadius: 8,
+                fontFamily: "inherit",
+                opacity: 0.78,
+              }}
+              title={collapsed ? `${label} pending` : undefined}
+            >
+              <span style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", gap: collapsed ? 0 : 12, width: "100%", minWidth: 0 }}>
+                <span style={{ width: collapsed ? 32 : 34, height: collapsed ? 32 : 34, borderRadius: 999, border: `1px dashed ${t.borderLight}`, display: "flex", alignItems: "center", justifyContent: "center", color: t.textMutedMore, flexShrink: 0 }}><Ic /></span>
+                <span style={{ maxWidth: collapsed ? 0 : 140, opacity: collapsed ? 0 : 1, overflow: "hidden", whiteSpace: "nowrap", transition: "max-width 0.2s ease, opacity 0.16s ease" }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {label}
+                    <span style={{ background: t.hover, border: `1px solid ${t.border}`, color: t.textMuted, borderRadius: 7, padding: "2px 7px", fontSize: 11, fontWeight: 650 }}>Pending</span>
+                  </span>
+                  <span style={{ display: "block", fontSize: 11, color: t.textMutedMore, fontWeight: 500, marginTop: 2 }}>{description}</span>
+                </span>
+              </span>
+            </button>
+          );
+        })}
+        {!collapsed && (
+          <div style={{ border: `1px solid ${t.border}`, borderRadius: 8, padding: "12px", display: "grid", gridTemplateColumns: "auto 1fr", gap: 10, alignItems: "center", color: t.textMutedMore, fontSize: 12, lineHeight: 1.35, margin: "10px 4px 0" }}>
+            <Icon.info />
+            <span>Habits and Focus are coming soon. Stay tuned!</span>
+          </div>
+        )}
       </nav>
 
     </aside>

@@ -35,7 +35,7 @@ export default function StudentOS({ user, onLogout }) {
     function onKey(e) {
       const tag = document.activeElement?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-      const item = NAV_ITEMS.find((n) => n.key === e.key);
+      const item = NAV_ITEMS.find((n) => n.key === e.key && !["habits", "focustime"].includes(n.id));
       if (item) setActive(item.id);
     }
     window.addEventListener("keydown", onKey);
@@ -111,7 +111,7 @@ export default function StudentOS({ user, onLogout }) {
           </div>
 
           <div style={{ flex: 1, overflow: isDoc ? "hidden" : "auto", padding: isDoc ? 0 : "28px", background: t.bg }}>
-            {active === "dashboard" && <Dashboard tasks={tasks} setTasks={setTasks} habits={habits} t={t} />}
+            {active === "dashboard" && <Dashboard user={user} tasks={tasks} setTasks={setTasks} habits={habits} schedule={schedule} subjects={subjects} setActive={setActive} t={t} />}
             {active === "schedule" && (
               <Schedule
                 schedule={schedule}
