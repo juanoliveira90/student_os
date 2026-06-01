@@ -39,7 +39,7 @@ function getSubjectStats(subject) {
   return { done, total, progress };
 }
 
-export default function Dashboard({ user, tasks, schedule, subjects, setActive, t }) {
+export default function Dashboard({ user, tasks, schedule, subjects, setActive, navigateToCreate, t }) {
   const s = getStyles(t);
   const profile = user?.user ?? user ?? {};
   const displayName = profile.name || profile.email?.split("@")[0] || "Juan";
@@ -139,7 +139,7 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
       <section style={card}>
         <SecHdr icon={<Icon.clock />} label="Continue Studying" t={t} />
         <div style={{ marginTop: 14, padding: "20px", borderRadius: 8, background: `linear-gradient(90deg, ${t.hover}, ${t.bgAlt})`, display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 18, alignItems: "center" }}>
-          <div style={{ width: 50, height: 50, borderRadius: 8, background: `linear-gradient(135deg, ${t.accentLight}, ${t.accentDark})`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontFamily: "Georgia, serif" }}>fx</div>
+          <div style={{ width: 50, height: 50, borderRadius: 8, background: `linear-gradient(135deg, ${t.accentLight}, ${t.accentDark})`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontFamily: "Georgia, serif" }}></div>
           <div>
             <div style={{ color: t.text, fontSize: 18, fontWeight: 800 }}>{continueSubject ? `${titleCase(continueSubject.name)}${continueSubject.tag ? ` - ${titleCase(continueSubject.tag)}` : ""}` : "No active study plan"}</div>
             <div style={{ color: t.text, fontSize: 13, marginTop: 4 }}>{continueSubject ? titleCase(continueSubject.subtasks?.find((task) => !task.done)?.text || "All tasks complete") : "Create a study plan to start tracking progress."}</div>
@@ -152,10 +152,9 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
       <section style={card}>
         <SecHdr icon={<Icon.zap />} label="Quick Actions" t={t} />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 14, marginTop: 16 }}>
-          <button type="button" onClick={() => setActive("schedule")} style={actionButton}><Icon.plus />Add Schedule Block</button>
-          <button type="button" onClick={() => setActive("studyplans")} style={actionButton}><Icon.plus />Add Subject / Plan</button>
-          <button type="button" onClick={() => setActive("documents")} style={actionButton}><Icon.plus />Create Note</button>
-          <button type="button" onClick={() => setActive("documents")} style={actionButton}><Icon.upload />Upload Document</button>
+          <button type="button" onClick={() => navigateToCreate("schedule", "study-block")} style={actionButton}><Icon.plus />Add Schedule Block</button>
+          <button type="button" onClick={() => navigateToCreate("studyplans", "subject")} style={actionButton}><Icon.plus />Add Subject / Plan</button>
+          <button type="button" onClick={() => navigateToCreate("documents", "note")} style={actionButton}><Icon.plus />Create Note</button>
         </div>
       </section>
     </div>

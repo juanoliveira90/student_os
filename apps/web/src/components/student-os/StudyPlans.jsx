@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { DAY_LABELS } from "./data.js";
 import { Icon } from "./icons.jsx";
-import { getStyles, Modal, PageHdr } from "./ui.jsx";
-import { deleteSubject as deleteSubjectFetch, deleteSubtask, postPlanSubject, postSubtask, putPlanSubject, putSubtask } from "../../fetchs/studyPlanFetchs";
+import { getStyles, Modal } from "./ui.jsx";
+import { saveStudyPlanChanges, studyPlanQueryKey } from "../../fetchs/studyPlanFetchs";
 
 function getStudyBlocks(schedule) {
   return DAY_LABELS.flatMap((day) =>
@@ -12,18 +13,88 @@ function getStudyBlocks(schedule) {
   );
 }
 
-export default function StudyPlans({ subjects, setSubjects, schedule, setSchedule, t }) {
+const emptyChanges = {
+  createSubjects: [],
+  updateSubjects: [],
+  createSubtasks: [],
+  updateSubtasks: [],
+  deleteSubtasks: [],
+  deleteSubjects: [],
+};
+
+const emptySubtaskDraft = { name: "", description: "" };
+
+function normalizeText(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function normalizeSubtask(subtask) {
+  const name = normalizeText(subtask.name || subtask.text);
+
+  return {
+    id: subtask.id,
+    name,
+    text: name,
+    description: String(subtask.description || "").trim(),
+    done: Boolean(subtask.done),
+  };
+}
+
+function toSubjectUpdate(subject) {
+  return {
+    id: subject.id,
+    name: normalizeText(subject.name),
+    tag: normalizeText(subject.tag),
+    scheduleBlockId: subject.scheduleBlockId || "",
+  };
+}
+
+export default function StudyPlans({ subjects, setSubjects, schedule, setSchedule, createAction, onCreateActionHandled, t }) {
   const s = getStyles(t);
+  const queryClient = useQueryClient();
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState({ name: "", tag: "", scheduleBlockId: "", subtasks: [{ id: 1, name: "", description: "" }] });
   const [editForm, setEditForm] = useState(null);
   const [drafts, setDrafts] = useState({});
   const [isAdding, setIsAdding] = useState(false);
-  const [savingId, setSavingId] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
+  const [hasChanges, setHasChanges] = useState(false);
+  const [pendingChanges, setPendingChanges] = useState(emptyChanges);
   const studyBlocks = getStudyBlocks(schedule);
 
-  function linkBlockToSubject(subjectId, blockId) {
-    setSubjects((items) => items.map((item) => (item.id === subjectId ? { ...item, scheduleBlockId: blockId } : item)));
+  useEffect(() => {
+    if (!createAction) return;
+
+    if (createAction.type === "subject") setModal(true);
+    onCreateActionHandled?.();
+  }, [createAction?.id]);
+
+  function markChanged() {
+    setHasChanges(true);
+    setSaveMessage("");
+  }
+
+  function queueSubjectUpdate(subject) {
+    setPendingChanges((current) => {
+      if (current.deleteSubjects.includes(subject.id)) return current;
+
+      const createSubject = current.createSubjects.find((item) => item.id === subject.id);
+      if (createSubject) {
+        return {
+          ...current,
+          createSubjects: current.createSubjects.map((item) => (item.id === subject.id ? { ...item, ...subject } : item)),
+        };
+      }
+
+      return {
+        ...current,
+        updateSubjects: [...current.updateSubjects.filter((item) => item.id !== subject.id), toSubjectUpdate(subject)],
+      };
+    });
+  }
+
+  function syncLinkedSchedule(subjectId, blockId) {
     setSchedule((days) =>
       Object.fromEntries(
         Object.entries(days).map(([day, events]) => [
@@ -38,50 +109,81 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     );
   }
 
-  async function add() {
+  function linkBlockToSubject(subjectId, blockId) {
+    const subject = subjects.find((item) => item.id === subjectId);
+
+    setSubjects((items) =>
+      items.map((item) => (item.id === subjectId ? { ...item, scheduleBlockId: blockId } : item))
+    );
+    syncLinkedSchedule(subjectId, blockId);
+    if (subject) queueSubjectUpdate({ ...subject, scheduleBlockId: blockId });
+    markChanged();
+  }
+
+  function add() {
     if (!form.name.trim() || isAdding) return;
+    setIsAdding(true);
+
     const id = crypto.randomUUID();
     const subtasks = form.subtasks
       .map((subtask) => ({ name: subtask.name.trim(), description: subtask.description.trim() }))
       .filter((subtask) => subtask.name)
-      .map((subtask) => ({ id: crypto.randomUUID(), text: subtask.name.toLowerCase(), description: subtask.description || "", done: false }));
+      .map((subtask) => normalizeSubtask({ id: crypto.randomUUID(), name: subtask.name, description: subtask.description }));
 
-    const subject = { id, name: form.name.trim().toLowerCase(), tag: form.tag.trim().toLowerCase(), progress: 0, importance: 3, scheduleBlockId: form.scheduleBlockId, subtasks };
-    setIsAdding(true);
+    const subject = {
+      id,
+      name: normalizeText(form.name),
+      tag: normalizeText(form.tag),
+      progress: 0,
+      importance: 3,
+      scheduleBlockId: form.scheduleBlockId,
+      subtasks,
+    };
 
-    try {
-      await postPlanSubject(subject);
-      setSubjects((items) => [...items, subject]);
-      if (form.scheduleBlockId) linkBlockToSubject(id, form.scheduleBlockId);
-      setModal(false);
-      setForm({ name: "", tag: "", scheduleBlockId: "", subtasks: [{ id: 1, name: "", description: "" }] });
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsAdding(false);
-    }
+    setSubjects((items) => [...items, subject]);
+    setPendingChanges((current) => ({ ...current, createSubjects: [...current.createSubjects, subject] }));
+    if (form.scheduleBlockId) linkBlockToSubject(id, form.scheduleBlockId);
+    markChanged();
+    setModal(false);
+    setForm({ name: "", tag: "", scheduleBlockId: "", subtasks: [{ id: 1, name: "", description: "" }] });
+    setIsAdding(false);
   }
 
-  async function addSubtask(subjectId, text) {
-    const cleanText = text.trim();
-    if (!cleanText) return false;
+  function addSubtask(subjectId, draft) {
+    const cleanName = draft.name.trim();
+    if (!cleanName) return false;
 
-    const subtask = { id: crypto.randomUUID(), text: cleanText.toLowerCase(), description: "", done: false };
+    const subtask = normalizeSubtask({
+      id: crypto.randomUUID(),
+      name: cleanName,
+      description: draft.description,
+    });
 
-    try {
-      await postSubtask(subjectId, subtask);
-      setSubjects((items) =>
-        items.map((item) =>
-          item.id === subjectId
-            ? { ...item, subtasks: [...(item.subtasks || []), subtask] }
-            : item
-        )
-      );
-      return true;
-    } catch (error) {
-      console.error(error);
-      return false;
-    }
+    setSubjects((items) =>
+      items.map((item) =>
+        item.id === subjectId
+          ? { ...item, subtasks: [...(item.subtasks || []), subtask] }
+          : item
+      )
+    );
+    setPendingChanges((current) => {
+      const createSubject = current.createSubjects.find((item) => item.id === subjectId);
+      if (createSubject) {
+        return {
+          ...current,
+          createSubjects: current.createSubjects.map((item) =>
+            item.id === subjectId ? { ...item, subtasks: [...(item.subtasks || []), subtask] } : item
+          ),
+        };
+      }
+
+      return {
+        ...current,
+        createSubtasks: [...current.createSubtasks, { subjectId, subtask }],
+      };
+    });
+    markChanged();
+    return true;
   }
 
   function toggleSubtask(subjectId, subtaskId) {
@@ -94,22 +196,45 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     );
   }
 
-  async function removeSubtask(subjectId, subtaskId) {
-    try {
-      await deleteSubtask(subtaskId);
-      setSubjects((items) => items.map((item) => (item.id === subjectId ? { ...item, subtasks: (item.subtasks || []).filter((subtask) => subtask.id !== subtaskId) } : item)));
-    } catch (error) {
-      console.error(error);
-    }
+  function removeSubtask(subjectId, subtaskId) {
+    setSubjects((items) => items.map((item) => (item.id === subjectId ? { ...item, subtasks: (item.subtasks || []).filter((subtask) => subtask.id !== subtaskId) } : item)));
+    setPendingChanges((current) => {
+      const createSubject = current.createSubjects.find((item) => item.id === subjectId);
+      if (createSubject) {
+        return {
+          ...current,
+          createSubjects: current.createSubjects.map((item) =>
+            item.id === subjectId ? { ...item, subtasks: (item.subtasks || []).filter((subtask) => subtask.id !== subtaskId) } : item
+          ),
+        };
+      }
+
+      const wasNew = current.createSubtasks.some((item) => item.subtask.id === subtaskId);
+      return {
+        ...current,
+        createSubtasks: current.createSubtasks.filter((item) => item.subtask.id !== subtaskId),
+        updateSubtasks: current.updateSubtasks.filter((item) => item.id !== subtaskId),
+        deleteSubtasks: wasNew ? current.deleteSubtasks : [...current.deleteSubtasks.filter((id) => id !== subtaskId), subtaskId],
+      };
+    });
+    markChanged();
   }
 
-  async function deleteSubject(subjectId) {
-    try {
-      await deleteSubjectFetch(subjectId);
-      setSubjects((items) => items.filter((item) => item.id !== subjectId));
-    } catch (error) {
-      console.error(error);
-    }
+  function deleteSubject(subjectId) {
+    setSubjects((items) => items.filter((item) => item.id !== subjectId));
+    setPendingChanges((current) => {
+      const wasNew = current.createSubjects.some((item) => item.id === subjectId);
+
+      return {
+        createSubjects: current.createSubjects.filter((item) => item.id !== subjectId),
+        updateSubjects: current.updateSubjects.filter((item) => item.id !== subjectId),
+        createSubtasks: current.createSubtasks.filter((item) => item.subjectId !== subjectId),
+        updateSubtasks: current.updateSubtasks,
+        deleteSubtasks: current.deleteSubtasks,
+        deleteSubjects: wasNew ? current.deleteSubjects : [...current.deleteSubjects.filter((id) => id !== subjectId), subjectId],
+      };
+    });
+    markChanged();
   }
 
   function linkedBlockLabel(blockId) {
@@ -145,12 +270,7 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
       name: subject.name || "",
       tag: subject.tag || "",
       scheduleBlockId: subject.scheduleBlockId || "",
-      subtasks: (subject.subtasks || []).map((subtask) => ({
-        id: subtask.id,
-        name: subtask.name || subtask.text || "",
-        description: subtask.description || "",
-        done: Boolean(subtask.done),
-      })),
+      subtasks: (subject.subtasks || []).map((subtask) => normalizeSubtask(subtask)),
     });
   }
 
@@ -161,70 +281,103 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     }));
   }
 
-  async function updateSubject(event) {
+  function updateSubject(event) {
     event?.preventDefault();
-    if (!editForm?.name.trim() || savingId) return;
-    const values = event?.currentTarget ? new FormData(event.currentTarget) : null;
-    const name = (values?.get("name") ?? editForm.name).toString();
-    const tag = (values?.get("tag") ?? editForm.tag).toString();
-    const scheduleBlockId = (values?.get("scheduleBlockId") ?? editForm.scheduleBlockId).toString();
+    if (!editForm?.name.trim()) return;
+    const updatedSubject = toSubjectUpdate(editForm);
 
-    const updatedSubject = {
-      id: editForm.id,
-      name: name.trim().toLowerCase(),
-      tag: tag.trim().toLowerCase(),
-      scheduleBlockId,
-    };
-
-    setSavingId(editForm.id);
-    try {
-      await putPlanSubject(updatedSubject);
-      setSubjects((items) => items.map((item) => (item.id === editForm.id ? { ...item, ...updatedSubject } : item)));
-      linkBlockToSubject(editForm.id, scheduleBlockId);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setSavingId("");
-    }
+    setSubjects((items) => items.map((item) => (item.id === editForm.id ? { ...item, ...updatedSubject } : item)));
+    syncLinkedSchedule(editForm.id, updatedSubject.scheduleBlockId);
+    queueSubjectUpdate(updatedSubject);
+    markChanged();
+    setEditForm((current) => ({ ...current, ...updatedSubject }));
   }
 
-  async function updateSubtask(subjectId, subtask) {
-    if (!subtask.name.trim() || savingId) return;
-    const updatedSubtask = {
-      id: subtask.id,
-      name: subtask.name.trim().toLowerCase(),
-      text: subtask.name.trim().toLowerCase(),
-      description: subtask.description.trim(),
-    };
+  function updateSubtask(subjectId, subtask) {
+    if (!subtask.name.trim()) return;
+    const updatedSubtask = normalizeSubtask(subtask);
 
-    setSavingId(subtask.id);
-    try {
-      await putSubtask(updatedSubtask);
-      setEditForm((current) => ({
+    setEditForm((current) => ({
+      ...current,
+      subtasks: current.subtasks.map((item) => (item.id === subtask.id ? { ...item, ...updatedSubtask } : item)),
+    }));
+    setSubjects((items) =>
+      items.map((item) =>
+        item.id === subjectId
+          ? { ...item, subtasks: (item.subtasks || []).map((task) => (task.id === subtask.id ? { ...task, ...updatedSubtask } : task)) }
+          : item
+      )
+    );
+    setPendingChanges((current) => {
+      const createSubject = current.createSubjects.find((item) => item.id === subjectId);
+      if (createSubject) {
+        return {
+          ...current,
+          createSubjects: current.createSubjects.map((item) =>
+            item.id === subjectId
+              ? { ...item, subtasks: (item.subtasks || []).map((task) => (task.id === subtask.id ? { ...task, ...updatedSubtask } : task)) }
+              : item
+          ),
+        };
+      }
+
+      if (current.createSubtasks.some((item) => item.subtask.id === subtask.id)) {
+        return {
+          ...current,
+          createSubtasks: current.createSubtasks.map((item) => (item.subtask.id === subtask.id ? { ...item, subtask: updatedSubtask } : item)),
+        };
+      }
+
+      return {
         ...current,
-        subtasks: current.subtasks.map((item) => (item.id === subtask.id ? { ...item, ...updatedSubtask } : item)),
-      }));
-      setSubjects((items) =>
-        items.map((item) =>
-          item.id === subjectId
-            ? { ...item, subtasks: (item.subtasks || []).map((task) => (task.id === subtask.id ? { ...task, ...updatedSubtask } : task)) }
-            : item
-        )
-      );
+        updateSubtasks: [...current.updateSubtasks.filter((item) => item.id !== subtask.id), updatedSubtask],
+      };
+    });
+    markChanged();
+  }
+
+  async function saveChanges() {
+    setSaving(true);
+    setSaveMessage("");
+
+    try {
+      await saveStudyPlanChanges(pendingChanges);
+      setPendingChanges(emptyChanges);
+      setHasChanges(false);
+      setSaveMessage("Saved.");
+      queryClient.invalidateQueries({ queryKey: studyPlanQueryKey });
     } catch (error) {
       console.error(error);
+      setSaveMessage("Could not save. Try again.");
     } finally {
-      setSavingId("");
+      setSaving(false);
     }
   }
 
   return (
     <div>
-      <PageHdr label="Study Plan" description="Plan subjects, subtasks, and optional schedule blocks." action={{ label: "Add subject", onClick: () => setModal(true) }} t={t} />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
+        <div>
+          <h1 style={{ fontSize: 28, lineHeight: 1.1, fontWeight: 750, color: t.text, margin: 0 }}>Study Plan</h1>
+          <div style={{ fontSize: 14, color: t.textMutedMore, marginTop: 6 }}>Plan subjects, subtasks, and optional schedule blocks.</div>
+          {saveMessage && <div style={{ fontSize: 12, color: saveMessage === "Saved." ? t.accent : t.textMutedMore, marginTop: 8 }}>{saveMessage}</div>}
+        </div>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <button
+            onClick={saveChanges}
+            disabled={!hasChanges || saving}
+            style={{ ...s.btn, opacity: !hasChanges || saving ? 0.55 : 1, cursor: !hasChanges || saving ? "not-allowed" : "pointer" }}
+          >
+            {saving ? "Saving..." : "Save"}
+          </button>
+          <button onClick={() => setModal(true)} style={s.btn}>Add subject</button>
+        </div>
+      </div>
+
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 14 }}>
         {subjects.map((subj) => {
-          const draft = drafts[subj.id] || "";
-          const setDraft = (value) => setDrafts((items) => ({ ...items, [subj.id]: value }));
+          const draft = drafts[subj.id] || emptySubtaskDraft;
+          const setDraft = (value) => setDrafts((items) => ({ ...items, [subj.id]: { ...emptySubtaskDraft, ...items[subj.id], ...value } }));
           const completed = (subj.subtasks || []).filter((task) => task.done).length;
           const total = (subj.subtasks || []).length;
           const progress = total ? Math.round((completed / total) * 100) : subj.progress || 0;
@@ -271,8 +424,23 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8 }}>
-                <input value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={async (e) => { if (e.key === "Enter" && await addSubtask(subj.id, draft)) setDraft(""); }} placeholder="new subtask" style={{ ...s.input, marginBottom: 0 }} />
-                <button onClick={async () => { if (await addSubtask(subj.id, draft)) setDraft(""); }} style={s.ghost}>Add</button>
+                <input
+                  value={draft.name}
+                  onChange={(e) => setDraft({ name: e.target.value })}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && addSubtask(subj.id, draft)) setDraft(emptySubtaskDraft);
+                  }}
+                  placeholder="new subtask"
+                  style={{ ...s.input, marginBottom: 0 }}
+                />
+                <button onClick={() => { if (addSubtask(subj.id, draft)) setDraft(emptySubtaskDraft); }} style={s.ghost}>Add</button>
+                <textarea
+                  value={draft.description}
+                  onChange={(e) => setDraft({ description: e.target.value })}
+                  placeholder="description (optional)"
+                  rows={2}
+                  style={{ ...s.input, gridColumn: "1 / -1", marginBottom: 0, minHeight: 62, resize: "vertical", lineHeight: 1.4 }}
+                />
               </div>
             </div>
           );
@@ -284,7 +452,7 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
           <label style={s.label}>Subject name</label>
           <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && add()} placeholder="subject name" style={s.input} autoFocus />
           <label style={s.label}>Tag</label>
-          <input value={form.tag} onChange={(e) => setForm((f) => ({ ...f, tag: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && add()} placeholder="tag optional" style={s.input} />
+          <input value={form.tag} onChange={(e) => setForm((f) => ({ ...f, tag: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && add()} placeholder="tag (optional)" style={s.input} />
           <label style={s.label}>Schedule block</label>
           <select value={form.scheduleBlockId} onChange={(e) => setForm((f) => ({ ...f, scheduleBlockId: e.target.value }))} style={s.input}>
             <option value="">No linked block</option>
@@ -307,7 +475,7 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
                 <textarea
                   value={subtask.description}
                   onChange={(e) => updateFormSubtask(subtask.id, "description", e.target.value)}
-                  placeholder="description optional"
+                  placeholder="description (optional)"
                   rows={2}
                   style={{ ...s.input, marginBottom: 0, minHeight: 68, resize: "vertical", lineHeight: 1.4 }}
                 />
@@ -325,15 +493,13 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
             <label style={s.label}>Subject name</label>
             <input name="name" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} placeholder="subject name" style={s.input} autoFocus />
             <label style={s.label}>Tag</label>
-            <input name="tag" value={editForm.tag} onChange={(e) => setEditForm((f) => ({ ...f, tag: e.target.value }))} placeholder="tag optional" style={s.input} />
+            <input name="tag" value={editForm.tag} onChange={(e) => setEditForm((f) => ({ ...f, tag: e.target.value }))} placeholder="tag (optional)" style={s.input} />
             <label style={s.label}>Schedule block</label>
             <select name="scheduleBlockId" value={editForm.scheduleBlockId} onChange={(e) => setEditForm((f) => ({ ...f, scheduleBlockId: e.target.value }))} style={s.input}>
               <option value="">No linked block</option>
               {studyBlocks.map((block) => <option key={block.id} value={block.id}>{block.day} - {block.title}</option>)}
             </select>
-            <button type="submit" disabled={savingId === editForm.id} style={{ ...s.btn, opacity: savingId === editForm.id ? 0.65 : 1, marginBottom: 14 }}>
-              {savingId === editForm.id ? "Updating..." : "Update subject"}
-            </button>
+            <button type="submit" style={{ ...s.btn, marginBottom: 14 }}>Update subject</button>
           </form>
 
           <label style={s.label}>Subtasks</label>
@@ -353,8 +519,8 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
                   rows={2}
                   style={{ ...s.input, minHeight: 68, resize: "vertical", lineHeight: 1.4 }}
                 />
-                <button onClick={() => updateSubtask(editForm.id, subtask)} disabled={savingId === subtask.id} style={{ ...s.ghost, width: "100%", opacity: savingId === subtask.id ? 0.65 : 1 }}>
-                  {savingId === subtask.id ? "Updating..." : "Update subtask"}
+                <button onClick={() => updateSubtask(editForm.id, subtask)} style={{ ...s.ghost, width: "100%" }}>
+                  Update subtask
                 </button>
               </div>
             ))}

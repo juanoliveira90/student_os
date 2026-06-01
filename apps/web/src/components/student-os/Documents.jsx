@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Icon } from "./icons.jsx";
 import { renderMarkdown } from "./markdown.js";
 import { getStyles } from "./ui.jsx";
 import { deleteNote, postNote, putNote } from "../../fetchs/notesFetchs";
 
-export default function Documents({ docs, setDocs, isLoading, isError, t }) {
+export default function Documents({ docs, setDocs, isLoading, isError, createAction, onCreateActionHandled, t }) {
   const s = getStyles(t);
   const [sel, setSel] = useState(null);
   const [editing, setEditing] = useState(false);
@@ -13,6 +13,7 @@ export default function Documents({ docs, setDocs, isLoading, isError, t }) {
   const [eTitle, setETitle] = useState("");
   const [savingId, setSavingId] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const handledCreateActionId = useRef(null);
   const filtered = docs.filter((d) => d.title.toLowerCase().includes(search.toLowerCase()));
 
   async function newDoc() {
@@ -69,6 +70,15 @@ export default function Documents({ docs, setDocs, isLoading, isError, t }) {
       console.error(error);
     }
   }
+
+  useEffect(() => {
+    if (!createAction) return;
+    if (handledCreateActionId.current === createAction.id) return;
+
+    handledCreateActionId.current = createAction.id;
+    if (createAction.type === "note") void newDoc();
+    onCreateActionHandled?.();
+  }, [createAction?.id]);
 
   useEffect(() => {
     function onKey(e) {

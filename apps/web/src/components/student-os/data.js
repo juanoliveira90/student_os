@@ -92,6 +92,7 @@ export const NAV_ITEMS = [
   { id: "habits", label: "Habits", description: "Daily routines", key: "4" },
   { id: "focustime", label: "Focus", description: "Timer and sessions", key: "5" },
   { id: "documents", label: "Notes", description: "Study documents", key: "6" },
+  { id: "settings", label: "Settings", description: "Profile and system", key: "7" },
 ];
 
 export const PRESETS = [

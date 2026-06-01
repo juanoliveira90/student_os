@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { DAY_LABELS } from "./data.js";
 import { Icon } from "./icons.jsx";
@@ -98,7 +98,7 @@ function TimeField({ id, label, value, period, onChange, onPeriodChange, onEnter
   );
 }
 
-export default function Schedule({ schedule, setSchedule, subjects, setSubjects, isLoading, isError, t }) {
+export default function Schedule({ schedule, setSchedule, subjects, setSubjects, isLoading, isError, createAction, onCreateActionHandled, t }) {
   const s = getStyles(t);
   const queryClient = useQueryClient();
   const [modal, setModal] = useState(false);
@@ -173,6 +173,17 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
     setForm({ ...emptyForm, tag: "study block", title: "study block" });
     setModal(true);
   }
+
+  useEffect(() => {
+    if (!createAction) return;
+
+    if (createAction.type === "study-block") {
+      openStudyBlockModal();
+    } else {
+      openAddModal();
+    }
+    onCreateActionHandled?.();
+  }, [createAction?.id]);
 
   function openEditModal(day, event) {
     const { start_time, start_period, end_time, end_period } = getEventTimes(event);
@@ -330,7 +341,6 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
             >
               {saving ? "Saving..." : "Save"}
             </button>
-            <button onClick={openStudyBlockModal} style={s.ghost}>Add study block</button>
             <button onClick={openAddModal} style={s.btn}>Add event</button>
           </div>
         </div>

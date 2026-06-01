@@ -140,3 +140,29 @@ export async function deleteSubject(subjectId) {
 
   return parseJsonResponse(response);
 }
+
+export async function saveStudyPlanChanges(changes) {
+  for (const subject of changes.createSubjects || []) {
+    await postPlanSubject(subject);
+  }
+
+  for (const subject of changes.updateSubjects || []) {
+    await putPlanSubject(subject);
+  }
+
+  for (const item of changes.createSubtasks || []) {
+    await postSubtask(item.subjectId, item.subtask);
+  }
+
+  for (const subtask of changes.updateSubtasks || []) {
+    await putSubtask(subtask);
+  }
+
+  for (const subtaskId of changes.deleteSubtasks || []) {
+    await deleteSubtask(subtaskId);
+  }
+
+  for (const subjectId of changes.deleteSubjects || []) {
+    await deleteSubject(subjectId);
+  }
+}

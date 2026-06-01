@@ -6,9 +6,10 @@ import { getAuthenticatedUser, logout } from "../../fetchs/authFetchs";
 
 export default function Sidebar({ active, setActive, t, collapsed, setCollapsed, onLogout }) {
   const navigate = useNavigate();
-  const icons = { dashboard: Icon.grid, schedule: Icon.cal, studyplans: Icon.book, habits: Icon.target, focustime: Icon.timer, documents: Icon.file };
-  const readyItems = NAV_ITEMS.filter((item) => !["habits", "focustime"].includes(item.id));
+  const icons = { dashboard: Icon.grid, schedule: Icon.cal, studyplans: Icon.book, habits: Icon.target, focustime: Icon.timer, documents: Icon.file, settings: Icon.settings };
+  const readyItems = NAV_ITEMS.filter((item) => !["habits", "focustime", "settings"].includes(item.id));
   const pendingItems = NAV_ITEMS.filter((item) => ["habits", "focustime"].includes(item.id));
+  const settingsItem = NAV_ITEMS.find((item) => item.id === "settings");
   const width = collapsed ? 64 : 216;
 
   const [user, setUser] = useState(null);
@@ -74,7 +75,7 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed,
       <div ref={profileRef} style={{ padding: collapsed ? "12px 10px" : "16px 12px", borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", gap: 10, transition: "padding 0.22s ease", position: "relative" }}>
         {profileOpen && (
           <div style={{ position: "absolute", left: collapsed ? 10 : 12, top: "calc(100% + 8px)", width: collapsed ? 180 : 190, background: t.card, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: 6, boxShadow: "0 14px 36px rgba(0,0,0,0.22)", zIndex: 40 }}>
-            <button type="button" style={profileMenuItem(t)}>
+            <button type="button" style={profileMenuItem(t)} onClick={() => { setActive("settings"); setProfileOpen(false); }}>
               <Icon.settings />
               <span>Settings</span>
             </button>
@@ -111,61 +112,14 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed,
       </div>
 
       <nav style={{ flex: 1, padding: collapsed ? "12px 8px" : "14px 12px", display: "flex", flexDirection: "column", gap: 6 }}>
-        {readyItems.map(({ id, label, description }) => {
-          const Ic = icons[id];
-          const on = active === id;
-          return (
-            <button
-              key={id}
-              onClick={() => setActive(id)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: collapsed ? "center" : "flex-start",
-                width: "100%",
-                minHeight: collapsed ? 42 : 54,
-                padding: collapsed ? "0" : "0 12px",
-                border: "none",
-                cursor: "pointer",
-                textAlign: "left",
-                background: on ? t.hover : "transparent",
-                color: on ? t.text : t.textMuted,
-                fontSize: 14,
-                fontWeight: on ? 750 : 600,
-                transition: "all 0.12s",
-                borderRadius: 8,
-                borderLeft: collapsed ? "none" : `3px solid ${on ? t.accent : "transparent"}`,
-                fontFamily: "inherit",
-              }}
-              title={collapsed ? label : undefined}
-              onMouseEnter={(e) => {
-                if (!on) {
-                  e.currentTarget.style.background = t.hover;
-                  e.currentTarget.style.color = t.text;
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!on) {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.color = t.textMuted;
-                }
-              }}
-            >
-              <span style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", gap: collapsed ? 0 : 12, width: "100%", minWidth: 0 }}>
-                <span style={{ color: on ? t.accent : t.textMuted, display: "flex" }}><Ic /></span>
-                <span style={{ maxWidth: collapsed ? 0 : 140, opacity: collapsed ? 0 : 1, overflow: "hidden", whiteSpace: "nowrap", transition: "max-width 0.2s ease, opacity 0.16s ease" }}>
-                  <span style={{ display: "block" }}>{label}</span>
-                  <span style={{ display: "block", fontSize: 11, color: t.textMutedMore, fontWeight: 500, marginTop: 2 }}>{description}</span>
-                </span>
-              </span>
-            </button>
-          );
-        })}
+        {readyItems.map((item) => (
+          <NavButton key={item.id} item={item} active={active} setActive={setActive} icons={icons} collapsed={collapsed} t={t} />
+        ))}
         <div style={{ height: 1, background: t.border, margin: collapsed ? "12px 8px" : "18px 44px 14px" }} />
         {!collapsed && (
           <div style={{ display: "flex", alignItems: "center", gap: 10, color: t.textMutedMore, fontSize: 11, fontWeight: 750, letterSpacing: 2.4, textTransform: "uppercase", margin: "0 10px 10px" }}>
             <span style={{ height: 1, flex: 1, background: t.border }} />
-            Pending Features
+            Coming Soon
             <span style={{ height: 1, flex: 1, background: t.border }} />
           </div>
         )}
@@ -208,15 +162,67 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed,
             </button>
           );
         })}
-        {!collapsed && (
-          <div style={{ border: `1px solid ${t.border}`, borderRadius: 8, padding: "12px", display: "grid", gridTemplateColumns: "auto 1fr", gap: 10, alignItems: "center", color: t.textMutedMore, fontSize: 12, lineHeight: 1.35, margin: "10px 4px 0" }}>
-            <Icon.info />
-            <span>Habits and Focus are coming soon. Stay tuned!</span>
+        {settingsItem && (
+          <div style={{ marginTop: "auto", paddingTop: 14 }}>
+            <NavButton item={settingsItem} active={active} setActive={setActive} icons={icons} collapsed={collapsed} t={t} />
           </div>
         )}
       </nav>
 
     </aside>
+  );
+}
+
+function NavButton({ item, active, setActive, icons, collapsed, t }) {
+  const { id, label, description } = item;
+  const Ic = icons[id];
+  const on = active === id;
+
+  return (
+    <button
+      type="button"
+      onClick={() => setActive(id)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: collapsed ? "center" : "flex-start",
+        width: "100%",
+        minHeight: collapsed ? 42 : 54,
+        padding: collapsed ? "0" : "0 12px",
+        border: "none",
+        cursor: "pointer",
+        textAlign: "left",
+        background: on ? t.hover : "transparent",
+        color: on ? t.text : t.textMuted,
+        fontSize: 14,
+        fontWeight: on ? 750 : 600,
+        transition: "all 0.12s",
+        borderRadius: 8,
+        borderLeft: collapsed ? "none" : `3px solid ${on ? t.accent : "transparent"}`,
+        fontFamily: "inherit",
+      }}
+      title={collapsed ? label : undefined}
+      onMouseEnter={(e) => {
+        if (!on) {
+          e.currentTarget.style.background = t.hover;
+          e.currentTarget.style.color = t.text;
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!on) {
+          e.currentTarget.style.background = "transparent";
+          e.currentTarget.style.color = t.textMuted;
+        }
+      }}
+    >
+      <span style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", gap: collapsed ? 0 : 12, width: "100%", minWidth: 0 }}>
+        <span style={{ color: on ? t.accent : t.textMuted, display: "flex" }}><Ic /></span>
+        <span style={{ maxWidth: collapsed ? 0 : 140, opacity: collapsed ? 0 : 1, overflow: "hidden", whiteSpace: "nowrap", transition: "max-width 0.2s ease, opacity 0.16s ease" }}>
+          <span style={{ display: "block" }}>{label}</span>
+          <span style={{ display: "block", fontSize: 11, color: t.textMutedMore, fontWeight: 500, marginTop: 2 }}>{description}</span>
+        </span>
+      </span>
+    </button>
   );
 }
 

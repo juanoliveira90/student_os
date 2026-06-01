@@ -5,6 +5,7 @@ import Documents from "./Documents.jsx";
 import FocusTime from "./FocusTime.jsx";
 import Habits from "./Habits.jsx";
 import Schedule from "./Schedule.jsx";
+import Settings from "./Settings.jsx";
 import Sidebar from "./Sidebar.jsx";
 import StudyPlans from "./StudyPlans.jsx";
 import { Icon } from "./icons.jsx";
@@ -25,6 +26,7 @@ export default function StudentOS({ user, onLogout }) {
   const [docs, setDocs] = useState(initDocs);
   const [theme, setTheme] = useState(getStoredTheme);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [createAction, setCreateAction] = useState(null);
   const t = themes[theme];
   const isDoc = active === "documents";
   const scheduleQuery = useQuery(scheduleQueryOptions(user?.id));
@@ -72,6 +74,10 @@ export default function StudentOS({ user, onLogout }) {
   }, [hasLoadedDocs, notesQuery.data]);
 
   const currentPage = NAV_ITEMS.find((n) => n.id === active);
+  const navigateToCreate = (page, type) => {
+    setCreateAction({ page, type, id: Date.now() });
+    setActive(page);
+  };
 
   return (
     <>
@@ -111,7 +117,7 @@ export default function StudentOS({ user, onLogout }) {
           </div>
 
           <div style={{ flex: 1, overflow: isDoc ? "hidden" : "auto", padding: isDoc ? 0 : "28px", background: t.bg }}>
-            {active === "dashboard" && <Dashboard user={user} tasks={tasks} setTasks={setTasks} habits={habits} schedule={schedule} subjects={subjects} setActive={setActive} t={t} />}
+            {active === "dashboard" && <Dashboard user={user} tasks={tasks} setTasks={setTasks} habits={habits} schedule={schedule} subjects={subjects} setActive={setActive} navigateToCreate={navigateToCreate} t={t} />}
             {active === "schedule" && (
               <Schedule
                 schedule={schedule}
@@ -120,18 +126,23 @@ export default function StudentOS({ user, onLogout }) {
                 setSubjects={setSubjects}
                 isLoading={scheduleQuery.isLoading && !hasLoadedSchedule}
                 isError={scheduleQuery.isError}
+                createAction={createAction?.page === "schedule" ? createAction : null}
+                onCreateActionHandled={() => setCreateAction(null)}
                 t={t}
               />
             )}
-            {active === "studyplans" && <StudyPlans subjects={subjects} setSubjects={setSubjects} schedule={schedule} setSchedule={setSchedule} t={t} />}
+            {active === "studyplans" && <StudyPlans subjects={subjects} setSubjects={setSubjects} schedule={schedule} setSchedule={setSchedule} createAction={createAction?.page === "studyplans" ? createAction : null} onCreateActionHandled={() => setCreateAction(null)} t={t} />}
             {active === "habits" && <Habits habits={habits} setHabits={setHabits} t={t} />}
             {active === "focustime" && <FocusTime tasks={tasks} setTasks={setTasks} subjects={subjects} schedule={schedule} t={t} />}
+            {active === "settings" && <Settings user={user} theme={theme} setTheme={setTheme} t={t} />}
             {active === "documents" && (
               <Documents
                 docs={docs}
                 setDocs={setDocs}
                 isLoading={notesQuery.isLoading && !hasLoadedDocs}
                 isError={notesQuery.isError}
+                createAction={createAction?.page === "documents" ? createAction : null}
+                onCreateActionHandled={() => setCreateAction(null)}
                 t={t}
               />
             )}
