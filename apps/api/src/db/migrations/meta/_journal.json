@@ -78,6 +78,27 @@
       "when": 1780142568621,
       "tag": "0010_fix_subject_subtasks_subject_id_uuid",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1780257600000,
+      "tag": "0011_add_subject_user_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1780358400000,
+      "tag": "0012_add_subject_tag",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1780444800000,
+      "tag": "0013_create_notes",
+      "breakpoints": true
     }
   ]
 }

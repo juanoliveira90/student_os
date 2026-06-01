@@ -2,7 +2,7 @@ import { useState } from "react";
 import { DAY_LABELS } from "./data.js";
 import { Icon } from "./icons.jsx";
 import { getStyles, Modal, PageHdr } from "./ui.jsx";
-import { postPlanSubject } from "../../fetchs/studyPlanFetchs";
+import { deleteSubtask, postPlanSubject, postSubtask, putPlanSubject, putSubtask } from "../../fetchs/studyPlanFetchs";
 
 function getStudyBlocks(schedule) {
   return DAY_LABELS.flatMap((day) =>
@@ -15,9 +15,11 @@ function getStudyBlocks(schedule) {
 export default function StudyPlans({ subjects, setSubjects, schedule, setSchedule, t }) {
   const s = getStyles(t);
   const [modal, setModal] = useState(false);
-  const [form, setForm] = useState({ name: "", scheduleBlockId: "", subtasks: [{ id: 1, name: "", description: "" }] });
+  const [form, setForm] = useState({ name: "", tag: "", scheduleBlockId: "", subtasks: [{ id: 1, name: "", description: "" }] });
+  const [editForm, setEditForm] = useState(null);
   const [drafts, setDrafts] = useState({});
   const [isAdding, setIsAdding] = useState(false);
+  const [savingId, setSavingId] = useState("");
   const studyBlocks = getStudyBlocks(schedule);
 
   function linkBlockToSubject(subjectId, blockId) {
@@ -44,7 +46,7 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
       .filter((subtask) => subtask.name)
       .map((subtask) => ({ id: crypto.randomUUID(), text: subtask.name.toLowerCase(), description: subtask.description || "", done: false }));
 
-    const subject = { id, name: form.name.trim().toLowerCase(), progress: 0, importance: 3, scheduleBlockId: form.scheduleBlockId, subtasks };
+    const subject = { id, name: form.name.trim().toLowerCase(), tag: form.tag.trim().toLowerCase(), progress: 0, importance: 3, scheduleBlockId: form.scheduleBlockId, subtasks };
     setIsAdding(true);
 
     try {
@@ -52,7 +54,7 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
       setSubjects((items) => [...items, subject]);
       if (form.scheduleBlockId) linkBlockToSubject(id, form.scheduleBlockId);
       setModal(false);
-      setForm({ name: "", scheduleBlockId: "", subtasks: [{ id: 1, name: "", description: "" }] });
+      setForm({ name: "", tag: "", scheduleBlockId: "", subtasks: [{ id: 1, name: "", description: "" }] });
     } catch (error) {
       console.error(error);
     } finally {
@@ -60,16 +62,26 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     }
   }
 
-  function addSubtask(subjectId, text) {
+  async function addSubtask(subjectId, text) {
     const cleanText = text.trim();
-    if (!cleanText) return;
-    setSubjects((items) =>
-      items.map((item) =>
-        item.id === subjectId
-          ? { ...item, subtasks: [...(item.subtasks || []), { id: Date.now(), text: cleanText.toLowerCase(), done: false }] }
-          : item
-      )
-    );
+    if (!cleanText) return false;
+
+    const subtask = { id: crypto.randomUUID(), text: cleanText.toLowerCase(), description: "", done: false };
+
+    try {
+      await postSubtask(subjectId, subtask);
+      setSubjects((items) =>
+        items.map((item) =>
+          item.id === subjectId
+            ? { ...item, subtasks: [...(item.subtasks || []), subtask] }
+            : item
+        )
+      );
+      return true;
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
   }
 
   function toggleSubtask(subjectId, subtaskId) {
@@ -82,8 +94,13 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     );
   }
 
-  function removeSubtask(subjectId, subtaskId) {
-    setSubjects((items) => items.map((item) => (item.id === subjectId ? { ...item, subtasks: (item.subtasks || []).filter((subtask) => subtask.id !== subtaskId) } : item)));
+  async function removeSubtask(subjectId, subtaskId) {
+    try {
+      await deleteSubtask(subtaskId);
+      setSubjects((items) => items.map((item) => (item.id === subjectId ? { ...item, subtasks: (item.subtasks || []).filter((subtask) => subtask.id !== subtaskId) } : item)));
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   function linkedBlockLabel(blockId) {
@@ -113,6 +130,85 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     }));
   }
 
+  function startEdit(subject) {
+    setEditForm({
+      id: subject.id,
+      name: subject.name || "",
+      tag: subject.tag || "",
+      scheduleBlockId: subject.scheduleBlockId || "",
+      subtasks: (subject.subtasks || []).map((subtask) => ({
+        id: subtask.id,
+        name: subtask.name || subtask.text || "",
+        description: subtask.description || "",
+        done: Boolean(subtask.done),
+      })),
+    });
+  }
+
+  function updateEditSubtask(id, field, value) {
+    setEditForm((current) => ({
+      ...current,
+      subtasks: current.subtasks.map((subtask) => (subtask.id === id ? { ...subtask, [field]: value } : subtask)),
+    }));
+  }
+
+  async function updateSubject(event) {
+    event?.preventDefault();
+    if (!editForm?.name.trim() || savingId) return;
+    const values = event?.currentTarget ? new FormData(event.currentTarget) : null;
+    const name = (values?.get("name") ?? editForm.name).toString();
+    const tag = (values?.get("tag") ?? editForm.tag).toString();
+    const scheduleBlockId = (values?.get("scheduleBlockId") ?? editForm.scheduleBlockId).toString();
+
+    const updatedSubject = {
+      id: editForm.id,
+      name: name.trim().toLowerCase(),
+      tag: tag.trim().toLowerCase(),
+      scheduleBlockId,
+    };
+
+    setSavingId(editForm.id);
+    try {
+      await putPlanSubject(updatedSubject);
+      setSubjects((items) => items.map((item) => (item.id === editForm.id ? { ...item, ...updatedSubject } : item)));
+      linkBlockToSubject(editForm.id, scheduleBlockId);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSavingId("");
+    }
+  }
+
+  async function updateSubtask(subjectId, subtask) {
+    if (!subtask.name.trim() || savingId) return;
+    const updatedSubtask = {
+      id: subtask.id,
+      name: subtask.name.trim().toLowerCase(),
+      text: subtask.name.trim().toLowerCase(),
+      description: subtask.description.trim(),
+    };
+
+    setSavingId(subtask.id);
+    try {
+      await putSubtask(updatedSubtask);
+      setEditForm((current) => ({
+        ...current,
+        subtasks: current.subtasks.map((item) => (item.id === subtask.id ? { ...item, ...updatedSubtask } : item)),
+      }));
+      setSubjects((items) =>
+        items.map((item) =>
+          item.id === subjectId
+            ? { ...item, subtasks: (item.subtasks || []).map((task) => (task.id === subtask.id ? { ...task, ...updatedSubtask } : task)) }
+            : item
+        )
+      );
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSavingId("");
+    }
+  }
+
   return (
     <div>
       <PageHdr label="Study Plan" description="Plan subjects, subtasks, and optional schedule blocks." action={{ label: "Add subject", onClick: () => setModal(true) }} t={t} />
@@ -131,10 +227,14 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
                   <div style={{ width: 38, height: 38, background: t.hover, border: `1px solid ${t.borderAlt}`, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", color: t.accent }}><Icon.book /></div>
                   <div>
                     <div style={{ fontSize: 15, color: t.text, fontWeight: 750 }}>{subj.name}</div>
+                    {subj.tag && <div style={{ fontSize: 11, color: t.accent, marginTop: 2 }}>{subj.tag}</div>}
                     <div style={{ fontSize: 12, color: t.textMutedMore, marginTop: 2 }}>{linkedBlockLabel(subj.scheduleBlockId)}</div>
                   </div>
                 </div>
-                <button onClick={() => setSubjects((subjs) => subjs.filter((x) => x.id !== subj.id))} style={{ background: "none", border: "none", cursor: "pointer", color: t.textMutedMost }}><Icon.x /></button>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button onClick={() => startEdit(subj)} title="Update subject" style={{ background: "none", border: "none", cursor: "pointer", color: t.textMutedMost }}><Icon.settings /></button>
+                  <button onClick={() => setSubjects((subjs) => subjs.filter((x) => x.id !== subj.id))} style={{ background: "none", border: "none", cursor: "pointer", color: t.textMutedMost }}><Icon.x /></button>
+                </div>
               </div>
 
               <label style={s.label}>Schedule block</label>
@@ -162,8 +262,8 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8 }}>
-                <input value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { addSubtask(subj.id, draft); setDraft(""); } }} placeholder="new subtask" style={{ ...s.input, marginBottom: 0 }} />
-                <button onClick={() => { addSubtask(subj.id, draft); setDraft(""); }} style={s.ghost}>Add</button>
+                <input value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={async (e) => { if (e.key === "Enter" && await addSubtask(subj.id, draft)) setDraft(""); }} placeholder="new subtask" style={{ ...s.input, marginBottom: 0 }} />
+                <button onClick={async () => { if (await addSubtask(subj.id, draft)) setDraft(""); }} style={s.ghost}>Add</button>
               </div>
             </div>
           );
@@ -174,6 +274,8 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
         <Modal onClose={() => setModal(false)} title="Add subject" t={t}>
           <label style={s.label}>Subject name</label>
           <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && add()} placeholder="subject name" style={s.input} autoFocus />
+          <label style={s.label}>Tag</label>
+          <input value={form.tag} onChange={(e) => setForm((f) => ({ ...f, tag: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && add()} placeholder="tag optional" style={s.input} />
           <label style={s.label}>Schedule block</label>
           <select value={form.scheduleBlockId} onChange={(e) => setForm((f) => ({ ...f, scheduleBlockId: e.target.value }))} style={s.input}>
             <option value="">No linked block</option>
@@ -205,6 +307,49 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
           </div>
           <button onClick={addFormSubtask} style={{ ...s.ghost, width: "100%", marginBottom: 12 }}>Add another subtask</button>
           <button onClick={add} disabled={isAdding} style={{ ...s.btn, opacity: isAdding ? 0.65 : 1 }}>{isAdding ? "Adding..." : "Add subject"}</button>
+        </Modal>
+      )}
+
+      {editForm && (
+        <Modal onClose={() => setEditForm(null)} title="Update subject" t={t}>
+          <form onSubmit={updateSubject}>
+            <label style={s.label}>Subject name</label>
+            <input name="name" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} placeholder="subject name" style={s.input} autoFocus />
+            <label style={s.label}>Tag</label>
+            <input name="tag" value={editForm.tag} onChange={(e) => setEditForm((f) => ({ ...f, tag: e.target.value }))} placeholder="tag optional" style={s.input} />
+            <label style={s.label}>Schedule block</label>
+            <select name="scheduleBlockId" value={editForm.scheduleBlockId} onChange={(e) => setEditForm((f) => ({ ...f, scheduleBlockId: e.target.value }))} style={s.input}>
+              <option value="">No linked block</option>
+              {studyBlocks.map((block) => <option key={block.id} value={block.id}>{block.day} - {block.title}</option>)}
+            </select>
+            <button type="submit" disabled={savingId === editForm.id} style={{ ...s.btn, opacity: savingId === editForm.id ? 0.65 : 1, marginBottom: 14 }}>
+              {savingId === editForm.id ? "Updating..." : "Update subject"}
+            </button>
+          </form>
+
+          <label style={s.label}>Subtasks</label>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {editForm.subtasks.map((subtask) => (
+              <div key={subtask.id} style={{ background: t.hover, border: `1px solid ${t.border}`, borderRadius: 8, padding: 10 }}>
+                <input
+                  value={subtask.name}
+                  onChange={(e) => updateEditSubtask(subtask.id, "name", e.target.value)}
+                  placeholder="subtask name"
+                  style={{ ...s.input, marginBottom: 8 }}
+                />
+                <textarea
+                  value={subtask.description}
+                  onChange={(e) => updateEditSubtask(subtask.id, "description", e.target.value)}
+                  placeholder="description optional"
+                  rows={2}
+                  style={{ ...s.input, minHeight: 68, resize: "vertical", lineHeight: 1.4 }}
+                />
+                <button onClick={() => updateSubtask(editForm.id, subtask)} disabled={savingId === subtask.id} style={{ ...s.ghost, width: "100%", opacity: savingId === subtask.id ? 0.65 : 1 }}>
+                  {savingId === subtask.id ? "Updating..." : "Update subtask"}
+                </button>
+              </div>
+            ))}
+          </div>
         </Modal>
       )}
     </div>

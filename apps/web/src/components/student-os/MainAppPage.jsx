@@ -10,12 +10,16 @@ import StudyPlans from "./StudyPlans.jsx";
 import { Icon } from "./icons.jsx";
 import { getNextTheme, getStoredTheme, initDocs, initHabits, initSchedule, initSubjects, initTasks, isDarkTheme, NAV_ITEMS, saveStoredTheme, themes } from "./data.js";
 import { scheduleQueryOptions } from "../../fetchs/scheduleFetchs";
+import { studyPlanQueryOptions } from "../../fetchs/studyPlanFetchs";
+import { notesQueryOptions } from "../../fetchs/notesFetchs";
 
 export default function StudentOS({ user, onLogout }) {
   const [active, setActive] = useState("dashboard");
   const [tasks, setTasks] = useState(initTasks);
   const [schedule, setSchedule] = useState(initSchedule);
   const [hasLoadedSchedule, setHasLoadedSchedule] = useState(false);
+  const [hasLoadedStudyPlan, setHasLoadedStudyPlan] = useState(false);
+  const [hasLoadedDocs, setHasLoadedDocs] = useState(false);
   const [subjects, setSubjects] = useState(initSubjects);
   const [habits, setHabits] = useState(initHabits);
   const [docs, setDocs] = useState(initDocs);
@@ -24,6 +28,8 @@ export default function StudentOS({ user, onLogout }) {
   const t = themes[theme];
   const isDoc = active === "documents";
   const scheduleQuery = useQuery(scheduleQueryOptions(user?.id));
+  const studyPlanQuery = useQuery(studyPlanQueryOptions(user?.id));
+  const notesQuery = useQuery(notesQueryOptions(user?.id));
 
   useEffect(() => {
     function onKey(e) {
@@ -50,6 +56,20 @@ export default function StudentOS({ user, onLogout }) {
     setSchedule(scheduleQuery.data);
     setHasLoadedSchedule(true);
   }, [hasLoadedSchedule, scheduleQuery.data]);
+
+  useEffect(() => {
+    if (hasLoadedStudyPlan || !studyPlanQuery.data) return;
+
+    setSubjects(studyPlanQuery.data);
+    setHasLoadedStudyPlan(true);
+  }, [hasLoadedStudyPlan, studyPlanQuery.data]);
+
+  useEffect(() => {
+    if (hasLoadedDocs || !notesQuery.data) return;
+
+    setDocs(notesQuery.data);
+    setHasLoadedDocs(true);
+  }, [hasLoadedDocs, notesQuery.data]);
 
   const currentPage = NAV_ITEMS.find((n) => n.id === active);
 
@@ -106,7 +126,15 @@ export default function StudentOS({ user, onLogout }) {
             {active === "studyplans" && <StudyPlans subjects={subjects} setSubjects={setSubjects} schedule={schedule} setSchedule={setSchedule} t={t} />}
             {active === "habits" && <Habits habits={habits} setHabits={setHabits} t={t} />}
             {active === "focustime" && <FocusTime tasks={tasks} setTasks={setTasks} subjects={subjects} schedule={schedule} t={t} />}
-            {active === "documents" && <Documents docs={docs} setDocs={setDocs} t={t} />}
+            {active === "documents" && (
+              <Documents
+                docs={docs}
+                setDocs={setDocs}
+                isLoading={notesQuery.isLoading && !hasLoadedDocs}
+                isError={notesQuery.isError}
+                t={t}
+              />
+            )}
           </div>
         </div>
       </div>

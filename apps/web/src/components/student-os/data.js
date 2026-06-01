@@ -75,11 +75,7 @@ export const initSchedule = {
   sunday: [],
 };
 
-export const initSubjects = [
-  { id: 1, name: "data structures & algorithms", progress: 65, importance: 5, scheduleBlockId: "", subtasks: [{ id: 101, text: "binary tree traversals", done: false }, { id: 102, text: "hash table exercises", done: true }] },
-  { id: 2, name: "calculus ii", progress: 45, importance: 4, scheduleBlockId: "", subtasks: [{ id: 201, text: "integration by parts", done: false }, { id: 202, text: "series convergence practice", done: false }] },
-  { id: 3, name: "physics", progress: 70, importance: 3, scheduleBlockId: "", subtasks: [{ id: 301, text: "kinematics problem set", done: true }, { id: 302, text: "electric fields review", done: false }] },
-];
+export const initSubjects = [];
 
 export const initHabits = [
   { id: 1, name: "morning workout", category: "health", streak: 15, done: true, week: [1, 1, 1, 0, 1, 1, 1] },

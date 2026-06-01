@@ -2,30 +2,55 @@ import { useEffect, useState } from "react";
 import { Icon } from "./icons.jsx";
 import { renderMarkdown } from "./markdown.js";
 import { getStyles } from "./ui.jsx";
+import { deleteNote, postNote, putNote } from "../../fetchs/notesFetchs";
 
-export default function Documents({ docs, setDocs, t }) {
+export default function Documents({ docs, setDocs, isLoading, isError, t }) {
   const s = getStyles(t);
   const [sel, setSel] = useState(null);
   const [editing, setEditing] = useState(false);
   const [search, setSearch] = useState("");
   const [eContent, setEContent] = useState("");
   const [eTitle, setETitle] = useState("");
-  const filtered = docs.filter((d) => d.title.includes(search.toLowerCase()));
+  const [savingId, setSavingId] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
+  const filtered = docs.filter((d) => d.title.toLowerCase().includes(search.toLowerCase()));
 
-  function newDoc() {
-    const doc = { id: Date.now(), title: "Untitled note", date: new Date().toLocaleDateString("en-US"), content: "# Untitled note\n\nStart writing..." };
-    setDocs((items) => [doc, ...items]);
-    setSel(doc);
-    setEContent(doc.content);
-    setETitle(doc.title);
-    setEditing(true);
+  async function newDoc() {
+    if (isCreating) return;
+
+    const doc = { id: crypto.randomUUID(), title: "Untitled note", date: new Date().toLocaleDateString("en-US"), content: "# Untitled note\n\nStart writing..." };
+    setIsCreating(true);
+
+    try {
+      await postNote(doc);
+      setDocs((items) => [doc, ...items]);
+      setSel(doc);
+      setEContent(doc.content);
+      setETitle(doc.title);
+      setEditing(true);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsCreating(false);
+    }
   }
 
-  function save() {
-    if (!sel) return;
-    setDocs((items) => items.map((doc) => (doc.id === sel.id ? { ...doc, title: eTitle, content: eContent } : doc)));
-    setSel((doc) => ({ ...doc, title: eTitle, content: eContent }));
-    setEditing(false);
+  async function save() {
+    if (!sel || savingId) return;
+
+    const updatedDoc = { ...sel, title: eTitle, content: eContent };
+    setSavingId(sel.id);
+
+    try {
+      await putNote(updatedDoc);
+      setDocs((items) => items.map((doc) => (doc.id === sel.id ? updatedDoc : doc)));
+      setSel(updatedDoc);
+      setEditing(false);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setSavingId("");
+    }
   }
 
   function open(doc) {
@@ -33,6 +58,16 @@ export default function Documents({ docs, setDocs, t }) {
     setEContent(doc.content);
     setETitle(doc.title);
     setEditing(false);
+  }
+
+  async function remove(doc) {
+    try {
+      await deleteNote(doc.id);
+      setDocs((items) => items.filter((x) => x.id !== doc.id));
+      if (sel?.id === doc.id) setSel(null);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   useEffect(() => {
@@ -50,12 +85,14 @@ export default function Documents({ docs, setDocs, t }) {
   return (
     <div style={{ display: "flex", height: "calc(100vh - 72px)" }}>
       <div style={{ width: 300, borderRight: `1px solid ${t.border}`, display: "flex", flexDirection: "column", flexShrink: 0, background: t.bgAlt }}>
-        <button onClick={newDoc} style={{ ...s.btn, margin: 14, marginBottom: 10 }}>New note</button>
+        <button onClick={newDoc} disabled={isCreating} style={{ ...s.btn, margin: 14, marginBottom: 10, opacity: isCreating ? 0.65 : 1 }}>{isCreating ? "Creating..." : "New note"}</button>
         <div style={{ position: "relative", margin: "0 12px 8px" }}>
           <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: t.textMutedMore }}><Icon.search /></span>
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search notes" style={{ ...s.input, paddingLeft: 30, marginBottom: 0 }} />
         </div>
         <div style={{ flex: 1, overflowY: "auto" }}>
+          {isLoading && <div style={{ padding: 14, color: t.textMutedMore, fontSize: 13 }}>Loading notes...</div>}
+          {isError && <div style={{ padding: 14, color: t.accent, fontSize: 13 }}>Could not load notes.</div>}
           {filtered.map((doc) => (
             <div key={doc.id} onClick={() => open(doc)} style={{ padding: "10px 14px", cursor: "pointer", borderBottom: `1px solid ${t.border}`, background: sel?.id === doc.id ? t.hover : "transparent", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }} onMouseEnter={(e) => { if (sel?.id !== doc.id) e.currentTarget.style.background = t.hover; }} onMouseLeave={(e) => { if (sel?.id !== doc.id) e.currentTarget.style.background = "transparent"; }}>
               <div>
@@ -65,7 +102,7 @@ export default function Documents({ docs, setDocs, t }) {
                 </div>
                 <div style={{ fontSize: 12, color: t.textMutedMore }}>{doc.date}</div>
               </div>
-              <button onClick={(e) => { e.stopPropagation(); setDocs((items) => items.filter((x) => x.id !== doc.id)); if (sel?.id === doc.id) setSel(null); }} style={{ background: "none", border: "none", cursor: "pointer", color: t.textMutedMost, flexShrink: 0 }}><Icon.x /></button>
+              <button onClick={(e) => { e.stopPropagation(); remove(doc); }} style={{ background: "none", border: "none", cursor: "pointer", color: t.textMutedMost, flexShrink: 0 }}><Icon.x /></button>
             </div>
           ))}
         </div>
@@ -81,7 +118,7 @@ export default function Documents({ docs, setDocs, t }) {
                 <span style={{ fontSize: 18, color: t.text, fontWeight: 750 }}>{sel.title}</span>
               )}
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                {editing ? <button onClick={save} style={s.btn}>Save</button> : <button onClick={() => { setEditing(true); setEContent(sel.content); setETitle(sel.title); }} style={s.btn}>Edit note</button>}
+                {editing ? <button onClick={save} disabled={savingId === sel.id} style={{ ...s.btn, opacity: savingId === sel.id ? 0.65 : 1 }}>{savingId === sel.id ? "Saving..." : "Save"}</button> : <button onClick={() => { setEditing(true); setEContent(sel.content); setETitle(sel.title); }} style={s.btn}>Edit note</button>}
               </div>
             </div>
             <div style={{ flex: 1, overflow: "auto", padding: 24 }}>
