@@ -21,6 +21,7 @@ function toSchedule(events) {
       id: event.id,
       title: event.title,
       description: event.description || "",
+      tag: event.tag,
       start_time: normalizeTime(event.start_time),
       start_period: event.start_period,
       end_time: normalizeTime(event.end_time),
