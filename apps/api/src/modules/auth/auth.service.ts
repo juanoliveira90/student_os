@@ -21,12 +21,12 @@ export const AuthService = {
     async login(data: LoginInput) {
         const userExists = await AuthQueries.getUserByEmail(data.email)
         if (!userExists) {
-            throw { statusCode: 409, message: "user is not registered" }
+            throw { statusCode: 401, error: "wrong credentials" }
         }
 
         const checkPassword = userExists.password ? await bcrypt.compare(data.password, userExists.password) : false
         if (!checkPassword) {
-            return { error: "wrong credentials" }
+            return { statusCode: 401, error: "wrong credentials" }
         }
 
         return {
@@ -39,7 +39,7 @@ export const AuthService = {
     async userInformation(data: getUserInput) {
         const getUser = await AuthQueries.getUserByEmail(data.email)
         if (!getUser) {
-            throw { statusCode: 409, message: "user is not registered" }
+            throw { statusCode: 401, message: "user is not registered" }
         }
 
         return {

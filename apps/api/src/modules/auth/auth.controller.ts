@@ -11,7 +11,7 @@ export async function AuthController(app: FastifyInstance) {
     app.post('/login', { schema: loginSchema, config: { public: true } }, async (request, reply) => {
         const user = await AuthService.login(request.body as any)
         if (!user.id || !user.email) {
-            throw new Error("missing id")
+            throw new Error("missing credentials")
         }
         const token = app.jwt.sign({
             sub: user.id?.toString(),
