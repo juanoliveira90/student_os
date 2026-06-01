@@ -5,8 +5,7 @@ export const noteInsertSchema = {
         properties: {
             id: { type: 'string' },
             title: { type: 'string' },
-            content: { type: 'string' },
-            subject_id: { type: 'string', nullable: true }
+            content: { type: 'string' }
         }
     }
 }
@@ -18,8 +17,7 @@ export const noteUpdateSchema = {
         properties: {
             id: { type: 'string' },
             title: { type: 'string' },
-            content: { type: 'string' },
-            subject_id: { type: 'string', nullable: true }
+            content: { type: 'string' }
         }
     }
 }

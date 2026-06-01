@@ -95,9 +95,6 @@ export const Notes = pgTable("notes", {
     user_id: bigint({ mode: "number" }).references(() => Users.id, {
         onDelete: 'cascade'
     }),
-    subject_id: uuid().references(() => Subjects.id, {
-        onDelete: 'set null'
-    }),
     title: varchar({ length: 100 }).notNull(),
     content: text().notNull(),
     created_at: timestamp({ precision: 0, withTimezone: true }).defaultNow(),

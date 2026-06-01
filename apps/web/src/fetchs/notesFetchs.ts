@@ -14,7 +14,6 @@ function toNote(note) {
     id: note.id,
     title: note.title,
     content: note.content,
-    subjectId: note.subject_id || "",
     date: formatDate(note.created_at),
   };
 }
@@ -49,7 +48,6 @@ function toNotePayload(note) {
     id: note.id,
     title: note.title,
     content: note.content,
-    subject_id: note.subjectId || null,
   };
 }
 
