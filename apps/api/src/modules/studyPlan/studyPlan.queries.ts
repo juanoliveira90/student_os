@@ -111,7 +111,7 @@ export const StudyPlanQueries = {
     await db.delete(SubjectSubtasks).where(eq(SubjectSubtasks.id, subtaskId))
   },
 
-  async deleteSubject(userId: number, subjectId: string) {
+    async deleteSubject(userId: number, subjectId: string) {
     const subject = await db.select({ id: Subjects.id })
     .from(Subjects)
     .where(and(eq(Subjects.id, subjectId), eq(Subjects.user_id, userId)))

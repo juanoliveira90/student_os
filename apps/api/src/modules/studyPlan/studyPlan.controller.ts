@@ -14,7 +14,8 @@ export async function StudyPlanController(app: FastifyInstance) {
     })
 
     app.post('/subject', { schema: subjectInsertSchema }, async (request, reply) => {
-        const query = await StudyPlanService.createSubject(parseInt(request.user.sub), request.body as any)
+        const data = request.body as Parameters<typeof StudyPlanService.createSubject>[1]
+        const query = await StudyPlanService.createSubject(parseInt(request.user.sub), data)
         if (query.error) {
             return reply.code(500).send(query)
         }
@@ -23,7 +24,8 @@ export async function StudyPlanController(app: FastifyInstance) {
     })
 
     app.post('/subtask', { schema: subtaskInsertSchema }, async (request, reply) => {
-        const query = await StudyPlanService.addSubtask(parseInt(request.user.sub), request.body as any)
+        const data = request.body as Parameters<typeof StudyPlanService.addSubtask>[1]
+        const query = await StudyPlanService.addSubtask(parseInt(request.user.sub), data)
         if (query.error) {
             return reply.code(500).send(query)
         }
@@ -52,7 +54,8 @@ export async function StudyPlanController(app: FastifyInstance) {
     })
 
     app.put('/subject', { schema: subjectUpdateSchema }, async (request, reply) => {
-        const query = await StudyPlanService.updateSubject(parseInt(request.user.sub), request.body as any)
+        const data = request.body as Parameters<typeof StudyPlanService.updateSubject>[1]
+        const query = await StudyPlanService.updateSubject(parseInt(request.user.sub), data)
         if (query.error) {
             return reply.code(500).send(query)
         }
@@ -61,7 +64,8 @@ export async function StudyPlanController(app: FastifyInstance) {
     })
 
     app.put('/subtask', { schema: subtaskUpdateSchema }, async (request, reply) => {
-        const query = await StudyPlanService.updateSubtask(parseInt(request.user.sub), request.body as any)
+        const data = request.body as Parameters<typeof StudyPlanService.updateSubtask>[1]
+        const query = await StudyPlanService.updateSubtask(parseInt(request.user.sub), data)
         if (query.error) {
             return reply.code(500).send(query)
         }

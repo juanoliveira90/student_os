@@ -4,12 +4,14 @@ import { registerSchema, loginSchema } from "./auth.schemas.ts";
 
 export async function AuthController(app: FastifyInstance) {
     app.post('/register', { schema: registerSchema, config: { public: true } }, async (request, reply) => {
-        const result = await AuthService.register(request.body as any)
+        const data = request.body as Parameters<typeof AuthService.register>[0]
+        const result = await AuthService.register(data)
         return reply.code(201).send(result)
     })
 
     app.post('/login', { schema: loginSchema, config: { public: true } }, async (request, reply) => {
-        const user = await AuthService.login(request.body as any)
+        const data = request.body as Parameters<typeof AuthService.login>[0]
+        const user = await AuthService.login(data)
         if (!user.id || !user.email) {
             throw new Error("missing credentials")
         }
@@ -30,8 +32,8 @@ export async function AuthController(app: FastifyInstance) {
     })
 
     app.get('/me', async (request, reply) => {
-        const user = request.user
-        const info = await AuthService.userInformation(user as { email: string })
+        const user = request.user as { email: string }
+        const info = await AuthService.userInformation(user)
 
         return reply.send({ user: info })
     })

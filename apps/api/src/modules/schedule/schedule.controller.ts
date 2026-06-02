@@ -13,7 +13,8 @@ export async function ScheduleController(app: FastifyInstance) {
     })
 
     app.put('/', { schema: InsertSchema }, async (request, reply) => {
-        const query = await ScheduleService.updateSchedule(parseInt(request.user.sub), request.body as any)
+        const data = request.body as Parameters<typeof ScheduleService.updateSchedule>[1]
+        const query = await ScheduleService.updateSchedule(parseInt(request.user.sub), data)
         if (query.error) {
             return reply.code(500).send(query.error)
         }
@@ -22,7 +23,8 @@ export async function ScheduleController(app: FastifyInstance) {
     })
 
     app.delete('/delete', { schema: DeleteSchema }, async (request, reply) => {
-        const query = await ScheduleService.deleteEvent(parseInt(request.user.sub), request.body as any)
+        const data = request.body as Parameters<typeof ScheduleService.deleteEvent>[1]
+        const query = await ScheduleService.deleteEvent(parseInt(request.user.sub), data)
         if (query.error) {
             return reply.code(500).send(query.error)
         }
