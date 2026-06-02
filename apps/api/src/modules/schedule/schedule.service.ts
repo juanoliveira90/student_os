@@ -1,10 +1,26 @@
 "use server"
 
 import { ScheduleQueries } from "./schedule.queries.ts"
-import type { remove, add } from "./schedule.types.ts"
+import type { add, remove } from "./schedule.types.ts"
 
 export const ScheduleService = {
-    async updateSchedule(userId: number, data: add) {        
+    async getSchedule(userId: number) {
+        try {
+            const schedule = await ScheduleQueries.getScheduleId(userId)
+            if (!schedule[0]) {
+                return { events: [] }
+            }
+
+            const events = await ScheduleQueries.getScheduleItems(schedule[0].id)
+
+            return { events }
+        } catch (error) {
+            console.error(error)
+            return { error: "could not load schedule" }
+        }
+    },
+
+    async updateSchedule(userId: number, data: add) {
         try {
             const schedule = await ScheduleQueries.createScheduleReturningId(userId)
             await ScheduleQueries.createOrUpdateEvent(data, schedule[0]!.id)

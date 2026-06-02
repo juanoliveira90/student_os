@@ -1,8 +1,15 @@
-import { 
-    pgTable, pgEnum, 
-    integer, varchar, text, time, timestamp, uuid, bigserial, bigint,
-    index, unique 
+import {
+    bigint,
+    bigserial,
+    pgTable,
+    text, time, timestamp,
+    unique,
+    uuid,
+    varchar,
+    boolean
 } from "drizzle-orm/pg-core"
+
+import type { AnyPgColumn } from "drizzle-orm/pg-core"
 
 export const Users = pgTable("users", {
     id: bigserial({ mode: "number" }).primaryKey(),
@@ -46,10 +53,56 @@ export const ScheduleItems = pgTable("schedule_items", {
     schedule_id: bigint({ mode: "number" }).references(() => Schedule.id, {
         onDelete: 'cascade'
     }),
+    //study_plan_id: uuid("study_plan_id").references((): AnyPgColumn => Subjects.id),
+    tag: text(),    
     day_of_week: /*dayOfWeekEnum()*/varchar({ length: 10 }).notNull(),
     title: text().notNull(),
+    description: text(),
     start_time: time().notNull(),
     start_period: varchar({ length: 2 }).notNull(),
     end_time: time().notNull(),
-    end_period: varchar({ length: 2 }).notNull()
+    end_period: varchar({ length: 2 }).notNull(),
+    //is_recurring: boolean().notNull()
+})
+
+export const StudyPlans = pgTable("study_plans", {
+    id: bigserial({ mode: "number" }).primaryKey(),
+    user_id: bigint({ mode: "number" }).references(() => Users.id),
+})
+
+export const Subjects = pgTable("subjects", {
+    id: uuid().primaryKey(),
+    user_id: bigint({ mode: "number" }).references(() => Users.id, {
+        onDelete: 'cascade'
+    }),
+    name: varchar({ length: 50 }).notNull(),
+    tag: text(),
+    schedule_block_id: uuid("schedule_block").references(() => ScheduleItems.id, {
+        onDelete: 'cascade'
+    }),
+    created_at: timestamp({ precision: 0, withTimezone: true }).defaultNow(),
+    updated_at: timestamp({ precision: 0, withTimezone: true }).defaultNow()    
+})
+
+export const SubjectSubtasks = pgTable("subjects_subtasks", {
+    id: uuid().primaryKey(),
+    subject_id: uuid().references(() => Subjects.id, {
+        onDelete: 'cascade'
+    }),
+    name: varchar({ length: 50 }).notNull(),
+    description: text(),
+    done: boolean().notNull().default(false),
+    created_at: timestamp({ precision: 0, withTimezone: true }).defaultNow(),
+    updated_at: timestamp({ precision: 0, withTimezone: true }).defaultNow()
+})
+
+export const Notes = pgTable("notes", {
+    id: uuid().primaryKey(),
+    user_id: bigint({ mode: "number" }).references(() => Users.id, {
+        onDelete: 'cascade'
+    }),
+    title: varchar({ length: 100 }).notNull(),
+    content: text().notNull(),
+    created_at: timestamp({ precision: 0, withTimezone: true }).defaultNow(),
+    updated_at: timestamp({ precision: 0, withTimezone: true }).defaultNow()
 })
