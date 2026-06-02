@@ -58,3 +58,11 @@ Interview me relentlessly about every aspect of this plan until we reach a share
 Ask the questions one at a time.
 
 If a question can be answered by exploring the codebase, explore the codebase instead.
+
+---
+name: no hardcode
+description: >
+  ..
+---
+
+Never leave any hard coded or mocked data without asking me first. If you are uncertain about making any changes, ask me instead of guessing

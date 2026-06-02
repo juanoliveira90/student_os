@@ -13,5 +13,17 @@ export const AuthQueries = {
         return await db.query.Users.findFirst({
             where: eq(Users.email, email) 
         })
+    },
+
+    async updateProfile(name: string, userId: number) {
+        await db.update(Users)
+        .set({ name: name })
+        .where(eq(Users.id, userId))
+    },
+
+    async updatePassword(userId: number, newPassword: string) {
+        await db.update(Users)
+        .set({ password: newPassword })
+        .where(eq(Users.id, userId))
     }
 }

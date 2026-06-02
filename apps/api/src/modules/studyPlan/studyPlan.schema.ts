@@ -64,7 +64,8 @@ export const subtaskUpdateSchema = {
     properties: {
       id: { type: 'string' },
       name: { type: 'string' },
-      description: { type: 'string', nullable: true }
+      description: { type: 'string', nullable: true },
+      done: { type: 'boolean' }
     }
   }
 }
@@ -84,7 +85,7 @@ export const subtaskInsertSchema = {
           properties: {
             id: { type: 'string' },
             name: { type: 'string' },
-            description: { type: 'string' }
+            description: { type: 'string' },
           }
         }
       }

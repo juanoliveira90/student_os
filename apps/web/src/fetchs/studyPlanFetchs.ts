@@ -13,7 +13,7 @@ function toSubject(subject) {
       text: subtask.name,
       name: subtask.name,
       description: subtask.description || "",
-      done: false,
+      done: Boolean(subtask.done),
     })),
   };
 }
@@ -113,6 +113,7 @@ export async function putSubtask(subtask) {
       id: subtask.id,
       name: subtask.name || subtask.text,
       description: subtask.description || "",
+      done: Boolean(subtask.done),
     }),
   });
 

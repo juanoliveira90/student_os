@@ -187,13 +187,45 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
   }
 
   function toggleSubtask(subjectId, subtaskId) {
+    const subject = subjects.find((item) => item.id === subjectId);
+    const subtask = subject?.subtasks?.find((item) => item.id === subtaskId);
+    if (!subtask) return;
+
+    const updatedSubtask = normalizeSubtask({ ...subtask, done: !subtask.done });
+
     setSubjects((items) =>
       items.map((item) =>
         item.id === subjectId
-          ? { ...item, subtasks: (item.subtasks || []).map((subtask) => (subtask.id === subtaskId ? { ...subtask, done: !subtask.done } : subtask)) }
+          ? { ...item, subtasks: (item.subtasks || []).map((task) => (task.id === subtaskId ? updatedSubtask : task)) }
           : item
       )
     );
+    setPendingChanges((current) => {
+      const createSubject = current.createSubjects.find((item) => item.id === subjectId);
+      if (createSubject) {
+        return {
+          ...current,
+          createSubjects: current.createSubjects.map((item) =>
+            item.id === subjectId
+              ? { ...item, subtasks: (item.subtasks || []).map((task) => (task.id === subtaskId ? updatedSubtask : task)) }
+              : item
+          ),
+        };
+      }
+
+      if (current.createSubtasks.some((item) => item.subtask.id === subtaskId)) {
+        return {
+          ...current,
+          createSubtasks: current.createSubtasks.map((item) => (item.subtask.id === subtaskId ? { ...item, subtask: updatedSubtask } : item)),
+        };
+      }
+
+      return {
+        ...current,
+        updateSubtasks: [...current.updateSubtasks.filter((item) => item.id !== subtaskId), updatedSubtask],
+      };
+    });
+    markChanged();
   }
 
   function removeSubtask(subjectId, subtaskId) {

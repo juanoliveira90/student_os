@@ -32,6 +32,7 @@ export interface updateSubtask {
     id: string
     name: string
     description?: string | null
+    done: boolean
 }
 
 export interface studyPlanSubject {
@@ -43,5 +44,6 @@ export interface studyPlanSubject {
         id: string
         name: string
         description: string | null
+        done: boolean
     }>
 }

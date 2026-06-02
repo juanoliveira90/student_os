@@ -53,3 +53,25 @@ export async function logout() {
 
   return parseJsonResponse(response);
 }
+
+export async function updateProfile(name) {
+  const response = await fetch("/auth/profile", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+    credentials: "include",
+  })
+
+  return parseJsonResponse(response)
+}
+
+export async function updatePassword(new_password) {
+  const response = await fetch("/auth/password", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ new_password }),
+    credentials: "include",
+  })
+
+  return parseJsonResponse(response)
+}

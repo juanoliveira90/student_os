@@ -13,7 +13,8 @@ export const StudyPlanQueries = {
       scheduleBlockId: Subjects.schedule_block_id,
       subtaskId: SubjectSubtasks.id,
       subtaskName: SubjectSubtasks.name,
-      subtaskDescription: SubjectSubtasks.description
+      subtaskDescription: SubjectSubtasks.description,
+      subtaskDone: SubjectSubtasks.done
     })
     .from(Subjects)
     .leftJoin(SubjectSubtasks, eq(SubjectSubtasks.subject_id, Subjects.id))
@@ -34,7 +35,8 @@ export const StudyPlanQueries = {
         subject.subtasks.push({
           id: row.subtaskId,
           name: row.subtaskName!,
-          description: row.subtaskDescription
+          description: row.subtaskDescription,
+          done: row.subtaskDone!
         })
       }
 
@@ -156,23 +158,10 @@ export const StudyPlanQueries = {
     .set({
       name: data.name,
       description: data.description ?? null,
+      done: data.done,
       updated_at: new Date()
     })
     .where(eq(SubjectSubtasks.id, data.id))
   }
   
-  
-  /*
-  async createStudyPlanReturningId(userId: number, data: createSubject) {
-    return await db.insert(StudyPlans).values({ user_id: userId, name: data.subject_name })
-    .onConflictDoUpdate({ 
-        target: StudyPlans.id,
-        set: {
-            user_id: sql`${StudyPlans.id}`
-        }
-    })
-    .returning({ id: StudyPlans.id })
-  },*/
-  
-
 }

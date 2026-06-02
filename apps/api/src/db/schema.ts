@@ -5,7 +5,8 @@ import {
     text, time, timestamp,
     unique,
     uuid,
-    varchar
+    varchar,
+    boolean
 } from "drizzle-orm/pg-core"
 
 import type { AnyPgColumn } from "drizzle-orm/pg-core"
@@ -90,6 +91,7 @@ export const SubjectSubtasks = pgTable("subjects_subtasks", {
     }),
     name: varchar({ length: 50 }).notNull(),
     description: text(),
+    done: boolean().notNull().default(false),
     created_at: timestamp({ precision: 0, withTimezone: true }).defaultNow(),
     updated_at: timestamp({ precision: 0, withTimezone: true }).defaultNow()
 })

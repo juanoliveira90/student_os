@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { DAY_LABELS } from "./data.js";
 import { Icon } from "./icons.jsx";
 import { getStyles, SecHdr } from "./ui.jsx";
@@ -32,7 +33,7 @@ function formatTime(time, period) {
 
 function getSubjectStats(subject) {
   const subtasks = subject.subtasks || [];
-  const total = subtasks.length || 1;
+  const total = subtasks.length || 0;
   const done = subtasks.filter((task) => task.done).length;
   const progress = Math.max(0, Math.min(100, Math.round((done / total) * 100)));
 
@@ -40,19 +41,39 @@ function getSubjectStats(subject) {
 }
 
 export default function Dashboard({ user, tasks, schedule, subjects, setActive, navigateToCreate, t }) {
+  const [isScheduleExpanded, setIsScheduleExpanded] = useState(false);
+  const [isStudyPlanExpanded, setIsStudyPlanExpanded] = useState(false);
   const s = getStyles(t);
   const profile = user?.user ?? user ?? {};
-  const displayName = profile.name || profile.email?.split("@")[0] || "Juan";
+  const displayName = profile.name || profile.email?.split("@")[0];
   const today = DAY_LABELS[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1];
-  const todaySchedule = (schedule?.[today] || []).slice(0, 3);
-  const scheduleItems = todaySchedule;
-  const subjectItems = (subjects || []).slice(0, 3);
-  const pendingTasks = subjectItems.reduce((sum, subject) => sum + (subject.subtasks || []).filter((task) => !task.done).length, 0);
-  const continueSubject = subjectItems.find((subject) => (subject.subtasks || []).some((task) => !task.done)) || subjectItems[0];
+  const allTodaySchedule = schedule?.[today] || [];
+  const hasMoreScheduleItems = allTodaySchedule.length > 4;
+  const scheduleItems = isScheduleExpanded ? allTodaySchedule : allTodaySchedule.slice(0, 3);
+  const allSubjects = subjects || [];
+  const hasMoreSubjectItems = allSubjects.length > 3;
+  const subjectItems = isStudyPlanExpanded ? allSubjects : allSubjects.slice(0, 3);
+  const pendingTasks = allSubjects.reduce((sum, subject) => sum + (subject.subtasks || []).filter((task) => !task.done).length, 0);
+  const continueSubject = allSubjects.find((subject) => (subject.subtasks || []).some((task) => !task.done)) || allSubjects[0];
   const continuePending = continueSubject ? (continueSubject.subtasks || []).filter((task) => !task.done).length : tasks.filter((task) => !task.done).length;
 
   const card = { ...s.card, boxShadow: "0 14px 42px rgba(102, 78, 50, 0.06)" };
+  const metricCard = { ...card, display: "flex", flexDirection: "column" };
+  const metricList = { border: `1px solid ${t.border}`, borderRadius: 8, overflow: "hidden", background: t.bgAlt, flex: 1 };
+  const scheduleList = {
+    ...metricList,
+    flex: "initial",
+    maxHeight: scheduleItems.length ? scheduleItems.length * 78 : 174,
+    transition: "max-height 220ms ease",
+  };
+  const subjectList = {
+    ...metricList,
+    flex: "initial",
+    maxHeight: subjectItems.length ? subjectItems.length * 74 : 174,
+    transition: "max-height 220ms ease",
+  };
   const pillButton = { ...s.ghost, borderRadius: 999, padding: "7px 14px", background: t.hover };
+  const expandButton = { ...s.ghost, width: "100%", marginTop: 10, padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 };
   const actionButton = {
     ...s.ghost,
     minHeight: 54,
@@ -75,13 +96,13 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
       </section>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
-        <section style={card}>
+        <section style={metricCard}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 16 }}>
             <SecHdr icon={<Icon.cal />} label="Today's Schedule" t={t} />
             <button type="button" onClick={() => setActive("schedule")} style={pillButton}>View full schedule</button>
           </div>
 
-          <div style={{ border: `1px solid ${t.border}`, borderRadius: 8, overflow: "hidden", background: t.bgAlt }}>
+          <div style={scheduleList}>
             {scheduleItems.length ? (
               scheduleItems.map((event, index) => (
                 <div key={event.id || `${event.title}-${index}`} style={{ display: "grid", gridTemplateColumns: "72px 24px 1fr", minHeight: 58, borderTop: index ? `1px solid ${t.border}` : "none" }}>
@@ -97,19 +118,25 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
                 </div>
               ))
             ) : (
-              <EmptyState t={t} label="No schedule blocks today" />
+              <EmptyState t={t} label="No events today" />
             )}
           </div>
-          <div style={{ color: t.text, fontSize: 13, marginTop: 16 }}>{scheduleItems.length} study blocks today</div>
+          {hasMoreScheduleItems && (
+            <button type="button" onClick={() => setIsScheduleExpanded((value) => !value)} style={expandButton}>
+              <span style={{ transform: isScheduleExpanded ? "rotate(-90deg)" : "rotate(90deg)", display: "inline-flex", transition: "transform 180ms ease" }}><Icon.chevronRight /></span>
+              {isScheduleExpanded ? "Show less" : `Show ${allTodaySchedule.length - 3} more`}
+            </button>
+          )}
+          <div style={{ color: t.text, fontSize: 13, marginTop: 16 }}>{allTodaySchedule.length} {allTodaySchedule.length > 1 ? "events" : allTodaySchedule.length === 0 ? "events" : "event"} today</div>
         </section>
 
-        <section style={card}>
+        <section style={metricCard}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 16 }}>
             <SecHdr icon={<Icon.book />} label="Study Plan Progress" t={t} />
             <button type="button" onClick={() => setActive("studyplans")} style={pillButton}>View all</button>
           </div>
 
-          <div style={{ border: `1px solid ${t.border}`, borderRadius: 8, overflow: "hidden", background: t.bgAlt }}>
+          <div style={subjectList}>
             {subjectItems.length ? (
               subjectItems.map((subject, index) => {
                 const stats = getSubjectStats(subject);
@@ -132,7 +159,13 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
               <EmptyState t={t} label="No study plans yet" />
             )}
           </div>
-          <div style={{ color: t.text, fontSize: 13, marginTop: 16 }}>{pendingTasks} tasks pending</div>
+          {hasMoreSubjectItems && (
+            <button type="button" onClick={() => setIsStudyPlanExpanded((value) => !value)} style={expandButton}>
+              <span style={{ transform: isStudyPlanExpanded ? "rotate(-90deg)" : "rotate(90deg)", display: "inline-flex", transition: "transform 180ms ease" }}><Icon.chevronRight /></span>
+              {isStudyPlanExpanded ? "Show less" : `Show ${allSubjects.length - 3} more`}
+            </button>
+          )}
+          <div style={{ color: t.text, fontSize: 13, marginTop: 16 }}>{pendingTasks} {pendingTasks > 1 ? "tasks" : pendingTasks === 0 ? "tasks" : "task"} pending</div>
         </section>
       </div>
 

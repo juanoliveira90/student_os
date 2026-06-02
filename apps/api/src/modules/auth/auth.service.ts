@@ -3,6 +3,7 @@
 import { AuthQueries } from "./auth.queries.ts"
 import { type RegisterInput, type LoginInput, type getUserInput } from "./auth.types.ts"
 import * as bcrypt from "bcrypt"
+import 'dotenv/config'
 
 export const AuthService = {    
     async register(data: RegisterInput) {
@@ -48,4 +49,25 @@ export const AuthService = {
             email: getUser.email
         }
     },
+
+    async updateProfile(userId: number, name: string) {
+        try {
+            await AuthQueries.updateProfile(name, userId)
+            return { statusCode: 201, message: "profile name updated!" }
+        } catch (error) {
+            console.error(error)
+            return { statusCode: 500, error: "could not update profile name." }
+        }
+    },
+
+    async updatePassword(userId: number, newPassword: string) {
+        try {
+            const newHashedPassword = await bcrypt.hash(newPassword, 10)
+            await AuthQueries.updatePassword(userId, newHashedPassword)
+            return { statusCode: 201, message: "password updated!" }
+        } catch (error) {
+            console.error(error)
+            return { statusCode: 500, error: "could not update password." }
+        }
+    }
 }

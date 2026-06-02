@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { AuthService } from "./auth.service.ts";
 import { registerSchema, loginSchema } from "./auth.schemas.ts";
+import { request } from "node:http";
 
 export async function AuthController(app: FastifyInstance) {
     app.post('/register', { schema: registerSchema, config: { public: true } }, async (request, reply) => {
@@ -47,5 +48,25 @@ export async function AuthController(app: FastifyInstance) {
             console.error(error)
             return reply.code(401).send({ message: "not authenticated" })
         }
+    })
+
+    app.patch('/profile', async (request, reply) => {
+        const data = request.body as { name: string }
+        const result = await AuthService.updateProfile(parseInt(request.user.sub), data.name)
+        if (result.error) {
+            return reply.code(result.statusCode).send(result.error)
+        }
+
+        return reply.code(result.statusCode).send(result.message)
+    })
+
+    app.patch('/password', async (request, reply) => {
+        const data = request.body as { new_password: string }
+        const result = await AuthService.updatePassword(parseInt(request.user.sub), data.new_password)
+        if (result.error) {
+            return reply.code(result.statusCode).send(result.error)
+        }
+
+        return reply.code(result.statusCode).send(result.message)
     })
 }
