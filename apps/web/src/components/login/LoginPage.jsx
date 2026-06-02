@@ -109,7 +109,7 @@ export default function LoginPage({ mode = "login", onAuthenticated }) {
     <div style={{ minHeight: "100vh", background: t.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', 'SF Pro Text', 'Segoe UI', system-ui, sans-serif", color: t.text, transition: "background 0.2s, color 0.2s" }}>
       <div style={{ width: "100%", maxWidth: 420, padding: "20px" }}>
         <div style={{ marginBottom: 34, textAlign: "center" }}>
-          <div style={{ fontSize: 34, color: t.text, marginBottom: 8, fontWeight: 800 }}>Student OS</div>
+          <div style={{ fontSize: 34, color: t.text, marginBottom: 8, fontWeight: 800 }}>Studium</div>
           <div style={{ fontSize: 14, color: t.textMutedMore }}>
             {isSignup ? tr("auth.subtitleSignup") : tr("auth.subtitleLogin")}
           </div>

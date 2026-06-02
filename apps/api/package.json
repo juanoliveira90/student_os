@@ -1,7 +1,7 @@
 {
-  "name": "student_os_api",
+  "name": "studium_api",
   "version": "1.0.0",
-  "description": "back end for student_os project",
+  "description": "back end for Studium project",
   "homepage": "https://github.com/juanoliveira90/student_os#readme",
   "bugs": {
     "url": "https://github.com/juanoliveira90/student_os/issues"

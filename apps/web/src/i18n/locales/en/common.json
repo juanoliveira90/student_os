@@ -8,7 +8,7 @@
     "switchTo": "Switch to {{language}}"
   },
   "landing": {
-    "brand": "Student OS",
+    "brand": "Studium",
     "nav": {
       "label": "Landing page navigation",
       "method": "Method",
@@ -44,7 +44,7 @@
     "openSource": {
       "eyebrow": "Open source MVP",
       "title": "Built to become useful before it becomes big.",
-      "body": "No pricing section. No fake urgency. Student OS is a small open source MVP shaped around real study routines.",
+      "body": "No pricing section. No fake urgency. Studium is a small open source MVP shaped around real study routines.",
       "cta": "Get started"
     }
   },
@@ -225,7 +225,7 @@
     "passwordMatch": "Passwords must match.",
     "passwordUpdated": "password updated!",
     "continue": "Continue",
-    "customizeSystem": "Customize how Student OS works for you.",
+    "customizeSystem": "Customize how Studium works for you.",
     "appearance": "Appearance",
     "appearanceCopy": "Choose the theme you prefer.",
     "light": "Light",
