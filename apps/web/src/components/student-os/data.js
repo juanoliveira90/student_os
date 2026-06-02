@@ -80,24 +80,6 @@ export function isDarkTheme(theme) {
 export const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 export const DAY_LABELS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
-export const initSchedule = {
-  monday: [],
-  tuesday: [],
-  wednesday: [],
-  thursday: [],
-  friday: [],
-  saturday: [],
-  sunday: [],
-};
-
-export const initSubjects = [];
-
-export const initHabits = [];
-
-export const initTasks = [];
-
-export const initDocs = [];
-
 export const productivityData = [];
 
 export const NAV_ITEMS = [

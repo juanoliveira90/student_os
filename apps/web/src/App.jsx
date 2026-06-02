@@ -8,10 +8,12 @@ import {
   redirect,
 } from "@tanstack/react-router";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import LoginPage from "./components/login/LoginPage.jsx";
 import StudentOS from "./components/student-os/MainAppPage.jsx";
 import { getAuthenticatedUser } from "./fetchs/authFetchs";
 import { scheduleQueryOptions } from "./fetchs/scheduleFetchs";
+import { studyPlanQueryOptions } from "./fetchs/studyPlanFetchs";
 import { queryClient } from "./lib/queryClient";
 
 const rootRoute = createRootRoute({
@@ -46,7 +48,10 @@ const appRoute = createRoute({
       throw redirect({ to: "/login", replace: true });
     }
 
-    await context.queryClient.prefetchQuery(scheduleQueryOptions(context.user.id));
+    await Promise.all([
+      context.queryClient.prefetchQuery(scheduleQueryOptions(context.user.id)),
+      context.queryClient.prefetchQuery(studyPlanQueryOptions(context.user.id)),
+    ]);
   },
   component: AppRoute,
 });
@@ -59,6 +64,7 @@ const router = createRouter({
 });
 
 export default function App() {
+  const { t } = useTranslation();
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -72,7 +78,7 @@ export default function App() {
   }, []);
 
   if (isLoading) {
-    return <div>Checking authentication...</div>;
+    return <div>{t("app.checkingAuth")}</div>;
   }
 
   return (

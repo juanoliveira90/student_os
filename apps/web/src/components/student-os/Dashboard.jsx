@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { DAY_LABELS } from "./data.js";
 import { Icon } from "./icons.jsx";
 import { getStyles, SecHdr } from "./ui.jsx";
@@ -41,6 +42,7 @@ function getSubjectStats(subject) {
 }
 
 export default function Dashboard({ user, tasks, schedule, subjects, setActive, navigateToCreate, t }) {
+  const { t: tr } = useTranslation();
   const [isScheduleExpanded, setIsScheduleExpanded] = useState(false);
   const [isStudyPlanExpanded, setIsStudyPlanExpanded] = useState(false);
   const s = getStyles(t);
@@ -90,16 +92,16 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
     <div style={{ display: "grid", gap: 16 }}>
       <section style={{ ...card, minHeight: 130, padding: "28px 30px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24 }}>
         <div>
-          <h2 style={{ margin: 0, color: t.text, fontSize: 25, lineHeight: 1.15, fontWeight: 800 }}>Good to see you, {titleCase(displayName)}.</h2>
-          <p style={{ margin: "10px 0 0", color: t.textMuted, fontSize: 15 }}>Here's what's happening with your studies today.</p>
+          <h2 style={{ margin: 0, color: t.text, fontSize: 25, lineHeight: 1.15, fontWeight: 800 }}>{tr("dashboard.greeting", { name: titleCase(displayName) })}</h2>
+          <p style={{ margin: "10px 0 0", color: t.textMuted, fontSize: 15 }}>{tr("dashboard.todaySummary")}</p>
         </div>
       </section>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
         <section style={metricCard}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <SecHdr icon={<Icon.cal />} label="Today's Schedule" t={t} />
-            <button type="button" onClick={() => setActive("schedule")} style={pillButton}>View full schedule</button>
+            <SecHdr icon={<Icon.cal />} label={tr("dashboard.todaysSchedule")} t={t} />
+            <button type="button" onClick={() => setActive("schedule")} style={pillButton}>{tr("dashboard.viewFullSchedule")}</button>
           </div>
 
           <div style={scheduleList}>
@@ -113,27 +115,27 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
                   </div>
                   <div style={{ padding: "12px 14px" }}>
                     <div style={{ color: t.text, fontSize: 14, fontWeight: 750 }}>{titleCase(event.title)}</div>
-                    <div style={{ color: t.textMutedMore, fontSize: 13, marginTop: 3 }}>{titleCase(event.description || event.tag || "Study block")}</div>
+                    <div style={{ color: t.textMutedMore, fontSize: 13, marginTop: 3 }}>{event.description ? titleCase(event.description) : tr(`tags.${event.tag || "study block"}`)}</div>
                   </div>
                 </div>
               ))
             ) : (
-              <EmptyState t={t} label="No events today" />
+              <EmptyState t={t} label={tr("dashboard.noEventsToday")} />
             )}
           </div>
           {hasMoreScheduleItems && (
             <button type="button" onClick={() => setIsScheduleExpanded((value) => !value)} style={expandButton}>
               <span style={{ transform: isScheduleExpanded ? "rotate(-90deg)" : "rotate(90deg)", display: "inline-flex", transition: "transform 180ms ease" }}><Icon.chevronRight /></span>
-              {isScheduleExpanded ? "Show less" : `Show ${allTodaySchedule.length - 3} more`}
+              {isScheduleExpanded ? tr("common.showLess") : tr("common.showMore", { count: allTodaySchedule.length - 3 })}
             </button>
           )}
-          <div style={{ color: t.text, fontSize: 13, marginTop: 16 }}>{allTodaySchedule.length} {allTodaySchedule.length > 1 ? "events" : allTodaySchedule.length === 0 ? "events" : "event"} today</div>
+          <div style={{ color: t.text, fontSize: 13, marginTop: 16 }}>{tr(allTodaySchedule.length === 1 ? "dashboard.eventToday" : "dashboard.eventsToday", { count: allTodaySchedule.length })}</div>
         </section>
 
         <section style={metricCard}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <SecHdr icon={<Icon.book />} label="Study Plan Progress" t={t} />
-            <button type="button" onClick={() => setActive("studyplans")} style={pillButton}>View all</button>
+            <SecHdr icon={<Icon.book />} label={tr("dashboard.studyPlanProgress")} t={t} />
+            <button type="button" onClick={() => setActive("studyplans")} style={pillButton}>{tr("dashboard.viewAll")}</button>
           </div>
 
           <div style={subjectList}>
@@ -144,10 +146,10 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
                   <div key={subject.id || subject.name} style={{ display: "grid", gridTemplateColumns: "1fr minmax(120px, 44%)", gap: 16, alignItems: "center", padding: "12px 16px", borderTop: index ? `1px solid ${t.border}` : "none" }}>
                     <div>
                       <div style={{ color: t.text, fontSize: 14, fontWeight: 750 }}>{titleCase(subject.name)}</div>
-                      <div style={{ color: t.textMutedMore, fontSize: 13, marginTop: 3 }}>{titleCase(subject.tag || "Study Plan")}</div>
+                      <div style={{ color: t.textMutedMore, fontSize: 13, marginTop: 3 }}>{subject.tag ? titleCase(subject.tag) : tr("dashboard.studyPlan")}</div>
                     </div>
                     <div>
-                      <div style={{ color: t.textMuted, fontSize: 12, textAlign: "right", marginBottom: 9 }}>{stats.done} / {stats.total} tasks</div>
+                      <div style={{ color: t.textMuted, fontSize: 12, textAlign: "right", marginBottom: 9 }}>{tr("dashboard.tasksCount", { done: stats.done, total: stats.total })}</div>
                       <div style={{ height: 7, background: t.hover, borderRadius: 999, overflow: "hidden" }}>
                         <div style={{ width: `${stats.progress}%`, height: "100%", background: t.accent, borderRadius: 999 }} />
                       </div>
@@ -156,38 +158,38 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
                 );
               })
             ) : (
-              <EmptyState t={t} label="No study plans yet" />
+              <EmptyState t={t} label={tr("dashboard.noStudyPlans")} />
             )}
           </div>
           {hasMoreSubjectItems && (
             <button type="button" onClick={() => setIsStudyPlanExpanded((value) => !value)} style={expandButton}>
               <span style={{ transform: isStudyPlanExpanded ? "rotate(-90deg)" : "rotate(90deg)", display: "inline-flex", transition: "transform 180ms ease" }}><Icon.chevronRight /></span>
-              {isStudyPlanExpanded ? "Show less" : `Show ${allSubjects.length - 3} more`}
+              {isStudyPlanExpanded ? tr("common.showLess") : tr("common.showMore", { count: allSubjects.length - 3 })}
             </button>
           )}
-          <div style={{ color: t.text, fontSize: 13, marginTop: 16 }}>{pendingTasks} {pendingTasks > 1 ? "tasks" : pendingTasks === 0 ? "tasks" : "task"} pending</div>
+          <div style={{ color: t.text, fontSize: 13, marginTop: 16 }}>{tr(pendingTasks === 1 ? "dashboard.pendingTask" : "dashboard.pendingTasks", { count: pendingTasks })}</div>
         </section>
       </div>
 
       <section style={card}>
-        <SecHdr icon={<Icon.clock />} label="Continue Studying" t={t} />
+        <SecHdr icon={<Icon.clock />} label={tr("dashboard.continueStudying")} t={t} />
         <div style={{ marginTop: 14, padding: "20px", borderRadius: 8, background: `linear-gradient(90deg, ${t.hover}, ${t.bgAlt})`, display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 18, alignItems: "center" }}>
           <div style={{ width: 50, height: 50, borderRadius: 8, background: `linear-gradient(135deg, ${t.accentLight}, ${t.accentDark})`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontFamily: "Georgia, serif" }}></div>
           <div>
-            <div style={{ color: t.text, fontSize: 18, fontWeight: 800 }}>{continueSubject ? `${titleCase(continueSubject.name)}${continueSubject.tag ? ` - ${titleCase(continueSubject.tag)}` : ""}` : "No active study plan"}</div>
-            <div style={{ color: t.text, fontSize: 13, marginTop: 4 }}>{continueSubject ? titleCase(continueSubject.subtasks?.find((task) => !task.done)?.text || "All tasks complete") : "Create a study plan to start tracking progress."}</div>
-            <div style={{ color: t.textMutedMore, fontSize: 12, marginTop: 5 }}>{continuePending} tasks pending</div>
+            <div style={{ color: t.text, fontSize: 18, fontWeight: 800 }}>{continueSubject ? `${titleCase(continueSubject.name)}${continueSubject.tag ? ` - ${titleCase(continueSubject.tag)}` : ""}` : tr("dashboard.noActiveStudyPlan")}</div>
+            <div style={{ color: t.text, fontSize: 13, marginTop: 4 }}>{continueSubject ? titleCase(continueSubject.subtasks?.find((task) => !task.done)?.text || tr("dashboard.allTasksComplete")) : tr("dashboard.createStudyPlan")}</div>
+            <div style={{ color: t.textMutedMore, fontSize: 12, marginTop: 5 }}>{tr(continuePending === 1 ? "dashboard.pendingTask" : "dashboard.pendingTasks", { count: continuePending })}</div>
           </div>
-          <button type="button" onClick={() => setActive("studyplans")} style={{ ...s.btn, minWidth: 92, height: 40 }}>Continue</button>
+          <button type="button" onClick={() => setActive("studyplans")} style={{ ...s.btn, minWidth: 92, height: 40 }}>{tr("common.continue")}</button>
         </div>
       </section>
 
       <section style={card}>
-        <SecHdr icon={<Icon.zap />} label="Quick Actions" t={t} />
+        <SecHdr icon={<Icon.zap />} label={tr("dashboard.quickActions")} t={t} />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 14, marginTop: 16 }}>
-          <button type="button" onClick={() => navigateToCreate("schedule", "study-block")} style={actionButton}><Icon.plus />Add Schedule Block</button>
-          <button type="button" onClick={() => navigateToCreate("studyplans", "subject")} style={actionButton}><Icon.plus />Add Subject / Plan</button>
-          <button type="button" onClick={() => navigateToCreate("documents", "note")} style={actionButton}><Icon.plus />Create Note</button>
+          <button type="button" onClick={() => navigateToCreate("schedule", "study-block")} style={actionButton}><Icon.plus />{tr("dashboard.addScheduleBlock")}</button>
+          <button type="button" onClick={() => navigateToCreate("studyplans", "subject")} style={actionButton}><Icon.plus />{tr("dashboard.addSubjectPlan")}</button>
+          <button type="button" onClick={() => navigateToCreate("documents", "note")} style={actionButton}><Icon.plus />{tr("dashboard.createNote")}</button>
         </div>
       </section>
     </div>

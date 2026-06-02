@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import Dashboard from "./Dashboard.jsx";
 import Documents from "./Documents.jsx";
 import FocusTime from "./FocusTime.jsx";
@@ -9,21 +10,19 @@ import Settings from "./Settings.jsx";
 import Sidebar from "./Sidebar.jsx";
 import StudyPlans from "./StudyPlans.jsx";
 import { Icon } from "./icons.jsx";
-import { getNextTheme, getResolvedTheme, getStoredAppearance, getSystemTheme, initDocs, initHabits, initSchedule, initSubjects, initTasks, isDarkTheme, NAV_ITEMS, saveStoredTheme, themes } from "./data.js";
+import { getNextTheme, getResolvedTheme, getStoredAppearance, getSystemTheme, isDarkTheme, NAV_ITEMS, saveStoredTheme, themes } from "./data.js";
 import { scheduleQueryOptions } from "../../fetchs/scheduleFetchs";
 import { studyPlanQueryOptions } from "../../fetchs/studyPlanFetchs";
 import { notesQueryOptions } from "../../fetchs/notesFetchs";
 
 export default function StudentOS({ user, onLogout }) {
+  const { t: tr } = useTranslation();
   const [active, setActive] = useState("dashboard");
-  const [tasks, setTasks] = useState(initTasks);
-  const [schedule, setSchedule] = useState(initSchedule);
-  const [hasLoadedSchedule, setHasLoadedSchedule] = useState(false);
-  const [hasLoadedStudyPlan, setHasLoadedStudyPlan] = useState(false);
-  const [hasLoadedDocs, setHasLoadedDocs] = useState(false);
-  const [subjects, setSubjects] = useState(initSubjects);
-  const [habits, setHabits] = useState(initHabits);
-  const [docs, setDocs] = useState(initDocs);
+  const [tasks, setTasks] = useState([]);
+  const [schedule, setSchedule] = useState(null);
+  const [subjects, setSubjects] = useState(null);
+  const [habits, setHabits] = useState([]);
+  const [docs, setDocs] = useState(null);
   const [appearance, setAppearance] = useState(getStoredAppearance);
   const [systemTheme, setSystemTheme] = useState(getSystemTheme);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -34,6 +33,18 @@ export default function StudentOS({ user, onLogout }) {
   const scheduleQuery = useQuery(scheduleQueryOptions(user?.id));
   const studyPlanQuery = useQuery(studyPlanQueryOptions(user?.id));
   const notesQuery = useQuery(notesQueryOptions(user?.id));
+  const currentSchedule = schedule ?? scheduleQuery.data ?? {};
+  const currentSubjects = subjects ?? studyPlanQuery.data ?? [];
+  const currentDocs = docs ?? notesQuery.data ?? [];
+  const updateSchedule = (nextValue) => {
+    setSchedule((current) => (typeof nextValue === "function" ? nextValue(current ?? scheduleQuery.data ?? {}) : nextValue));
+  };
+  const updateSubjects = (nextValue) => {
+    setSubjects((current) => (typeof nextValue === "function" ? nextValue(current ?? studyPlanQuery.data ?? []) : nextValue));
+  };
+  const updateDocs = (nextValue) => {
+    setDocs((current) => (typeof nextValue === "function" ? nextValue(current ?? notesQuery.data ?? []) : nextValue));
+  };
 
   useEffect(() => {
     function onKey(e) {
@@ -65,25 +76,22 @@ export default function StudentOS({ user, onLogout }) {
   }, []);
 
   useEffect(() => {
-    if (hasLoadedSchedule || !scheduleQuery.data) return;
+    if (schedule !== null || !scheduleQuery.data) return;
 
     setSchedule(scheduleQuery.data);
-    setHasLoadedSchedule(true);
-  }, [hasLoadedSchedule, scheduleQuery.data]);
+  }, [schedule, scheduleQuery.data]);
 
   useEffect(() => {
-    if (hasLoadedStudyPlan || !studyPlanQuery.data) return;
+    if (subjects !== null || !studyPlanQuery.data) return;
 
     setSubjects(studyPlanQuery.data);
-    setHasLoadedStudyPlan(true);
-  }, [hasLoadedStudyPlan, studyPlanQuery.data]);
+  }, [subjects, studyPlanQuery.data]);
 
   useEffect(() => {
-    if (hasLoadedDocs || !notesQuery.data) return;
+    if (docs !== null || !notesQuery.data) return;
 
     setDocs(notesQuery.data);
-    setHasLoadedDocs(true);
-  }, [hasLoadedDocs, notesQuery.data]);
+  }, [docs, notesQuery.data]);
 
   const currentPage = NAV_ITEMS.find((n) => n.id === active);
   const navigateToCreate = (page, type) => {
@@ -99,8 +107,8 @@ export default function StudentOS({ user, onLogout }) {
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
           <div style={{ minHeight: 72, borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexShrink: 0, background: t.bgAlt, padding: "0 28px" }}>
             <div>
-              <div style={{ fontSize: 18, fontWeight: 750, color: t.text }}>{currentPage?.label}</div>
-              <div style={{ fontSize: 13, color: t.textMutedMore, marginTop: 3 }}>{currentPage?.description}</div>
+              <div style={{ fontSize: 18, fontWeight: 750, color: t.text }}>{tr(`nav.${currentPage?.id}.label`)}</div>
+              <div style={{ fontSize: 13, color: t.textMutedMore, marginTop: 3 }}>{tr(`nav.${currentPage?.id}.description`)}</div>
             </div>
             <button
               onClick={() => setAppearance(getNextTheme(theme))}
@@ -120,38 +128,38 @@ export default function StudentOS({ user, onLogout }) {
                 fontWeight: 650,
                 fontFamily: "inherit",
               }}
-              aria-label="cycle theme"
+              aria-label={tr("common.cycleTheme")}
               title={`theme: ${appearance}`}
             >
               {isDarkTheme(theme) ? <Icon.sun /> : <Icon.moon />}
-              {isDarkTheme(theme) ? "Light mode" : "Dark mode"}
+              {isDarkTheme(theme) ? tr("common.lightMode") : tr("common.darkMode")}
             </button>
           </div>
 
           <div style={{ flex: 1, overflow: isDoc ? "hidden" : "auto", padding: isDoc ? 0 : "28px", background: t.bg }}>
-            {active === "dashboard" && <Dashboard user={user} tasks={tasks} setTasks={setTasks} habits={habits} schedule={schedule} subjects={subjects} setActive={setActive} navigateToCreate={navigateToCreate} t={t} />}
+            {active === "dashboard" && <Dashboard user={user} tasks={tasks} setTasks={setTasks} habits={habits} schedule={currentSchedule} subjects={currentSubjects} setActive={setActive} navigateToCreate={navigateToCreate} t={t} />}
             {active === "schedule" && (
               <Schedule
-                schedule={schedule}
-                setSchedule={setSchedule}
-                subjects={subjects}
-                setSubjects={setSubjects}
-                isLoading={scheduleQuery.isLoading && !hasLoadedSchedule}
+                schedule={currentSchedule}
+                setSchedule={updateSchedule}
+                subjects={currentSubjects}
+                setSubjects={updateSubjects}
+                isLoading={scheduleQuery.isLoading && schedule === null && !scheduleQuery.data}
                 isError={scheduleQuery.isError}
                 createAction={createAction?.page === "schedule" ? createAction : null}
                 onCreateActionHandled={() => setCreateAction(null)}
                 t={t}
               />
             )}
-            {active === "studyplans" && <StudyPlans subjects={subjects} setSubjects={setSubjects} schedule={schedule} setSchedule={setSchedule} createAction={createAction?.page === "studyplans" ? createAction : null} onCreateActionHandled={() => setCreateAction(null)} t={t} />}
+            {active === "studyplans" && <StudyPlans subjects={currentSubjects} setSubjects={updateSubjects} schedule={currentSchedule} setSchedule={updateSchedule} createAction={createAction?.page === "studyplans" ? createAction : null} onCreateActionHandled={() => setCreateAction(null)} t={t} />}
             {active === "habits" && <Habits habits={habits} setHabits={setHabits} t={t} />}
-            {active === "focustime" && <FocusTime tasks={tasks} setTasks={setTasks} subjects={subjects} schedule={schedule} t={t} />}
+            {active === "focustime" && <FocusTime tasks={tasks} setTasks={setTasks} subjects={currentSubjects} schedule={currentSchedule} t={t} />}
             {active === "settings" && <Settings user={user} appearance={appearance} setAppearance={setAppearance} t={t} />}
             {active === "documents" && (
               <Documents
-                docs={docs}
-                setDocs={setDocs}
-                isLoading={notesQuery.isLoading && !hasLoadedDocs}
+                docs={currentDocs}
+                setDocs={updateDocs}
+                isLoading={notesQuery.isLoading && docs === null && !notesQuery.data}
                 isError={notesQuery.isError}
                 createAction={createAction?.page === "documents" ? createAction : null}
                 onCreateActionHandled={() => setCreateAction(null)}

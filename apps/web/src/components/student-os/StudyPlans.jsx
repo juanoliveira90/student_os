@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { DAY_LABELS } from "./data.js";
 import { Icon } from "./icons.jsx";
 import { getStyles, Modal } from "./ui.jsx";
@@ -50,6 +51,7 @@ function toSubjectUpdate(subject) {
 }
 
 export default function StudyPlans({ subjects, setSubjects, schedule, setSchedule, createAction, onCreateActionHandled, t }) {
+  const { t: tr } = useTranslation();
   const s = getStyles(t);
   const queryClient = useQueryClient();
   const [modal, setModal] = useState(false);
@@ -271,8 +273,8 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
 
   function linkedBlockLabel(blockId) {
     const block = studyBlocks.find((item) => item.id === blockId);
-    if (!block) return "No schedule block linked";
-    return `${block.title} - ${block.day}, ${block.start_time || ""} ${block.start_period || ""}`;
+    if (!block) return tr("studyPlans.noScheduleBlockLinked");
+    return `${block.title} - ${tr(`days.${block.day}`)}, ${block.start_time || ""} ${block.start_period || ""}`;
   }
 
   function updateFormSubtask(id, field, value) {
@@ -376,11 +378,11 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
       await saveStudyPlanChanges(pendingChanges);
       setPendingChanges(emptyChanges);
       setHasChanges(false);
-      setSaveMessage("Saved.");
+      setSaveMessage("saved");
       queryClient.invalidateQueries({ queryKey: studyPlanQueryKey });
     } catch (error) {
       console.error(error);
-      setSaveMessage("Could not save. Try again.");
+      setSaveMessage("error");
     } finally {
       setSaving(false);
     }
@@ -390,9 +392,9 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
         <div>
-          <h1 style={{ fontSize: 28, lineHeight: 1.1, fontWeight: 750, color: t.text, margin: 0 }}>Study Plan</h1>
-          <div style={{ fontSize: 14, color: t.textMutedMore, marginTop: 6 }}>Plan subjects, subtasks, and optional schedule blocks.</div>
-          {saveMessage && <div style={{ fontSize: 12, color: saveMessage === "Saved." ? t.accent : t.textMutedMore, marginTop: 8 }}>{saveMessage}</div>}
+          <h1 style={{ fontSize: 28, lineHeight: 1.1, fontWeight: 750, color: t.text, margin: 0 }}>{tr("studyPlans.title")}</h1>
+          <div style={{ fontSize: 14, color: t.textMutedMore, marginTop: 6 }}>{tr("studyPlans.description")}</div>
+          {saveMessage && <div style={{ fontSize: 12, color: saveMessage === "saved" ? t.accent : t.textMutedMore, marginTop: 8 }}>{tr(saveMessage === "saved" ? "common.saved" : "common.couldNotSave")}</div>}
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
           <button
@@ -400,9 +402,9 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
             disabled={!hasChanges || saving}
             style={{ ...s.btn, opacity: !hasChanges || saving ? 0.55 : 1, cursor: !hasChanges || saving ? "not-allowed" : "pointer" }}
           >
-            {saving ? "Saving..." : "Save"}
+            {saving ? tr("common.saving") : tr("common.save")}
           </button>
-          <button onClick={() => setModal(true)} style={s.btn}>Add subject</button>
+          <button onClick={() => setModal(true)} style={s.btn}>{tr("studyPlans.addSubject")}</button>
         </div>
       </div>
 
@@ -426,18 +428,18 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 6 }}>
-                  <button onClick={() => startEdit(subj)} title="Update subject" style={{ background: "none", border: "none", cursor: "pointer", color: t.textMutedMost }}><Icon.settings /></button>
+                  <button onClick={() => startEdit(subj)} title={tr("studyPlans.updateSubject")} style={{ background: "none", border: "none", cursor: "pointer", color: t.textMutedMost }}><Icon.settings /></button>
                   <button onClick={() => deleteSubject(subj.id)} style={{ background: "none", border: "none", cursor: "pointer", color: t.textMutedMost }}><Icon.x /></button>
                 </div>
               </div>
 
-              <label style={s.label}>Schedule block</label>
+              <label style={s.label}>{tr("studyPlans.scheduleBlock")}</label>
               <select value={subj.scheduleBlockId || ""} onChange={(e) => linkBlockToSubject(subj.id, e.target.value)} style={s.input}>
-                <option value="">No linked block</option>
-                {studyBlocks.map((block) => <option key={block.id} value={block.id}>{block.day} - {block.title}</option>)}
+                <option value="">{tr("studyPlans.noLinkedBlock")}</option>
+                {studyBlocks.map((block) => <option key={block.id} value={block.id}>{tr(`days.${block.day}`)} - {block.title}</option>)}
               </select>
 
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: t.textMutedMore, marginBottom: 6 }}><span>Subtasks</span><span style={{ color: t.accent, fontWeight: 700 }}>{completed}/{total}</span></div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: t.textMutedMore, marginBottom: 6 }}><span>{tr("studyPlans.subtasks")}</span><span style={{ color: t.accent, fontWeight: 700 }}>{completed}/{total}</span></div>
               <div style={{ height: 8, background: t.hover, borderRadius: 999, marginBottom: 14 }}>
                 <div style={{ height: "100%", width: `${progress}%`, background: t.accent, borderRadius: 999 }} />
               </div>
@@ -462,14 +464,14 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && addSubtask(subj.id, draft)) setDraft(emptySubtaskDraft);
                   }}
-                  placeholder="new subtask"
+                  placeholder={tr("studyPlans.newSubtask")}
                   style={{ ...s.input, marginBottom: 0 }}
                 />
-                <button onClick={() => { if (addSubtask(subj.id, draft)) setDraft(emptySubtaskDraft); }} style={s.ghost}>Add</button>
+                <button onClick={() => { if (addSubtask(subj.id, draft)) setDraft(emptySubtaskDraft); }} style={s.ghost}>{tr("common.add")}</button>
                 <textarea
                   value={draft.description}
                   onChange={(e) => setDraft({ description: e.target.value })}
-                  placeholder="description (optional)"
+                  placeholder={tr("studyPlans.descriptionOptional")}
                   rows={2}
                   style={{ ...s.input, gridColumn: "1 / -1", marginBottom: 0, minHeight: 62, resize: "vertical", lineHeight: 1.4 }}
                 />
@@ -480,17 +482,17 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
       </div>
 
       {modal && (
-        <Modal onClose={() => setModal(false)} title="Add subject" t={t}>
-          <label style={s.label}>Subject name</label>
-          <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && add()} placeholder="subject name" style={s.input} autoFocus />
-          <label style={s.label}>Tag</label>
-          <input value={form.tag} onChange={(e) => setForm((f) => ({ ...f, tag: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && add()} placeholder="tag (optional)" style={s.input} />
-          <label style={s.label}>Schedule block</label>
+        <Modal onClose={() => setModal(false)} title={tr("studyPlans.addSubject")} t={t}>
+          <label style={s.label}>{tr("studyPlans.subjectName")}</label>
+          <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && add()} placeholder={tr("studyPlans.subjectNamePlaceholder")} style={s.input} autoFocus />
+          <label style={s.label}>{tr("studyPlans.tag")}</label>
+          <input value={form.tag} onChange={(e) => setForm((f) => ({ ...f, tag: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && add()} placeholder={tr("studyPlans.tagOptional")} style={s.input} />
+          <label style={s.label}>{tr("studyPlans.scheduleBlock")}</label>
           <select value={form.scheduleBlockId} onChange={(e) => setForm((f) => ({ ...f, scheduleBlockId: e.target.value }))} style={s.input}>
-            <option value="">No linked block</option>
-            {studyBlocks.map((block) => <option key={block.id} value={block.id}>{block.day} - {block.title}</option>)}
+            <option value="">{tr("studyPlans.noLinkedBlock")}</option>
+            {studyBlocks.map((block) => <option key={block.id} value={block.id}>{tr(`days.${block.day}`)} - {block.title}</option>)}
           </select>
-          <label style={s.label}>Subtasks</label>
+          <label style={s.label}>{tr("studyPlans.subtasks")}</label>
           <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 12 }}>
             {form.subtasks.map((subtask, index) => (
               <div key={subtask.id} style={{ background: t.hover, border: `1px solid ${t.border}`, borderRadius: 8, padding: 10 }}>
@@ -499,7 +501,7 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
                     value={subtask.name}
                     onChange={(e) => updateFormSubtask(subtask.id, "name", e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && add()}
-                    placeholder={`subtask ${index + 1} name`}
+                    placeholder={tr("studyPlans.subtaskName", { count: index + 1 })}
                     style={{ ...s.input, marginBottom: 8 }}
                   />
                   <button onClick={() => removeFormSubtask(subtask.id)} style={{ ...s.ghost, padding: "10px 12px", opacity: form.subtasks.length === 1 ? 0.55 : 1 }}><Icon.x /></button>
@@ -507,52 +509,52 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
                 <textarea
                   value={subtask.description}
                   onChange={(e) => updateFormSubtask(subtask.id, "description", e.target.value)}
-                  placeholder="description (optional)"
+                  placeholder={tr("studyPlans.descriptionOptional")}
                   rows={2}
                   style={{ ...s.input, marginBottom: 0, minHeight: 68, resize: "vertical", lineHeight: 1.4 }}
                 />
               </div>
             ))}
           </div>
-          <button onClick={addFormSubtask} style={{ ...s.ghost, width: "100%", marginBottom: 12 }}>Add another subtask</button>
-          <button onClick={add} disabled={isAdding} style={{ ...s.btn, opacity: isAdding ? 0.65 : 1 }}>{isAdding ? "Adding..." : "Add subject"}</button>
+          <button onClick={addFormSubtask} style={{ ...s.ghost, width: "100%", marginBottom: 12 }}>{tr("studyPlans.addAnotherSubtask")}</button>
+          <button onClick={add} disabled={isAdding} style={{ ...s.btn, opacity: isAdding ? 0.65 : 1 }}>{isAdding ? tr("studyPlans.adding") : tr("studyPlans.addSubject")}</button>
         </Modal>
       )}
 
       {editForm && (
-        <Modal onClose={() => setEditForm(null)} title="Update subject" t={t}>
+        <Modal onClose={() => setEditForm(null)} title={tr("studyPlans.updateSubject")} t={t}>
           <form onSubmit={updateSubject}>
-            <label style={s.label}>Subject name</label>
-            <input name="name" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} placeholder="subject name" style={s.input} autoFocus />
-            <label style={s.label}>Tag</label>
-            <input name="tag" value={editForm.tag} onChange={(e) => setEditForm((f) => ({ ...f, tag: e.target.value }))} placeholder="tag (optional)" style={s.input} />
-            <label style={s.label}>Schedule block</label>
+            <label style={s.label}>{tr("studyPlans.subjectName")}</label>
+            <input name="name" value={editForm.name} onChange={(e) => setEditForm((f) => ({ ...f, name: e.target.value }))} placeholder={tr("studyPlans.subjectNamePlaceholder")} style={s.input} autoFocus />
+            <label style={s.label}>{tr("studyPlans.tag")}</label>
+            <input name="tag" value={editForm.tag} onChange={(e) => setEditForm((f) => ({ ...f, tag: e.target.value }))} placeholder={tr("studyPlans.tagOptional")} style={s.input} />
+            <label style={s.label}>{tr("studyPlans.scheduleBlock")}</label>
             <select name="scheduleBlockId" value={editForm.scheduleBlockId} onChange={(e) => setEditForm((f) => ({ ...f, scheduleBlockId: e.target.value }))} style={s.input}>
-              <option value="">No linked block</option>
-              {studyBlocks.map((block) => <option key={block.id} value={block.id}>{block.day} - {block.title}</option>)}
+              <option value="">{tr("studyPlans.noLinkedBlock")}</option>
+              {studyBlocks.map((block) => <option key={block.id} value={block.id}>{tr(`days.${block.day}`)} - {block.title}</option>)}
             </select>
-            <button type="submit" style={{ ...s.btn, marginBottom: 14 }}>Update subject</button>
+            <button type="submit" style={{ ...s.btn, marginBottom: 14 }}>{tr("studyPlans.updateSubject")}</button>
           </form>
 
-          <label style={s.label}>Subtasks</label>
+          <label style={s.label}>{tr("studyPlans.subtasks")}</label>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {editForm.subtasks.map((subtask) => (
               <div key={subtask.id} style={{ background: t.hover, border: `1px solid ${t.border}`, borderRadius: 8, padding: 10 }}>
                 <input
                   value={subtask.name}
                   onChange={(e) => updateEditSubtask(subtask.id, "name", e.target.value)}
-                  placeholder="subtask name"
+                  placeholder={tr("studyPlans.newSubtask")}
                   style={{ ...s.input, marginBottom: 8 }}
                 />
                 <textarea
                   value={subtask.description}
                   onChange={(e) => updateEditSubtask(subtask.id, "description", e.target.value)}
-                  placeholder="description optional"
+                  placeholder={tr("studyPlans.descriptionOptionalNoParens")}
                   rows={2}
                   style={{ ...s.input, minHeight: 68, resize: "vertical", lineHeight: 1.4 }}
                 />
                 <button onClick={() => updateSubtask(editForm.id, subtask)} style={{ ...s.ghost, width: "100%" }}>
-                  Update subtask
+                  {tr("studyPlans.updateSubtask")}
                 </button>
               </div>
             ))}

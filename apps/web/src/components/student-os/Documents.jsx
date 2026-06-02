@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Icon } from "./icons.jsx";
 import { renderMarkdown } from "./markdown.js";
 import { getStyles } from "./ui.jsx";
 import { deleteNote, postNote, putNote } from "../../fetchs/notesFetchs";
 
 export default function Documents({ docs, setDocs, isLoading, isError, createAction, onCreateActionHandled, t }) {
+  const { t: tr } = useTranslation();
   const s = getStyles(t);
   const [sel, setSel] = useState(null);
   const [editing, setEditing] = useState(false);
@@ -19,7 +21,7 @@ export default function Documents({ docs, setDocs, isLoading, isError, createAct
   async function newDoc() {
     if (isCreating) return;
 
-    const doc = { id: crypto.randomUUID(), title: "Untitled note", date: new Date().toLocaleDateString("en-US"), content: "# Untitled note\n\nStart writing..." };
+    const doc = { id: crypto.randomUUID(), title: tr("documents.untitledTitle"), date: new Date().toLocaleDateString("en-US"), content: tr("documents.untitledContent") };
     setIsCreating(true);
 
     try {
@@ -95,14 +97,14 @@ export default function Documents({ docs, setDocs, isLoading, isError, createAct
   return (
     <div style={{ display: "flex", height: "calc(100vh - 72px)" }}>
       <div style={{ width: 300, borderRight: `1px solid ${t.border}`, display: "flex", flexDirection: "column", flexShrink: 0, background: t.bgAlt }}>
-        <button onClick={newDoc} disabled={isCreating} style={{ ...s.btn, margin: 14, marginBottom: 10, opacity: isCreating ? 0.65 : 1 }}>{isCreating ? "Creating..." : "New note"}</button>
+        <button onClick={newDoc} disabled={isCreating} style={{ ...s.btn, margin: 14, marginBottom: 10, opacity: isCreating ? 0.65 : 1 }}>{isCreating ? tr("documents.creating") : tr("documents.newNote")}</button>
         <div style={{ position: "relative", margin: "0 12px 8px" }}>
           <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: t.textMutedMore }}><Icon.search /></span>
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search notes" style={{ ...s.input, paddingLeft: 30, marginBottom: 0 }} />
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tr("documents.searchNotes")} style={{ ...s.input, paddingLeft: 30, marginBottom: 0 }} />
         </div>
         <div style={{ flex: 1, overflowY: "auto" }}>
-          {isLoading && <div style={{ padding: 14, color: t.textMutedMore, fontSize: 13 }}>Loading notes...</div>}
-          {isError && <div style={{ padding: 14, color: t.accent, fontSize: 13 }}>Could not load notes.</div>}
+          {isLoading && <div style={{ padding: 14, color: t.textMutedMore, fontSize: 13 }}>{tr("documents.loading")}</div>}
+          {isError && <div style={{ padding: 14, color: t.accent, fontSize: 13 }}>{tr("documents.loadError")}</div>}
           {filtered.map((doc) => (
             <div key={doc.id} onClick={() => open(doc)} style={{ padding: "10px 14px", cursor: "pointer", borderBottom: `1px solid ${t.border}`, background: sel?.id === doc.id ? t.hover : "transparent", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }} onMouseEnter={(e) => { if (sel?.id !== doc.id) e.currentTarget.style.background = t.hover; }} onMouseLeave={(e) => { if (sel?.id !== doc.id) e.currentTarget.style.background = "transparent"; }}>
               <div>
@@ -128,7 +130,7 @@ export default function Documents({ docs, setDocs, isLoading, isError, createAct
                 <span style={{ fontSize: 18, color: t.text, fontWeight: 750 }}>{sel.title}</span>
               )}
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                {editing ? <button onClick={save} disabled={savingId === sel.id} style={{ ...s.btn, opacity: savingId === sel.id ? 0.65 : 1 }}>{savingId === sel.id ? "Saving..." : "Save"}</button> : <button onClick={() => { setEditing(true); setEContent(sel.content); setETitle(sel.title); }} style={s.btn}>Edit note</button>}
+                {editing ? <button onClick={save} disabled={savingId === sel.id} style={{ ...s.btn, opacity: savingId === sel.id ? 0.65 : 1 }}>{savingId === sel.id ? tr("documents.saving") : tr("documents.save")}</button> : <button onClick={() => { setEditing(true); setEContent(sel.content); setETitle(sel.title); }} style={s.btn}>{tr("documents.editNote")}</button>}
               </div>
             </div>
             <div style={{ flex: 1, overflow: "auto", padding: 24 }}>
@@ -142,7 +144,7 @@ export default function Documents({ docs, setDocs, isLoading, isError, createAct
         ) : (
           <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12, color: t.textMutedMost }}>
             <Icon.file />
-            <span style={{ fontSize: 14 }}>Select a note to read or edit</span>
+            <span style={{ fontSize: 14 }}>{tr("documents.selectNote")}</span>
           </div>
         )}
       </div>

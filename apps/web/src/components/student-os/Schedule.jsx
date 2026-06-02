@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { DAY_LABELS } from "./data.js";
 import { Icon } from "./icons.jsx";
 import { getStyles, Modal } from "./ui.jsx";
@@ -99,6 +100,7 @@ function TimeField({ id, label, value, period, onChange, onPeriodChange, onEnter
 }
 
 export default function Schedule({ schedule, setSchedule, subjects, setSubjects, isLoading, isError, createAction, onCreateActionHandled, t }) {
+  const { t: tr } = useTranslation();
   const s = getStyles(t);
   const queryClient = useQueryClient();
   const [modal, setModal] = useState(false);
@@ -315,10 +317,10 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
 
       setPendingChanges({ createOrUpdate: [], delete: [] });
       setHasChanges(false);
-      setSaveMessage("Saved.");
+      setSaveMessage("saved");
       queryClient.invalidateQueries({ queryKey: scheduleQueryKey });
     } catch {
-      setSaveMessage("Could not save. Try again.");
+      setSaveMessage("error");
     } finally {
       setSaving(false);
     }
@@ -328,10 +330,10 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
       <div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
           <div>
-            <h1 style={{ fontSize: 28, lineHeight: 1.1, fontWeight: 750, color: t.text, margin: 0 }}>Schedule</h1>
-            <div style={{ fontSize: 14, color: t.textMutedMore, marginTop: 6 }}>Add classes, deadlines, and study blocks for each day.</div>
-            {saveMessage && <div style={{ fontSize: 12, color: saveMessage === "Saved." ? t.accent : t.textMutedMore, marginTop: 8 }}>{saveMessage}</div>}
-            {isError && <div style={{ fontSize: 12, color: t.textMutedMore, marginTop: 8 }}>Could not load your saved schedule.</div>}
+            <h1 style={{ fontSize: 28, lineHeight: 1.1, fontWeight: 750, color: t.text, margin: 0 }}>{tr("schedule.title")}</h1>
+            <div style={{ fontSize: 14, color: t.textMutedMore, marginTop: 6 }}>{tr("schedule.description")}</div>
+            {saveMessage && <div style={{ fontSize: 12, color: saveMessage === "saved" ? t.accent : t.textMutedMore, marginTop: 8 }}>{tr(saveMessage === "saved" ? "common.saved" : "common.couldNotSave")}</div>}
+            {isError && <div style={{ fontSize: 12, color: t.textMutedMore, marginTop: 8 }}>{tr("schedule.loadError")}</div>}
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
             <button
@@ -339,25 +341,25 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
               disabled={!hasChanges || saving}
               style={{ ...s.btn, opacity: !hasChanges || saving ? 0.55 : 1, cursor: !hasChanges || saving ? "not-allowed" : "pointer" }}
             >
-              {saving ? "Saving..." : "Save"}
+              {saving ? tr("common.saving") : tr("common.save")}
             </button>
-            <button onClick={openAddModal} style={s.btn}>Add event</button>
+            <button onClick={openAddModal} style={s.btn}>{tr("schedule.addEvent")}</button>
           </div>
         </div>
-        {isLoading && <div style={{ fontSize: 13, color: t.textMutedMore, marginBottom: 12 }}>Loading schedule...</div>}
+        {isLoading && <div style={{ fontSize: 13, color: t.textMutedMore, marginBottom: 12 }}>{tr("schedule.loading")}</div>}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
           {DAY_LABELS.map((day) => (
             <div key={day} style={s.card}>
-              <div style={{ fontSize: 16, color: t.text, marginBottom: 12, fontWeight: 750, textTransform: "capitalize" }}>{day}</div>
+              <div style={{ fontSize: 16, color: t.text, marginBottom: 12, fontWeight: 750, textTransform: "capitalize" }}>{tr(`days.${day}`)}</div>
               {!schedule[day]?.length ? (
-                <span style={{ fontSize: 13, color: t.textMutedMore }}>No events planned</span>
+                <span style={{ fontSize: 13, color: t.textMutedMore }}>{tr("schedule.noEventsPlanned")}</span>
               ) : schedule[day].map((ev) => (
                 <div key={ev.id} style={{ background: t.hover, border: `1px solid ${t.borderAlt}`, borderLeft: `4px solid ${t.accent}`, borderRadius: 8, padding: "12px 14px", marginBottom: 8, position: "relative" }}>
                   <button onClick={() => remove(day, ev.id)} style={{ position: "absolute", top: 6, right: 6, background: "none", border: "none", cursor: "pointer", color: t.textMutedMore, padding: 2 }}><Icon.x /></button>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, paddingRight: 16, flexWrap: "wrap" }}>
                     <div style={{ fontSize: 14, color: t.text, fontWeight: 650 }}>{ev.title}</div>
                     <span style={{ border: `1px solid ${t.borderLight}`, background: ev.tag === "study block" ? t.accent : t.select, color: ev.tag === "study block" ? "#fff" : t.textMuted, borderRadius: 999, padding: "2px 7px", fontSize: 10, fontWeight: 750 }}>
-                      {ev.tag || "event"}
+                      {tr(`tags.${ev.tag || "event"}`, { defaultValue: ev.tag || tr("tags.event") })}
                     </span>
                   </div>
                   {ev.description && (
@@ -377,54 +379,54 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
                     </div>
                   )}
                   {ev.studyPlanId && (
-                    <div style={{ fontSize: 12, color: t.accent, marginTop: 6, display: "flex", alignItems: "center", gap: 5 }}><Icon.book /> {subjects.find((subject) => subject.id === ev.studyPlanId)?.name || "linked study plan"}</div>
+                    <div style={{ fontSize: 12, color: t.accent, marginTop: 6, display: "flex", alignItems: "center", gap: 5 }}><Icon.book /> {subjects.find((subject) => subject.id === ev.studyPlanId)?.name || tr("schedule.linkedStudyPlan")}</div>
                   )}
                   <div style={{ fontSize: 12, color: t.textMutedMore, marginTop: 6, display: "flex", alignItems: "center", gap: 5 }}><Icon.clock /> {formatEventTime(ev)}</div>
-                  <button onClick={() => openEditModal(day, ev)} style={{ ...s.ghost, padding: "6px 9px", fontSize: 11, marginTop: 10 }}>Edit</button>
+                  <button onClick={() => openEditModal(day, ev)} style={{ ...s.ghost, padding: "6px 9px", fontSize: 11, marginTop: 10 }}>{tr("common.edit")}</button>
                 </div>
               ))}
             </div>
           ))}
         </div>
         {modal && (
-          <Modal onClose={() => setModal(false)} title={form.id ? "Edit event" : "Add event"} t={t}>
-            <label style={s.label}>Day</label>
+          <Modal onClose={() => setModal(false)} title={form.id ? tr("schedule.editEvent") : tr("schedule.addEvent")} t={t}>
+            <label style={s.label}>{tr("schedule.day")}</label>
             <select value={form.day} onChange={(e) => setForm((f) => ({ ...f, day: e.target.value }))} style={s.input}>
-              {DAY_LABELS.map((d) => <option key={d} value={d}>{d}</option>)}
+              {DAY_LABELS.map((d) => <option key={d} value={d}>{tr(`days.${d}`)}</option>)}
             </select>
-            <label style={s.label}>Title</label>
-            <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && (form.id ? update() : add())} placeholder="event name" style={s.input} autoFocus />
-            <label style={s.label}>Description</label>
+            <label style={s.label}>{tr("schedule.eventTitle")}</label>
+            <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && (form.id ? update() : add())} placeholder={tr("schedule.eventName")} style={s.input} autoFocus />
+            <label style={s.label}>{tr("schedule.eventDescription")}</label>
             <textarea
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              placeholder="optional notes"
+              placeholder={tr("schedule.optionalNotes")}
               rows={3}
               style={{ ...s.input, minHeight: 82, resize: "vertical", lineHeight: 1.4 }}
             />
-            <label style={s.label}>Tag</label>
+            <label style={s.label}>{tr("schedule.tag")}</label>
             <select value={form.tag} onChange={(e) => setForm((f) => ({ ...f, tag: e.target.value, studyPlanId: e.target.value === "study block" ? f.studyPlanId : "" }))} style={s.input}>
-              {DEFAULT_TAGS.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
-              <option value="custom">custom tag</option>
+              {DEFAULT_TAGS.map((tag) => <option key={tag} value={tag}>{tr(`tags.${tag}`)}</option>)}
+              <option value="custom">{tr("tags.custom tag")}</option>
             </select>
             {form.tag === "custom" && (
               <>
-                <label style={s.label}>Custom tag</label>
-                <input value={form.customTag} onChange={(e) => setForm((f) => ({ ...f, customTag: e.target.value }))} placeholder="e.g. lab, exam prep" style={s.input} />
+                <label style={s.label}>{tr("schedule.customTag")}</label>
+                <input value={form.customTag} onChange={(e) => setForm((f) => ({ ...f, customTag: e.target.value }))} placeholder={tr("schedule.customTagPlaceholder")} style={s.input} />
               </>
             )}
             {form.tag === "study block" && (
               <>
-                <label style={s.label}>Study plan</label>
+                <label style={s.label}>{tr("schedule.studyPlan")}</label>
                 <select value={form.studyPlanId} onChange={(e) => setForm((f) => ({ ...f, studyPlanId: e.target.value }))} style={s.input}>
-                  <option value="">No linked study plan</option>
+                  <option value="">{tr("schedule.noLinkedStudyPlan")}</option>
                   {subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}
                 </select>
               </>
             )}
             <TimeField
               id="start-time"
-              label="Start time"
+              label={tr("schedule.startTime")}
               value={form.start_time}
               period={form.start_period}
               onChange={(start_time) => setForm((f) => ({ ...f, start_time }))}
@@ -435,7 +437,7 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
             />
             <TimeField
               id="end-time"
-              label="End time"
+              label={tr("schedule.endTime")}
               value={form.end_time}
               period={form.end_period}
               onChange={(end_time) => setForm((f) => ({ ...f, end_time }))}
@@ -444,7 +446,7 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
               s={s}
               t={t}
             />
-            <button onClick={form.id ? update : add} style={s.btn}>{form.id ? "Save changes" : "Add event"}</button>
+            <button onClick={form.id ? update : add} style={s.btn}>{form.id ? tr("schedule.saveChanges") : tr("schedule.addEvent")}</button>
           </Modal>
         )}
       </div>

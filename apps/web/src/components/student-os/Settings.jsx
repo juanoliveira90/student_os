@@ -1,21 +1,24 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Icon } from "./icons.jsx";
 import { getStyles } from "./ui.jsx";
 import { updatePassword, updateProfile } from "../../fetchs/authFetchs";
+import { saveLanguage } from "../../i18n";
 
 export default function Settings({ user, appearance, setAppearance, t }) {
+  const { t: tr, i18n } = useTranslation();
   const s = getStyles(t);
   const profile = user?.user ?? user ?? {};
   const [tab, setTab] = useState("profile");
   const [form, setForm] = useState({
     name: profile.name,
     email: profile.email,
-    language: "en",
+    language: i18n.language?.startsWith("pt") ? "pt-BR" : "en",
   });
 
   const tabs = [
-    { id: "profile", label: "Profile", icon: Icon.settings },
-    { id: "system", label: "System", icon: Icon.panelSoft },
+    { id: "profile", label: tr("settings.profile"), icon: Icon.settings },
+    { id: "system", label: tr("settings.system"), icon: Icon.panelSoft },
   ];
 
   return (
@@ -66,6 +69,7 @@ export default function Settings({ user, appearance, setAppearance, t }) {
 }
 
 function ProfileTab({ form, setForm, s, t }) {
+  const { t: tr } = useTranslation();
   const [savedName, setSavedName] = useState(form.name || "");
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
@@ -84,7 +88,7 @@ function ProfileTab({ form, setForm, s, t }) {
       await updateProfile(nextName);
       setSavedName(nextName);
       setForm((current) => ({ ...current, name: nextName }));
-      setSaveStatus("Saved");
+      setSaveStatus("saved");
     } catch (error) {
       setSaveStatus(error.message);
     } finally {
@@ -94,19 +98,19 @@ function ProfileTab({ form, setForm, s, t }) {
 
   return (
     <div>
-      <h2 style={sectionTitle(t)}>Profile</h2>
-      <p style={sectionCopy(t)}>Manage your personal information and account.</p>
+      <h2 style={sectionTitle(t)}>{tr("settings.profile")}</h2>
+      <p style={sectionCopy(t)}>{tr("settings.manageProfile")}</p>
 
       <div style={{ maxWidth: 520, marginTop: 28 }}>
-        <label style={s.label}>Name</label>
+        <label style={s.label}>{tr("settings.name")}</label>
         <input value={form.name} onChange={(e) => setForm((current) => ({ ...current, name: e.target.value }))} style={s.input} />
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, marginBottom: 6 }}>
-          <label style={{ ...s.label, margin: 0 }}>Email</label>
+          <label style={{ ...s.label, margin: 0 }}>{tr("settings.email")}</label>
         </div>
         <input
           value={form.email}
           disabled
-          title="Email changes pending"
+          title={tr("settings.emailPending")}
           style={{
             ...s.input,
             cursor: "not-allowed",
@@ -120,14 +124,14 @@ function ProfileTab({ form, setForm, s, t }) {
 
       <div style={{ height: 1, background: t.border, margin: "28px 0" }} />
 
-      <h2 style={sectionTitle(t)}>Security</h2>
-      <p style={sectionCopy(t)}>Update your password to keep your account secure.</p>
+      <h2 style={sectionTitle(t)}>{tr("settings.security")}</h2>
+      <p style={sectionCopy(t)}>{tr("settings.securityCopy")}</p>
       <button
         type="button"
         onClick={() => setPasswordOpen(true)}
         style={{ ...s.ghost, height: 42, color: t.accent, borderColor: t.borderAlt, marginTop: 28 }}
       >
-        Change Password
+        {tr("settings.changePassword")}
       </button>
 
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 28 }}>
@@ -141,9 +145,9 @@ function ProfileTab({ form, setForm, s, t }) {
             opacity: canSave ? 1 : 0.58,
           }}
         >
-          {isSaving ? "Saving..." : "Save Changes"}
+          {isSaving ? tr("common.saving") : tr("settings.saveChanges")}
         </button>
-        {saveStatus && <span style={{ color: saveStatus === "Saved" ? t.accent : t.danger || "#b42318", fontSize: 13 }}>{saveStatus}</span>}
+        {saveStatus && <span style={{ color: saveStatus === "saved" ? t.accent : t.danger || "#b42318", fontSize: 13 }}>{saveStatus === "saved" ? tr("settings.saved") : saveStatus}</span>}
       </div>
 
       {passwordOpen && (
@@ -163,6 +167,7 @@ function ProfileTab({ form, setForm, s, t }) {
 }
 
 function PasswordPanel({ onClose, onUpdated, s, t }) {
+  const { t: tr } = useTranslation();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isSaving, setIsSaving] = useState(false);
@@ -191,31 +196,21 @@ function PasswordPanel({ onClose, onUpdated, s, t }) {
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.38)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 18 }}>
       <section style={{ ...s.card, width: "min(420px, 100%)", padding: 24, boxShadow: "0 18px 48px rgba(0,0,0,0.24)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
-          <h2 style={sectionTitle(t)}>Change Password</h2>
-          <button type="button" onClick={onClose} aria-label="Close change password" style={{ ...s.ghost, width: 34, height: 34, padding: 0 }}>x</button>
+          <h2 style={sectionTitle(t)}>{tr("settings.changePassword")}</h2>
+          <button type="button" onClick={onClose} aria-label={tr("settings.closeChangePassword")} style={{ ...s.ghost, width: 34, height: 34, padding: 0 }}>x</button>
         </div>
 
         <div style={{ marginTop: 22 }}>
-          <label style={s.label}>New Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            style={s.input}
-          />
+          <label style={s.label}>{tr("settings.newPassword")}</label>
+          <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} style={s.input} />
 
-          <label style={{ ...s.label, marginTop: 12 }}>Confirm New Password</label>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            style={s.input}
-          />
+          <label style={{ ...s.label, marginTop: 12 }}>{tr("settings.confirmNewPassword")}</label>
+          <input type="password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} style={s.input} />
         </div>
 
-        <div style={{ minHeight: 20, color: status === "Password updated" ? t.accent : t.danger || "#b42318", fontSize: 13 }}>
-          {!isLongEnough && password ? "Password must be at least 8 characters." : ""}
-          {isLongEnough && !isMatching && confirmPassword ? "Passwords must match." : ""}
+        <div style={{ minHeight: 20, color: t.danger || "#b42318", fontSize: 13 }}>
+          {!isLongEnough && password ? tr("settings.passwordLength") : ""}
+          {isLongEnough && !isMatching && confirmPassword ? tr("settings.passwordMatch") : ""}
           {status}
         </div>
 
@@ -231,7 +226,7 @@ function PasswordPanel({ onClose, onUpdated, s, t }) {
             opacity: canContinue ? 1 : 0.58,
           }}
         >
-          {isSaving ? "Saving..." : "Continue"}
+          {isSaving ? tr("common.saving") : tr("settings.continue")}
         </button>
       </section>
     </div>
@@ -239,30 +234,33 @@ function PasswordPanel({ onClose, onUpdated, s, t }) {
 }
 
 function PasswordUpdatedPanel({ onClose, s, t }) {
+  const { t: tr } = useTranslation();
+
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.38)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 18 }}>
       <section style={{ ...s.card, width: "min(360px, 100%)", padding: 24, boxShadow: "0 18px 48px rgba(0,0,0,0.24)", textAlign: "center" }}>
-        <h2 style={{ ...sectionTitle(t), fontSize: 20 }}>password updated!</h2>
-        <button type="button" onClick={onClose} style={{ ...s.btn, width: "100%", marginTop: 22 }}>Close</button>
+        <h2 style={{ ...sectionTitle(t), fontSize: 20 }}>{tr("settings.passwordUpdated")}</h2>
+        <button type="button" onClick={onClose} style={{ ...s.btn, width: "100%", marginTop: 22 }}>{tr("common.close")}</button>
       </section>
     </div>
   );
 }
 
 function SystemTab({ form, setForm, appearance, setAppearance, s, t }) {
+  const { t: tr, i18n } = useTranslation();
   const options = [
-    { id: "light", label: "Light", icon: Icon.sun },
-    { id: "dark", label: "Dark", icon: Icon.moon },
-    { id: "system", label: "System", icon: Icon.panelSoft },
+    { id: "light", label: tr("settings.light"), icon: Icon.sun },
+    { id: "dark", label: tr("settings.dark"), icon: Icon.moon },
+    { id: "system", label: tr("settings.systemTheme"), icon: Icon.panelSoft },
   ];
 
   return (
     <div>
-      <h2 style={sectionTitle(t)}>System</h2>
-      <p style={sectionCopy(t)}>Customize how Student OS works for you.</p>
+      <h2 style={sectionTitle(t)}>{tr("settings.system")}</h2>
+      <p style={sectionCopy(t)}>{tr("settings.customizeSystem")}</p>
 
-      <h3 style={groupTitle(t)}>Appearance</h3>
-      <p style={sectionCopy(t)}>Choose the theme you prefer.</p>
+      <h3 style={groupTitle(t)}>{tr("settings.appearance")}</h3>
+      <p style={sectionCopy(t)}>{tr("settings.appearanceCopy")}</p>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 18, marginTop: 18 }}>
         {options.map((option) => {
           const on = appearance === option.id;
@@ -303,14 +301,21 @@ function SystemTab({ form, setForm, appearance, setAppearance, s, t }) {
 
       <div style={{ height: 1, background: t.border, margin: "30px 0" }} />
 
-      <h3 style={groupTitle(t)}>Language</h3>
-      <p style={sectionCopy(t)}>Choose the language used in the application.</p>
-      <select value={form.language} onChange={(e) => setForm((current) => ({ ...current, language: e.target.value }))} style={{ ...s.input, maxWidth: 520, marginTop: 18 }}>
-        <option value="en">English</option>
-        <option value="pt">Português</option>
+      <h3 style={groupTitle(t)}>{tr("settings.language")}</h3>
+      <p style={sectionCopy(t)}>{tr("settings.languageCopy")}</p>
+      <select
+        value={i18n.language?.startsWith("pt") ? "pt-BR" : "en"}
+        onChange={(e) => {
+          const language = e.target.value;
+          setForm((current) => ({ ...current, language }));
+          void i18n.changeLanguage(language);
+          saveLanguage(language);
+        }}
+        style={{ ...s.input, maxWidth: 520, marginTop: 18 }}
+      >
+        <option value="en">{tr("language.english")}</option>
+        <option value="pt-BR">{tr("language.portuguese")}</option>
       </select>
-
-      <button type="button" style={{ ...s.btn, marginTop: 16, marginLeft: 10 }}>Save Changes</button>
     </div>
   );
 }
@@ -325,16 +330,4 @@ function groupTitle(t) {
 
 function sectionCopy(t) {
   return { margin: "8px 0 0", color: t.textMuted, fontSize: 14 };
-}
-
-function pendingBadge(t) {
-  return {
-    background: t.hover,
-    border: `1px solid ${t.border}`,
-    color: t.textMuted,
-    borderRadius: 7,
-    padding: "2px 7px",
-    fontSize: 11,
-    fontWeight: 650,
-  };
 }
