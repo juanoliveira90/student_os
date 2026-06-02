@@ -2,11 +2,10 @@ import { useState } from "react";
 import { Icon } from "./icons.jsx";
 import { getStyles } from "./ui.jsx";
 
-export default function Settings({ user, theme, setTheme, t }) {
+export default function Settings({ user, appearance, setAppearance, t }) {
   const s = getStyles(t);
   const profile = user?.user ?? user ?? {};
   const [tab, setTab] = useState("profile");
-  const [appearance, setAppearance] = useState(theme);
   const [form, setForm] = useState({
     name: profile.name || "Juan Farias",
     email: profile.email || "juan@example.com",
@@ -58,7 +57,7 @@ export default function Settings({ user, theme, setTheme, t }) {
           {tab === "profile" ? (
             <ProfileTab form={form} setForm={setForm} s={s} t={t} />
           ) : (
-            <SystemTab form={form} setForm={setForm} appearance={appearance} setAppearance={setAppearance} setTheme={setTheme} s={s} t={t} />
+            <SystemTab form={form} setForm={setForm} appearance={appearance} setAppearance={setAppearance} s={s} t={t} />
           )}
         </div>
       </section>
@@ -96,7 +95,7 @@ function ProfileTab({ form, setForm, s, t }) {
   );
 }
 
-function SystemTab({ form, setForm, appearance, setAppearance, setTheme, s, t }) {
+function SystemTab({ form, setForm, appearance, setAppearance, s, t }) {
   const options = [
     { id: "light", label: "Light", icon: Icon.sun },
     { id: "dark", label: "Dark", icon: Icon.moon },
@@ -120,7 +119,6 @@ function SystemTab({ form, setForm, appearance, setAppearance, setTheme, s, t })
               type="button"
               onClick={() => {
                 setAppearance(option.id);
-                if (option.id !== "system") setTheme(option.id);
               }}
               style={{
                 height: 56,

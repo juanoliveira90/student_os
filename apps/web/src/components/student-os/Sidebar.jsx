@@ -75,10 +75,6 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed,
       <div ref={profileRef} style={{ padding: collapsed ? "12px 10px" : "16px 12px", borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "flex-start", gap: 10, transition: "padding 0.22s ease", position: "relative" }}>
         {profileOpen && (
           <div style={{ position: "absolute", left: collapsed ? 10 : 12, top: "calc(100% + 8px)", width: collapsed ? 180 : 190, background: t.card, border: `1px solid ${t.borderLight}`, borderRadius: 8, padding: 6, boxShadow: "0 14px 36px rgba(0,0,0,0.22)", zIndex: 40 }}>
-            <button type="button" style={profileMenuItem(t)} onClick={() => { setActive("settings"); setProfileOpen(false); }}>
-              <Icon.settings />
-              <span>Settings</span>
-            </button>
             <button type="button" style={{ ...profileMenuItem(t), color: t.accent }} onClick={callLogout}>
               <Icon.logout />
               <span>Log out</span>

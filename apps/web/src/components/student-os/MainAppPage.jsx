@@ -9,7 +9,7 @@ import Settings from "./Settings.jsx";
 import Sidebar from "./Sidebar.jsx";
 import StudyPlans from "./StudyPlans.jsx";
 import { Icon } from "./icons.jsx";
-import { getNextTheme, getStoredTheme, initDocs, initHabits, initSchedule, initSubjects, initTasks, isDarkTheme, NAV_ITEMS, saveStoredTheme, themes } from "./data.js";
+import { getNextTheme, getResolvedTheme, getStoredAppearance, getSystemTheme, initDocs, initHabits, initSchedule, initSubjects, initTasks, isDarkTheme, NAV_ITEMS, saveStoredTheme, themes } from "./data.js";
 import { scheduleQueryOptions } from "../../fetchs/scheduleFetchs";
 import { studyPlanQueryOptions } from "../../fetchs/studyPlanFetchs";
 import { notesQueryOptions } from "../../fetchs/notesFetchs";
@@ -24,9 +24,11 @@ export default function StudentOS({ user, onLogout }) {
   const [subjects, setSubjects] = useState(initSubjects);
   const [habits, setHabits] = useState(initHabits);
   const [docs, setDocs] = useState(initDocs);
-  const [theme, setTheme] = useState(getStoredTheme);
+  const [appearance, setAppearance] = useState(getStoredAppearance);
+  const [systemTheme, setSystemTheme] = useState(getSystemTheme);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [createAction, setCreateAction] = useState(null);
+  const theme = getResolvedTheme(appearance, systemTheme);
   const t = themes[theme];
   const isDoc = active === "documents";
   const scheduleQuery = useQuery(scheduleQueryOptions(user?.id));
@@ -49,8 +51,18 @@ export default function StudentOS({ user, onLogout }) {
     style.background = t.bg;
     style.color = t.text;
     style.setProperty("--sos-accent", t.accent);
-    saveStoredTheme(theme);
-  }, [t, theme]);
+    saveStoredTheme(appearance);
+  }, [appearance, t]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => setSystemTheme(media.matches ? "dark" : "light");
+    onChange();
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
 
   useEffect(() => {
     if (hasLoadedSchedule || !scheduleQuery.data) return;
@@ -91,7 +103,7 @@ export default function StudentOS({ user, onLogout }) {
               <div style={{ fontSize: 13, color: t.textMutedMore, marginTop: 3 }}>{currentPage?.description}</div>
             </div>
             <button
-              onClick={() => setTheme(getNextTheme)}
+              onClick={() => setAppearance(getNextTheme(theme))}
               style={{
                 minWidth: 112,
                 height: 38,
@@ -109,7 +121,7 @@ export default function StudentOS({ user, onLogout }) {
                 fontFamily: "inherit",
               }}
               aria-label="cycle theme"
-              title={`theme: ${theme}`}
+              title={`theme: ${appearance}`}
             >
               {isDarkTheme(theme) ? <Icon.sun /> : <Icon.moon />}
               {isDarkTheme(theme) ? "Light mode" : "Dark mode"}
@@ -134,7 +146,7 @@ export default function StudentOS({ user, onLogout }) {
             {active === "studyplans" && <StudyPlans subjects={subjects} setSubjects={setSubjects} schedule={schedule} setSchedule={setSchedule} createAction={createAction?.page === "studyplans" ? createAction : null} onCreateActionHandled={() => setCreateAction(null)} t={t} />}
             {active === "habits" && <Habits habits={habits} setHabits={setHabits} t={t} />}
             {active === "focustime" && <FocusTime tasks={tasks} setTasks={setTasks} subjects={subjects} schedule={schedule} t={t} />}
-            {active === "settings" && <Settings user={user} theme={theme} setTheme={setTheme} t={t} />}
+            {active === "settings" && <Settings user={user} appearance={appearance} setAppearance={setAppearance} t={t} />}
             {active === "documents" && (
               <Documents
                 docs={docs}

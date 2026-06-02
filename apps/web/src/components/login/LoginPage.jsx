@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { getNextTheme, getStoredTheme, isDarkTheme, saveStoredTheme, themes } from "../student-os/data.js";
+import { getNextTheme, getResolvedTheme, getStoredAppearance, getSystemTheme, isDarkTheme, saveStoredTheme, themes } from "../student-os/data.js";
 import { Icon as AppIcon } from "../student-os/icons.jsx";
 import { getAuthenticatedUser, loginWithEmail, registerWithEmail } from "../../fetchs/authFetchs";
 
@@ -42,7 +42,9 @@ export default function LoginPage({ mode = "login", onAuthenticated }) {
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState("");
   const [mounted, setMounted] = useState(false);
-  const [theme, setTheme] = useState(getStoredTheme);
+  const [appearance, setAppearance] = useState(getStoredAppearance);
+  const [systemTheme, setSystemTheme] = useState(getSystemTheme);
+  const theme = getResolvedTheme(appearance, systemTheme);
   const t = themes[theme];
 
   useEffect(() => {
@@ -54,8 +56,18 @@ export default function LoginPage({ mode = "login", onAuthenticated }) {
     style.background = t.bg;
     style.color = t.text;
     style.setProperty("--sos-accent", t.accent);
-    saveStoredTheme(theme);
-  }, [t, theme]);
+    saveStoredTheme(appearance);
+  }, [appearance, t]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => setSystemTheme(media.matches ? "dark" : "light");
+    onChange();
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
 
   async function handleEmailSubmit(e) {
     e.preventDefault();
@@ -155,7 +167,7 @@ export default function LoginPage({ mode = "login", onAuthenticated }) {
       </div>
 
       <button
-        onClick={() => setTheme(getNextTheme)}
+        onClick={() => setAppearance(getNextTheme(theme))}
         style={{
           position: "fixed",
           bottom: 20,
@@ -175,7 +187,7 @@ export default function LoginPage({ mode = "login", onAuthenticated }) {
           boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
         }}
         aria-label="cycle theme"
-        title={`theme: ${theme}`}
+        title={`theme: ${appearance}`}
       >
         {isDarkTheme(theme) ? <AppIcon.sun /> : <AppIcon.moon />}
       </button>

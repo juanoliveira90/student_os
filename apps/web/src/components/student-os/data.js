@@ -38,17 +38,32 @@ export const themes = {
 };
 
 export const THEME_ORDER = ["dark", "light"];
+export const APPEARANCE_ORDER = ["dark", "light", "system"];
 export const THEME_STORAGE_KEY = "student_os_theme";
 
-export function getStoredTheme() {
+export function getSystemTheme() {
+  if (typeof window === "undefined") return "dark";
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+export function getResolvedTheme(appearance, systemTheme = getSystemTheme()) {
+  return appearance === "system" ? systemTheme : appearance;
+}
+
+export function getStoredAppearance() {
   if (typeof window === "undefined") return "dark";
 
   const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-  return THEME_ORDER.includes(storedTheme) ? storedTheme : "dark";
+  return APPEARANCE_ORDER.includes(storedTheme) ? storedTheme : "dark";
+}
+
+export function getStoredTheme() {
+  return getResolvedTheme(getStoredAppearance());
 }
 
 export function saveStoredTheme(theme) {
-  if (typeof window === "undefined" || !THEME_ORDER.includes(theme)) return;
+  if (typeof window === "undefined" || !APPEARANCE_ORDER.includes(theme)) return;
 
   window.localStorage.setItem(THEME_STORAGE_KEY, theme);
 }
