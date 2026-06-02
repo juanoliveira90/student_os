@@ -65,7 +65,6 @@ export default function LandingPage({ isAuthenticated = false }) {
         </Link>
 
         <nav className="landing-nav" aria-label={tr("landing.nav.label")}>
-          <a href="#product">{tr("landing.nav.product")}</a>
           <a href="#method">{tr("landing.nav.method")}</a>
           <a href="#open-source">{tr("landing.nav.openSource")}</a>
         </nav>
@@ -98,15 +97,11 @@ export default function LandingPage({ isAuthenticated = false }) {
               {isAuthenticated ? tr("landing.hero.openApp") : tr("landing.hero.primaryCta")}
               <Icon.chevronRight />
             </Link>
-            <a href="#product" className="landing-secondary">
+            <a href="#method" className="landing-secondary">
               {tr("landing.hero.secondaryCta")}
             </a>
           </div>
         </div>
-      </section>
-
-      <section id="product" className="landing-product" aria-label={tr("landing.product.label")}>
-        <ProductFrame />
       </section>
 
       <section id="method" className="landing-method">
@@ -141,77 +136,5 @@ export default function LandingPage({ isAuthenticated = false }) {
         </Link>
       </section>
     </main>
-  );
-}
-
-function ProductFrame() {
-  const { t: tr } = useTranslation();
-
-  return (
-    <div className="landing-frame">
-      <div className="landing-frame-top">
-        <div className="landing-window-controls">
-          <i />
-          <i />
-          <i />
-        </div>
-        <span>{tr("landing.product.title")}</span>
-      </div>
-
-      <div className="landing-frame-body">
-        <aside className="landing-frame-sidebar">
-          <span>{tr("landing.brand")}</span>
-          <nav>
-            <div className="active">
-              <Icon.grid /> {tr("nav.dashboard.label")}
-            </div>
-            <div>
-              <Icon.book /> {tr("nav.studyplans.label")}
-            </div>
-            <div>
-              <Icon.cal /> {tr("nav.schedule.label")}
-            </div>
-            <div>
-              <Icon.timer /> {tr("nav.focustime.label")}
-            </div>
-          </nav>
-        </aside>
-
-        <div className="landing-frame-main">
-          <div className="landing-frame-heading">
-            <div>
-              <span>{tr("landing.product.eyebrow")}</span>
-              <strong>{tr("landing.product.headline")}</strong>
-            </div>
-            <div className="landing-status">
-              <Icon.check /> {tr("landing.product.status")}
-            </div>
-          </div>
-
-          <div className="landing-frame-grid">
-            <div className="landing-focus-panel">
-              <span>{tr("nav.studyplans.label")}</span>
-              <h3>{tr("landing.product.plan")}</h3>
-              <div className="landing-line one" />
-              <div className="landing-line two" />
-              <div className="landing-line three" />
-            </div>
-
-            <div className="landing-small-panel">
-              <span>{tr("nav.schedule.label")}</span>
-              <h3>{tr("landing.product.schedule")}</h3>
-            </div>
-
-            <div className="landing-small-panel accent">
-              <span>{tr("nav.focustime.label")}</span>
-              <h3>{tr("landing.product.focus")}</h3>
-              <button type="button">
-                <Icon.play /> {tr("focus.start")}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   );
 }

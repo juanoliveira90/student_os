@@ -11,7 +11,6 @@
     "brand": "Student OS",
     "nav": {
       "label": "Landing page navigation",
-      "product": "Product",
       "method": "Method",
       "openSource": "Open source",
       "signIn": "Sign in"
@@ -22,17 +21,7 @@
       "body": "End decision paralysis with one simple system for plans, schedule, focus, and notes.",
       "primaryCta": "Get started",
       "openApp": "Open app",
-      "secondaryCta": "See product"
-    },
-    "product": {
-      "label": "Product preview",
-      "title": "study workspace",
-      "eyebrow": "Student OS",
-      "headline": "Plan the work. Protect the time. Start.",
-      "status": "clear next step",
-      "plan": "Turn subjects into a study plan.",
-      "schedule": "Give the plan a place in your week.",
-      "focus": "Study one thing at a time."
+      "secondaryCta": "See method"
     },
     "method": {
       "eyebrow": "No extra noise",
