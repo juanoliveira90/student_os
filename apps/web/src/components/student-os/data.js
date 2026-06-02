@@ -39,7 +39,7 @@ export const themes = {
 
 export const THEME_ORDER = ["dark", "light"];
 export const APPEARANCE_ORDER = ["dark", "light", "system"];
-export const THEME_STORAGE_KEY = "student_os_theme";
+export const THEME_STORAGE_KEY = "studium_theme";
 
 export function getSystemTheme() {
   if (typeof window === "undefined") return "dark";

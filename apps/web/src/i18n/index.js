@@ -3,7 +3,7 @@ import { initReactI18next } from "react-i18next";
 import en from "./locales/en/common.json";
 import ptBR from "./locales/pt-BR/common.json";
 
-export const LANGUAGE_STORAGE_KEY = "student_os_language";
+export const LANGUAGE_STORAGE_KEY = "studium_language";
 export const SUPPORTED_LANGUAGES = ["en", "pt-BR"];
 
 export function detectBrowserLanguage() {

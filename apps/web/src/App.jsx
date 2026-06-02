@@ -11,7 +11,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import LandingPage from "./components/landing/LandingPage.jsx";
 import LoginPage from "./components/login/LoginPage.jsx";
-import StudentOS from "./components/student-os/MainAppPage.jsx";
+import Studium from "./components/student-os/MainAppPage.jsx";
 import { getAuthenticatedUser } from "./fetchs/authFetchs";
 import { scheduleQueryOptions } from "./fetchs/scheduleFetchs";
 import { studyPlanQueryOptions } from "./fetchs/studyPlanFetchs";
@@ -113,7 +113,7 @@ function SignupRoute() {
 function AppRoute() {
   const { user, setUser, queryClient } = rootRoute.useRouteContext();
   return (
-    <StudentOS
+    <Studium
       user={user}
       onLogout={() => {
         queryClient.clear();

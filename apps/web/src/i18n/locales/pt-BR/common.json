@@ -8,7 +8,7 @@
     "switchTo": "Mudar para {{language}}"
   },
   "landing": {
-    "brand": "Student OS",
+    "brand": "Studium",
     "nav": {
       "label": "Navega\u00e7\u00e3o da landing page",
       "method": "M\u00e9todo",
@@ -44,7 +44,7 @@
     "openSource": {
       "eyebrow": "MVP open source",
       "title": "Feito para ser \u00fatil antes de ser grande.",
-      "body": "Sem se\u00e7\u00e3o de pre\u00e7os. Sem urg\u00eancia falsa. Student OS \u00e9 um MVP open source pequeno, moldado por rotinas reais de estudo.",
+      "body": "Sem se\u00e7\u00e3o de pre\u00e7os. Sem urg\u00eancia falsa. Studium \u00e9 um MVP open source pequeno, moldado por rotinas reais de estudo.",
       "cta": "Come\u00e7ar agora"
     }
   },
@@ -225,7 +225,7 @@
     "passwordMatch": "As senhas devem coincidir.",
     "passwordUpdated": "senha atualizada!",
     "continue": "Continuar",
-    "customizeSystem": "Personalize como o Student OS funciona para você.",
+    "customizeSystem": "Personalize como o Studium funciona para você.",
     "appearance": "Aparência",
     "appearanceCopy": "Escolha o tema que prefere.",
     "light": "Claro",

@@ -15,7 +15,7 @@ import { scheduleQueryOptions } from "../../fetchs/scheduleFetchs";
 import { studyPlanQueryOptions } from "../../fetchs/studyPlanFetchs";
 import { notesQueryOptions } from "../../fetchs/notesFetchs";
 
-export default function StudentOS({ user, onLogout }) {
+export default function Studium({ user, onLogout }) {
   const { t: tr } = useTranslation();
   const [active, setActive] = useState("dashboard");
   const [tasks, setTasks] = useState([]);
