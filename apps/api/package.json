@@ -2,13 +2,13 @@
   "name": "studium_api",
   "version": "1.0.0",
   "description": "back end for Studium project",
-  "homepage": "https://github.com/juanoliveira90/student_os#readme",
+  "homepage": "https://github.com/juanoliveira90/studium#readme",
   "bugs": {
-    "url": "https://github.com/juanoliveira90/student_os/issues"
+    "url": "https://github.com/juanoliveira90/studium/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/juanoliveira90/student_os.git"
+    "url": "git+https://github.com/juanoliveira90/studium.git"
   },
   "license": "ISC",
   "author": "juanoliveira90",
