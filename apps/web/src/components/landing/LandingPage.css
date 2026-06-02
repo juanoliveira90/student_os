@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Tangerine:wght@700&display=swap");
+
 .landing {
   min-height: 100vh;
   background:
@@ -39,28 +41,88 @@
 .landing-actions,
 .landing-primary,
 .landing-secondary,
-.landing-method-icon {
+.landing-method-icon,
+.landing-repo-link {
   display: flex;
   align-items: center;
 }
 
 .landing-brand {
   justify-self: start;
-  gap: 10px;
+  width: fit-content;
   text-decoration: none;
-  font-weight: 850;
 }
 
-.landing-brand-mark {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border-radius: 8px;
-  background: var(--landing-text);
-  color: var(--landing-bg);
-  font-size: 12px;
+.studium-wordmark {
+  position: relative;
+  display: inline-grid;
+  grid-template-columns: auto auto;
+  align-items: end;
+  gap: clamp(4px, 0.7vw, 10px);
+  color: var(--landing-text);
+  isolation: isolate;
+}
+
+.studium-wordmark::before {
+  position: absolute;
+  inset: 18% -9% -12% 6%;
+  z-index: -1;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--landing-accent) 13%, transparent);
+  filter: blur(18px);
+  opacity: 0;
+  content: "";
+  transition: opacity 180ms ease;
+}
+
+.landing-brand:hover .studium-wordmark::before,
+.landing-hero-logo .studium-wordmark::before {
+  opacity: 1;
+}
+
+.studium-wordmark-text {
+  font-family: "Tangerine", Georgia, "Times New Roman", serif;
+  font-size: clamp(39px, 3vw, 48px);
+  font-style: italic;
+  font-weight: 700;
+  line-height: 0.82;
   letter-spacing: 0;
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--landing-bg) 72%, transparent);
+}
+
+.studium-wordmark-feather {
+  width: clamp(40px, 4.8vw, 68px);
+  height: auto;
+  margin-bottom: -3px;
+  color: color-mix(in srgb, var(--landing-text) 88%, var(--landing-accent));
+  overflow: visible;
+}
+
+.studium-feather-fill {
+  fill: color-mix(in srgb, currentColor 20%, transparent);
+}
+
+.studium-feather-spine,
+.studium-feather-barb,
+.studium-feather-shadow {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.studium-feather-spine {
+  stroke-width: 3;
+}
+
+.studium-feather-barb {
+  opacity: 0.72;
+  stroke-width: 1.4;
+}
+
+.studium-feather-shadow {
+  opacity: 0.34;
+  stroke-width: 1.5;
 }
 
 .landing-nav {
@@ -303,6 +365,89 @@
   margin-top: 28px;
 }
 
+.landing-footer {
+  display: grid;
+  grid-template-columns: minmax(240px, 0.8fr) minmax(0, 1fr);
+  gap: clamp(44px, 8vw, 120px);
+  padding: clamp(52px, 7vw, 84px) clamp(18px, 10vw, 160px);
+  border-top: 1px solid var(--landing-border);
+  background: var(--landing-bg);
+}
+
+.landing-footer-brand {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 18px;
+}
+
+.landing-footer-brand p {
+  max-width: 280px;
+  color: var(--landing-muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.landing-footer-name {
+  color: var(--landing-text);
+  font-family: "Tangerine", Georgia, "Times New Roman", serif;
+  font-size: 26px;
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.landing-repo-link {
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--landing-border);
+  border-radius: 8px;
+  background: var(--landing-soft);
+  color: var(--landing-text);
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.landing-repo-link:hover {
+  background: var(--landing-hover);
+}
+
+.landing-footer-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(150px, 1fr));
+  gap: clamp(28px, 6vw, 84px);
+}
+
+.landing-footer-column {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.landing-footer-column h2 {
+  margin: 0 0 4px;
+  color: var(--landing-muted-more);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.landing-footer-column a {
+  width: fit-content;
+  color: var(--landing-text);
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.landing-footer-column a:hover {
+  color: var(--landing-accent);
+}
+
 @media (max-width: 920px) {
   .landing-header {
     grid-template-columns: auto 1fr;
@@ -316,7 +461,19 @@
     grid-column: 2;
   }
 
+  .landing-header .studium-wordmark-text {
+    font-size: 29px;
+  }
+
+  .landing-header .studium-wordmark-feather {
+    width: 38px;
+  }
+
   .landing-method-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-footer {
     grid-template-columns: 1fr;
   }
 }
@@ -327,9 +484,16 @@
     padding-inline: 14px;
   }
 
-  .landing-brand span:last-child,
   .landing-login {
     display: none;
+  }
+
+  .landing-header .studium-wordmark-text {
+    font-size: 27px;
+  }
+
+  .landing-header .studium-wordmark-feather {
+    width: 35px;
   }
 
   .landing-actions {
@@ -349,5 +513,9 @@
   .landing-primary,
   .landing-secondary {
     width: 100%;
+  }
+
+  .landing-footer-columns {
+    grid-template-columns: 1fr;
   }
 }

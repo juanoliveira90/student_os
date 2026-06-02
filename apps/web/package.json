@@ -2,6 +2,10 @@
   "name": "studium_frontend",
   "version": "0.1.0",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/juanoliveira90/student_os.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",

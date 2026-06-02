@@ -46,6 +46,13 @@
       "title": "Built to become useful before it becomes big.",
       "body": "No pricing section. No fake urgency. Studium is a small open source MVP shaped around real study routines.",
       "cta": "Get started"
+    },
+    "footer": {
+      "tagline": "Open-source study planning for schedules, focus, habits, and notes.",
+      "repository": "GitHub repository",
+      "product": "Product",
+      "project": "Project",
+      "github": "View on GitHub"
     }
   },
   "auth": {
