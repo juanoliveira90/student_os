@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import LandingPage from "./components/landing/LandingPage.jsx";
 import LoginPage from "./components/login/LoginPage.jsx";
 import StudentOS from "./components/student-os/MainAppPage.jsx";
 import { getAuthenticatedUser } from "./fetchs/authFetchs";
@@ -23,9 +24,7 @@ const rootRoute = createRootRoute({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  beforeLoad: ({ context }) => {
-    throw redirect({ to: context.user ? "/app" : "/login", replace: true });
-  },
+  component: LandingRoute,
 });
 
 const loginRoute = createRoute({
@@ -99,6 +98,11 @@ function LoginRoute() {
       }}
     />
   );
+}
+
+function LandingRoute() {
+  const { user } = rootRoute.useRouteContext();
+  return <LandingPage isAuthenticated={Boolean(user)} />;
 }
 
 function SignupRoute() {

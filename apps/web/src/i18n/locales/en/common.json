@@ -7,6 +7,58 @@
     "portuguese": "Portuguese",
     "switchTo": "Switch to {{language}}"
   },
+  "landing": {
+    "brand": "Student OS",
+    "nav": {
+      "label": "Landing page navigation",
+      "product": "Product",
+      "method": "Method",
+      "openSource": "Open source",
+      "signIn": "Sign in"
+    },
+    "hero": {
+      "kicker": "Calm down. Organize first.",
+      "headline": "Know what to study next.",
+      "body": "End decision paralysis with one simple system for plans, schedule, focus, and notes.",
+      "primaryCta": "Get started",
+      "openApp": "Open app",
+      "secondaryCta": "See product"
+    },
+    "product": {
+      "label": "Product preview",
+      "title": "study workspace",
+      "eyebrow": "Student OS",
+      "headline": "Plan the work. Protect the time. Start.",
+      "status": "clear next step",
+      "plan": "Turn subjects into a study plan.",
+      "schedule": "Give the plan a place in your week.",
+      "focus": "Study one thing at a time."
+    },
+    "method": {
+      "eyebrow": "No extra noise",
+      "title": "Three moves. That is enough.",
+      "items": [
+        {
+          "title": "Decide once",
+          "body": "Write the subjects, split the work, and stop reopening the same mental tab."
+        },
+        {
+          "title": "Block time",
+          "body": "Put study blocks beside real life, not in an imaginary perfect routine."
+        },
+        {
+          "title": "Start smaller",
+          "body": "When it is time, pick the next task and let the rest wait."
+        }
+      ]
+    },
+    "openSource": {
+      "eyebrow": "Open source MVP",
+      "title": "Built to become useful before it becomes big.",
+      "body": "No pricing section. No fake urgency. Student OS is a small open source MVP shaped around real study routines.",
+      "cta": "Get started"
+    }
+  },
   "auth": {
     "subtitleLogin": "Sign in to continue planning",
     "subtitleSignup": "Create your study workspace",

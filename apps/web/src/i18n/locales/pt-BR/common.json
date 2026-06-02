@@ -7,6 +7,58 @@
     "portuguese": "Português",
     "switchTo": "Mudar para {{language}}"
   },
+  "landing": {
+    "brand": "Student OS",
+    "nav": {
+      "label": "Navega\u00e7\u00e3o da landing page",
+      "product": "Produto",
+      "method": "M\u00e9todo",
+      "openSource": "Open source",
+      "signIn": "Entrar"
+    },
+    "hero": {
+      "kicker": "Calma. Primeiro organiza.",
+      "headline": "Saiba o que estudar agora.",
+      "body": "Acabe com a paralisia de decis\u00e3o com um sistema simples para planos, agenda, foco e notas.",
+      "primaryCta": "Come\u00e7ar agora",
+      "openApp": "Abrir app",
+      "secondaryCta": "Ver produto"
+    },
+    "product": {
+      "label": "Pr\u00e9via do produto",
+      "title": "espa\u00e7o de estudos",
+      "eyebrow": "Student OS",
+      "headline": "Planeje. Proteja o tempo. Comece.",
+      "status": "pr\u00f3ximo passo claro",
+      "plan": "Transforme mat\u00e9rias em plano.",
+      "schedule": "D\u00ea lugar ao plano na semana.",
+      "focus": "Estude uma coisa por vez."
+    },
+    "method": {
+      "eyebrow": "Sem barulho extra",
+      "title": "Tr\u00eas movimentos. Isso basta.",
+      "items": [
+        {
+          "title": "Decida uma vez",
+          "body": "Escreva as mat\u00e9rias, divida o trabalho e pare de reabrir a mesma aba mental."
+        },
+        {
+          "title": "Bloqueie tempo",
+          "body": "Coloque blocos de estudo junto da vida real, n\u00e3o em uma rotina perfeita imagin\u00e1ria."
+        },
+        {
+          "title": "Comece menor",
+          "body": "Na hora de estudar, escolha a pr\u00f3xima tarefa e deixe o resto esperar."
+        }
+      ]
+    },
+    "openSource": {
+      "eyebrow": "MVP open source",
+      "title": "Feito para ser \u00fatil antes de ser grande.",
+      "body": "Sem se\u00e7\u00e3o de pre\u00e7os. Sem urg\u00eancia falsa. Student OS \u00e9 um MVP open source pequeno, moldado por rotinas reais de estudo.",
+      "cta": "Come\u00e7ar agora"
+    }
+  },
   "auth": {
     "subtitleLogin": "Entre para continuar planejando",
     "subtitleSignup": "Crie seu espaço de estudos",
