@@ -12,6 +12,6 @@ export default defineConfig({
     },
   },
   preview: {
-    allowedHosts: ['studium-frontend-production.up.railway.app']
+    allowedHosts: ['studium-frontend-production.up.railway.app', 'www.studium-web.com']
   }
 });
