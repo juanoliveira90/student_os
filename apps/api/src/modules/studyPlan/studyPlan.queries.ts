@@ -1,7 +1,7 @@
-import { db } from "../../db/client.ts"
-import { Subjects, SubjectSubtasks } from "../../db/schema.ts"
+import { db } from "../../db/client.js"
+import { Subjects, SubjectSubtasks } from "../../db/schema.js"
 import { and, eq } from "drizzle-orm"
-import type { createSubject, createSubtask, studyPlanSubject, updateSubject, updateSubtask } from "./studyPlan.type.ts"
+import type { createSubject, createSubtask, studyPlanSubject, updateSubject, updateSubtask } from "./studyPlan.type.js"
 
 
 export const StudyPlanQueries = {

@@ -1,7 +1,7 @@
 "use server"
 
-import { NotesQueries } from "./notes.queries.ts"
-import type { createNote, deleteNote, updateNote } from "./notes.type.ts"
+import { NotesQueries } from "./notes.queries.js"
+import type { createNote, deleteNote, updateNote } from "./notes.type.js"
 
 export const NotesService = {
     async getNotes(userId: number) {

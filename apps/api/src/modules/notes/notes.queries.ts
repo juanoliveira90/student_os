@@ -1,7 +1,7 @@
-import { db } from "../../db/client.ts"
-import { Notes } from "../../db/schema.ts"
+import { db } from "../../db/client.js"
+import { Notes } from "../../db/schema.js"
 import { and, eq } from "drizzle-orm"
-import type { createNote, updateNote } from "./notes.type.ts"
+import type { createNote, updateNote } from "./notes.type.js"
 
 export const NotesQueries = {
     async getNotes(userId: number) {

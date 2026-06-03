@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify"
-import { noteDeleteSchema, noteInsertSchema, noteUpdateSchema } from "./notes.schema.ts"
-import { NotesService } from "./notes.service.ts"
+import { noteDeleteSchema, noteInsertSchema, noteUpdateSchema } from "./notes.schema.js"
+import { NotesService } from "./notes.service.js"
 
 export async function NotesController(app: FastifyInstance) {
     app.get('/', async (request, reply) => {

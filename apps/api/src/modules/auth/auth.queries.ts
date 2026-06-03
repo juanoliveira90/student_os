@@ -1,7 +1,7 @@
 "use server"
 
-import { db } from "../../db/client.ts"
-import { Accounts, Users } from "../../db/schema.ts"
+import { db } from "../../db/client.js"
+import { Accounts, Users } from "../../db/schema.js"
 import { eq } from "drizzle-orm"
 
 export const AuthQueries = {

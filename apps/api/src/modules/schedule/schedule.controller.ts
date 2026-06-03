@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify"
-import { DeleteSchema, InsertSchema } from "./schedule.schema.ts"
-import { ScheduleService } from "./schedule.service.ts"
+import { DeleteSchema, InsertSchema } from "./schedule.schema.js"
+import { ScheduleService } from "./schedule.service.js"
 
 export async function ScheduleController(app: FastifyInstance) {
     app.get('/', async (request, reply) => {

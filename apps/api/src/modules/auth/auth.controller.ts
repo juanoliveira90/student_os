@@ -1,7 +1,6 @@
 import type { FastifyInstance } from "fastify";
-import { AuthService } from "./auth.service.ts";
-import { registerSchema, loginSchema } from "./auth.schemas.ts";
-import { request } from "node:http";
+import { AuthService } from "./auth.service.js";
+import { registerSchema, loginSchema } from "./auth.schemas.js";
 
 export async function AuthController(app: FastifyInstance) {
     app.post('/register', { schema: registerSchema, config: { public: true } }, async (request, reply) => {
@@ -20,12 +19,15 @@ export async function AuthController(app: FastifyInstance) {
             sub: user.id?.toString(),
             email: user.email,
         })
+        const isProduction = process.env.NODE_ENV === "production"
+        const sameSite = process.env.COOKIE_SAME_SITE === "none" ? "none" : "lax"
+        const secure = process.env.COOKIE_SECURE === "true" || isProduction
 
         reply.setCookie('access_token', token, {
             path: '/',
             httpOnly: true,
-            sameSite: 'lax',
-            secure: false,
+            sameSite,
+            secure,
             maxAge: 60 * 60 * 24 * 7
         })
 

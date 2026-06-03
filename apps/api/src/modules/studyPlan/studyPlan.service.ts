@@ -1,7 +1,7 @@
 "use server"
 
-import { StudyPlanQueries } from "./studyPlan.queries.ts"
-import type { createSubtask, createSubject, updateSubject, updateSubtask } from "./studyPlan.type.ts"
+import { StudyPlanQueries } from "./studyPlan.queries.js"
+import type { createSubtask, createSubject, updateSubject, updateSubtask } from "./studyPlan.type.js"
 
 export const StudyPlanService = {
     async getStudyPlans(userId: number) {

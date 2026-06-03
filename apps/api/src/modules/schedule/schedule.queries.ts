@@ -1,8 +1,8 @@
 "use server"
 
-import { db } from "../../db/client.ts"
-import { Schedule, ScheduleItems } from "../../db/schema.ts"
-import type { remove, add } from "./schedule.types.ts"
+import { db } from "../../db/client.js"
+import { Schedule, ScheduleItems } from "../../db/schema.js"
+import type { remove, add } from "./schedule.types.js"
 import { and, sql, inArray, eq } from "drizzle-orm"
 
 export const ScheduleQueries = {

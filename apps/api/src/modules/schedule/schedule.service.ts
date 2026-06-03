@@ -1,7 +1,7 @@
 "use server"
 
-import { ScheduleQueries } from "./schedule.queries.ts"
-import type { add, remove } from "./schedule.types.ts"
+import { ScheduleQueries } from "./schedule.queries.js"
+import type { add, remove } from "./schedule.types.js"
 
 export const ScheduleService = {
     async getSchedule(userId: number) {

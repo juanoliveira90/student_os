@@ -1,7 +1,7 @@
 "use server"
 
-import { AuthQueries } from "./auth.queries.ts"
-import { type RegisterInput, type LoginInput, type getUserInput } from "./auth.types.ts"
+import { AuthQueries } from "./auth.queries.js"
+import { type RegisterInput, type LoginInput, type getUserInput } from "./auth.types.js"
 import * as bcrypt from "bcrypt"
 import 'dotenv/config'
 

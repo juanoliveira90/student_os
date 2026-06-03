@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify"
-//import { DeleteSchema, InsertSchema } from "./studyPlan.schema.ts"
-import { StudyPlanService } from "./studyPlan.service.ts"
-import { deleteSubjectSchema, deleteSubtaskSchema, subjectInsertSchema, subjectUpdateSchema, subtaskInsertSchema, subtaskUpdateSchema } from "./studyPlan.schema.ts"
+//import { DeleteSchema, InsertSchema } from "./studyPlan.schema.js"
+import { StudyPlanService } from "./studyPlan.service.js"
+import { deleteSubjectSchema, deleteSubtaskSchema, subjectInsertSchema, subjectUpdateSchema, subtaskInsertSchema, subtaskUpdateSchema } from "./studyPlan.schema.js"
 
 export async function StudyPlanController(app: FastifyInstance) {
     app.get('/', async (request, reply) => {
