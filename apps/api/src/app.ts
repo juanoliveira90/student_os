@@ -1,17 +1,25 @@
 import fastify from "fastify"
 import fastifyCookie from "@fastify/cookie"
+import fastifyCors from "@fastify/cors"
 import fastifyJwt from "@fastify/jwt"
 
 import 'dotenv/config'
 
-import { AuthController } from "./modules/auth/auth.controller.ts"
-import { NotesController } from "./modules/notes/notes.controller.ts"
-import { ScheduleController } from "./modules/schedule/schedule.controller.ts"
-import { StudyPlanController } from "./modules/studyPlan/studyPlan.controller.ts"
+import { AuthController } from "./modules/auth/auth.controller.js"
+import { NotesController } from "./modules/notes/notes.controller.js"
+import { ScheduleController } from "./modules/schedule/schedule.controller.js"
+import { StudyPlanController } from "./modules/studyPlan/studyPlan.controller.js"
 
 export default function Build() {
     const app = fastify()
+    const frontendOrigin = process.env.FRONTEND_ORIGIN
 
+    if (frontendOrigin) {
+        app.register(fastifyCors, {
+            origin: frontendOrigin.split(",").map((origin) => origin.trim()),
+            credentials: true
+        })
+    }
     app.register(fastifyCookie, {
         secret: process.env.COOKIE_SECRET! 
     })
