@@ -17,7 +17,8 @@ export default function Build() {
     if (frontendOrigin) {
         app.register(fastifyCors, {
             origin: frontendOrigin.split(",").map((origin) => origin.trim()),
-            credentials: true
+            credentials: true,
+            methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
         })
     }
     app.register(fastifyCookie, {
