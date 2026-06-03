@@ -11,4 +11,7 @@ export default defineConfig({
       "/notes": "http://localhost:3001"
     },
   },
+  preview: {
+    allowedHosts: ['studium-frontend-production.up.railway.app']
+  }
 });
