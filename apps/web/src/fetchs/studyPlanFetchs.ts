@@ -1,3 +1,5 @@
+import { apiUrl } from "./apiUrl";
+
 export const studyPlanQueryKey = ["studyPlan"];
 
 function toSubject(subject) {
@@ -29,7 +31,7 @@ async function parseJsonResponse(response, fallback = null) {
 }
 
 export async function fetchStudyPlanSubjects() {
-  const response = await fetch("/plan", { credentials: "include" });
+  const response = await fetch(apiUrl("/plan"), { credentials: "include" });
   const data = await parseJsonResponse(response, { plans: [] });
 
   return (data.plans || []).map(toSubject);
@@ -58,7 +60,7 @@ function toSubjectPayload(subject) {
 }
 
 export async function postPlanSubject(subject) {
-  const response = await fetch("/plan/subject", {
+  const response = await fetch(apiUrl("/plan/subject"), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -69,7 +71,7 @@ export async function postPlanSubject(subject) {
 }
 
 export async function putPlanSubject(subject) {
-  const response = await fetch("/plan/subject", {
+  const response = await fetch(apiUrl("/plan/subject"), {
     method: "PUT",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -85,7 +87,7 @@ export async function putPlanSubject(subject) {
 }
 
 export async function postSubtask(subjectId, subtask) {
-  const response = await fetch("/plan/subtask", {
+  const response = await fetch(apiUrl("/plan/subtask"), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -105,7 +107,7 @@ export async function postSubtask(subjectId, subtask) {
 }
 
 export async function putSubtask(subtask) {
-  const response = await fetch("/plan/subtask", {
+  const response = await fetch(apiUrl("/plan/subtask"), {
     method: "PUT",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -121,7 +123,7 @@ export async function putSubtask(subtask) {
 }
 
 export async function deleteSubtask(subtaskId) {
-  const response = await fetch("/plan/subtask", {
+  const response = await fetch(apiUrl("/plan/subtask"), {
     method: "DELETE",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -132,7 +134,7 @@ export async function deleteSubtask(subtaskId) {
 }
 
 export async function deleteSubject(subjectId) {
-  const response = await fetch("/plan/subject", {
+  const response = await fetch(apiUrl("/plan/subject"), {
     method: "DELETE",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

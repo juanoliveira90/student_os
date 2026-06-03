@@ -1,3 +1,5 @@
+import { apiUrl } from "./apiUrl";
+
 function getServerMessage(data) {
   if (!data) return "";
   if (typeof data.message === "string") return data.message;
@@ -17,14 +19,14 @@ async function parseJsonResponse(response) {
 }
 
 export async function getAuthenticatedUser() {
-  const response = await fetch("/auth/me", { credentials: "include" });
+  const response = await fetch(apiUrl("/auth/me"), { credentials: "include" });
   const data = await parseJsonResponse(response);
 
   return data.user;
 }
 
 export async function loginWithEmail(credentials) {
-  const response = await fetch("/auth/login", {
+  const response = await fetch(apiUrl("/auth/login"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(credentials),
@@ -35,7 +37,7 @@ export async function loginWithEmail(credentials) {
 }
 
 export async function registerWithEmail(account) {
-  const response = await fetch("/auth/register", {
+  const response = await fetch(apiUrl("/auth/register"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(account),
@@ -46,7 +48,7 @@ export async function registerWithEmail(account) {
 }
 
 export async function logout() {
-  const response = await fetch("/auth/logout", {
+  const response = await fetch(apiUrl("/auth/logout"), {
     method: "POST",
     credentials: "include",
   });
@@ -55,7 +57,7 @@ export async function logout() {
 }
 
 export async function updateProfile(name) {
-  const response = await fetch("/auth/profile", {
+  const response = await fetch(apiUrl("/auth/profile"), {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name }),
@@ -66,7 +68,7 @@ export async function updateProfile(name) {
 }
 
 export async function updatePassword(new_password) {
-  const response = await fetch("/auth/password", {
+  const response = await fetch(apiUrl("/auth/password"), {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ new_password }),

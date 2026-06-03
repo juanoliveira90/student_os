@@ -1,3 +1,5 @@
+import { apiUrl } from "./apiUrl";
+
 export const notesQueryKey = ["notes"];
 
 function formatDate(value) {
@@ -29,7 +31,7 @@ async function parseJsonResponse(response, fallback = null) {
 }
 
 export async function fetchNotes() {
-  const response = await fetch("/notes", { credentials: "include" });
+  const response = await fetch(apiUrl("/notes"), { credentials: "include" });
   const data = await parseJsonResponse(response, { notes: [] });
 
   return (data.notes || []).map(toNote);
@@ -52,7 +54,7 @@ function toNotePayload(note) {
 }
 
 export async function postNote(note) {
-  const response = await fetch("/notes", {
+  const response = await fetch(apiUrl("/notes"), {
     method: "POST",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -63,7 +65,7 @@ export async function postNote(note) {
 }
 
 export async function putNote(note) {
-  const response = await fetch("/notes", {
+  const response = await fetch(apiUrl("/notes"), {
     method: "PUT",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -74,7 +76,7 @@ export async function putNote(note) {
 }
 
 export async function deleteNote(noteId) {
-  const response = await fetch("/notes", {
+  const response = await fetch(apiUrl("/notes"), {
     method: "DELETE",
     credentials: "include",
     headers: { "Content-Type": "application/json" },

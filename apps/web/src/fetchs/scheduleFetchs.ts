@@ -1,4 +1,5 @@
 import { DAY_LABELS } from "../components/student-os/data.js";
+import { apiUrl } from "./apiUrl";
 
 export const scheduleQueryKey = ["schedule"];
 
@@ -43,7 +44,7 @@ async function parseJsonResponse(response, fallback) {
 }
 
 export async function fetchSchedule() {
-  const response = await fetch("/schedule", { credentials: "include" });
+  const response = await fetch(apiUrl("/schedule"), { credentials: "include" });
   const data = await parseJsonResponse(response, { events: [] });
 
   return toSchedule(data.events);
@@ -58,7 +59,7 @@ export function scheduleQueryOptions(userId) {
 }
 
 export async function saveScheduleEvents(events) {
-  const response = await fetch("/schedule", {
+  const response = await fetch(apiUrl("/schedule"), {
     method: "PUT",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -69,7 +70,7 @@ export async function saveScheduleEvents(events) {
 }
 
 export async function deleteScheduleEvents(events) {
-  const response = await fetch("/schedule/delete", {
+  const response = await fetch(apiUrl("/schedule/delete"), {
     method: "DELETE",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
