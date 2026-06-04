@@ -72,7 +72,17 @@
     "google": "Continuar com Google",
     "alreadyAccount": "Já tem uma conta?",
     "newHere": "Novo por aqui?",
-    "genericError": "Algo deu errado. Tente novamente."
+    "genericError": "Algo deu errado. Tente novamente.",
+    "verifyEmail": {
+      "subtitle": "Confirme sua conta",
+      "title": "Confira seu email",
+      "body": "Digite o codigo de 5 digitos enviado ao seu email para concluir a criacao da conta.",
+      "codeLabel": "codigo de verificacao",
+      "codePlaceholder": "00000",
+      "codeFormat": "Digite um codigo valido de 5 digitos.",
+      "verify": "Verificar",
+      "verifying": "Verificando..."
+    }
   },
   "nav": {
     "dashboard": { "label": "Início", "description": "Seu dia em resumo" },

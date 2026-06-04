@@ -6,12 +6,54 @@ export async function AuthController(app: FastifyInstance) {
     app.post('/register', { schema: registerSchema, config: { public: true } }, async (request, reply) => {
         const data = request.body as Parameters<typeof AuthService.register>[0]
         const result = await AuthService.register(data)
+        const storeCode = await AuthService.storeEmailVerificationCode(result.user_id)
+        await AuthService.sendEmail(data.email, storeCode.code!)
+        
+
+        const token = app.jwt.sign({
+            sub: result.user_id?.toString(),
+            email: data.email,
+        })
+        const isProduction = process.env.NODE_ENV === "production"
+        const sameSite = process.env.COOKIE_SAME_SITE === "none" ? "none" : "lax"
+        const secure = process.env.COOKIE_SECURE === "true" || isProduction
+
+        reply.setCookie('access_token', token, {
+            path: '/',
+            httpOnly: true,
+            sameSite,
+            secure,
+            maxAge: 60 * 60 * 24 * 7
+        })
+
         return reply.code(201).send(result)
     })
 
+    app.post('/email-code/request', async (request, reply) => {
+        const user = request.user as { sub: string, email: string }
+        const result = await AuthService.requestEmailVerificationCode(parseInt(user.sub), user.email)
+
+        return reply.code(result.statusCode).send({ message: result.message })
+    })
+    
+    app.post('/email-code', async (request, reply) => {
+        const data = request.body as { userCode: number }
+        const checkValidation = await AuthService.validateEmailVerificationCodeFromUser(parseInt(request.user.sub), data.userCode)
+
+        if (!checkValidation) return reply.code(403).send({ message: "wrong code!" })
+
+        await AuthService.emailConfirmation(parseInt(request.user.sub))
+        
+        return reply.code(200).send({ message: "email confirmed!" })
+    })
+    
     app.post('/login', { schema: loginSchema, config: { public: true } }, async (request, reply) => {
         const data = request.body as Parameters<typeof AuthService.login>[0]
         const user = await AuthService.login(data)
+        if ("error" in user) {
+            return reply.code(user.statusCode ?? 401).send(user)
+        }
+
         if (!user.id || !user.email) {
             throw new Error("missing credentials")
         }

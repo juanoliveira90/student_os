@@ -13,14 +13,27 @@ import { StudyPlanController } from "./modules/studyPlan/studyPlan.controller.js
 export default function Build() {
     const app = fastify()
     const frontendOrigin = process.env.FRONTEND_ORIGIN
+    const isDev = process.env.NODE_ENV === "development"
 
-    if (frontendOrigin) {
+    if (frontendOrigin && !isDev) {
         app.register(fastifyCors, {
             origin: frontendOrigin.split(",").map((origin) => origin.trim()),
             credentials: true,
             methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
         })
     }
+    else if (isDev) {
+        app.register(fastifyCors, {
+            origin: [
+                'http://localhost:3001', 
+                'http://localhost:5173',
+                'http://127.0.0.1:5173',
+            ],
+            credentials: true,
+            methods: ['GET', 'POST', 'PUT', 'PATCH', 'OPTIONS', 'DELETE'],
+        })
+    }
+
     app.register(fastifyCookie, {
         secret: process.env.COOKIE_SECRET! 
     })

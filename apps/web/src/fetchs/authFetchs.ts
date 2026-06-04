@@ -47,6 +47,17 @@ export async function registerWithEmail(account) {
   return parseJsonResponse(response);
 }
 
+export async function verifyEmailCode(userCode) {
+  const response = await fetch(apiUrl("/auth/email-code"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userCode }),
+    credentials: "include",
+  });
+
+  return parseJsonResponse(response);
+}
+
 export async function logout() {
   const response = await fetch(apiUrl("/auth/logout"), {
     method: "POST",

@@ -85,7 +85,11 @@ export default function LoginPage({ mode = "login", onAuthenticated }) {
     try {
       if (isSignup) {
         await registerWithEmail({ name, email, password });
-        navigate({ to: "/login" });
+        const authenticatedUser = await getAuthenticatedUser().catch(() => null);
+        flushSync(() => {
+          onAuthenticated?.(authenticatedUser);
+        });
+        navigate({ to: "/verify-email" });
         return;
       }
 

@@ -17,7 +17,8 @@ export const Users = pgTable("users", {
     email: text().unique().notNull(),
     password: text(),
     created_at: timestamp({ precision: 0, withTimezone: true }).defaultNow(),
-    updated_at: timestamp({ precision: 0, withTimezone: true }).defaultNow()
+    updated_at: timestamp({ precision: 0, withTimezone: true }).defaultNow(),
+    email_verified: boolean().default(false)
 })
 
 export const Accounts = pgTable("accounts", {
@@ -65,11 +66,6 @@ export const ScheduleItems = pgTable("schedule_items", {
     //is_recurring: boolean().notNull()
 })
 
-export const StudyPlans = pgTable("study_plans", {
-    id: bigserial({ mode: "number" }).primaryKey(),
-    user_id: bigint({ mode: "number" }).references(() => Users.id),
-})
-
 export const Subjects = pgTable("subjects", {
     id: uuid().primaryKey(),
     user_id: bigint({ mode: "number" }).references(() => Users.id, {
@@ -105,4 +101,15 @@ export const Notes = pgTable("notes", {
     content: text().notNull(),
     created_at: timestamp({ precision: 0, withTimezone: true }).defaultNow(),
     updated_at: timestamp({ precision: 0, withTimezone: true }).defaultNow()
+})
+
+export const EmailVerification = pgTable("email_verification", {
+    id: bigserial({ mode: "number" }).primaryKey(),
+    user_id: bigint({ mode: "number" }).references(() => Users.id, {
+        onDelete: 'cascade'
+    }),
+    code_hash: text().notNull(),
+    expires_at: timestamp().notNull(),
+    used: boolean().default(false),
+    created_at: timestamp({ precision: 0, withTimezone: true }).defaultNow(),
 })

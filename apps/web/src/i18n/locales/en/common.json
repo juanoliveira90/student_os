@@ -72,7 +72,17 @@
     "google": "Continue with Google",
     "alreadyAccount": "Already have an account?",
     "newHere": "New here?",
-    "genericError": "Something went wrong. Please try again."
+    "genericError": "Something went wrong. Please try again.",
+    "verifyEmail": {
+      "subtitle": "Confirm your account",
+      "title": "Check your email",
+      "body": "Enter the 5 digit code sent to your email to finish creating your account.",
+      "codeLabel": "verification code",
+      "codePlaceholder": "00000",
+      "codeFormat": "Enter a valid 5 digit code.",
+      "verify": "Verify",
+      "verifying": "Verifying..."
+    }
   },
   "nav": {
     "dashboard": { "label": "Home", "description": "Your day at a glance" },

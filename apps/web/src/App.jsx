@@ -11,6 +11,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import LandingPage from "./components/landing/LandingPage.jsx";
 import LoginPage from "./components/login/LoginPage.jsx";
+import VerifyEmailPage from "./components/login/VerifyEmailPage.jsx";
 import Studium from "./components/student-os/MainAppPage.jsx";
 import { getAuthenticatedUser } from "./fetchs/authFetchs";
 import { scheduleQueryOptions } from "./fetchs/scheduleFetchs";
@@ -39,6 +40,12 @@ const signupRoute = createRoute({
   component: SignupRoute,
 });
 
+const verifyEmailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/verify-email",
+  component: VerifyEmailRoute,
+});
+
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/app",
@@ -55,7 +62,7 @@ const appRoute = createRoute({
   component: AppRoute,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, loginRoute, signupRoute, appRoute]);
+const routeTree = rootRoute.addChildren([indexRoute, loginRoute, signupRoute, verifyEmailRoute, appRoute]);
 
 const router = createRouter({
   routeTree,
@@ -108,6 +115,18 @@ function LandingRoute() {
 function SignupRoute() {
   const { setUser } = rootRoute.useRouteContext();
   return <LoginPage mode="signup" onAuthenticated={setUser} />;
+}
+
+function VerifyEmailRoute() {
+  const { setUser, queryClient } = rootRoute.useRouteContext();
+  return (
+    <VerifyEmailPage
+      onVerified={(authenticatedUser) => {
+        queryClient.clear();
+        setUser(authenticatedUser);
+      }}
+    />
+  );
 }
 
 function AppRoute() {
