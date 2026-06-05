@@ -1,15 +1,16 @@
-import { after, before, beforeEach, describe, it } from "node:test"
+import { afterEach, beforeEach, describe, it } from "node:test"
 import assert from "node:assert/strict"
 import { randomUUID } from "node:crypto"
 import { eq } from "drizzle-orm"
-import Build from "../app.js"
-import { db } from "../db/client.js"
-import { EmailVerification, Users } from "../db/schema.js"
-import { AuthService } from "../modules/auth/auth.service.js"
 
 process.env.JWT_SECRET ??= randomUUID()
 process.env.COOKIE_SECRET ??= randomUUID()
 process.env.NODE_ENV = "test"
+
+const { default: Build } = await import("../app.js")
+const { db } = await import("../db/client.js")
+const { EmailVerification, Users } = await import("../db/schema.js")
+const { AuthService } = await import("../modules/auth/auth.service.js")
 
 function makeUser() {
   const id = randomUUID()
@@ -51,10 +52,30 @@ function getAccessToken(setCookie: string | string[] | undefined) {
   return `access_token=${token}`
 }
 
-describe("auth workflow", { concurrency: false }, () => {
-  const app = Build()
+async function registerUser(app: ReturnType<typeof Build>, user: ReturnType<typeof makeUser>) {
+  const response = await app.inject({
+    method: "POST",
+    url: "/auth/register",
+    payload: {
+      name: user.name,
+      email: user.email,
+      password: user.password,
+    },
+  })
 
-  after(async () => {
+  assert.equal(response.statusCode, 201, response.body)
+
+  return response
+}
+
+describe("auth workflow", { concurrency: false }, () => {
+  let app: ReturnType<typeof Build>
+
+  beforeEach(() => {
+    app = Build()
+  })
+
+  afterEach(async () => {
     await app.close()
   })
 
@@ -62,17 +83,8 @@ describe("auth workflow", { concurrency: false }, () => {
     const user = makeUser()
 
     try {
-      const registerResponse = await app.inject({
-        method: "POST",
-        url: "/auth/register",
-        payload: {
-          name: user.name,
-          email: user.email,
-          password: user.password,
-        },
-      })
+      const registerResponse = await registerUser(app, user)
 
-      assert.equal(registerResponse.statusCode, 201)
       assert.equal(registerResponse.json().message, "user created!")
       assert.equal(typeof registerResponse.json().user_id, "number")
 
@@ -109,15 +121,7 @@ describe("auth workflow", { concurrency: false }, () => {
     const user = makeUser()
 
     try {
-      await app.inject({
-        method: "POST",
-        url: "/auth/register",
-        payload: {
-          name: user.name,
-          email: user.email,
-          password: user.password,
-        },
-      })
+      await registerUser(app, user)
 
       const duplicateResponse = await app.inject({
         method: "POST",
@@ -143,15 +147,7 @@ describe("auth workflow", { concurrency: false }, () => {
     const user = makeUser()
 
     try {
-      await app.inject({
-        method: "POST",
-        url: "/auth/register",
-        payload: {
-          name: user.name,
-          email: user.email,
-          password: user.password,
-        },
-      })
+      await registerUser(app, user)
 
       const createdUser = await getUserByEmail(user.email)
       await AuthService.emailConfirmation(createdUser.id)
@@ -252,15 +248,7 @@ describe("auth workflow", { concurrency: false }, () => {
       assert.equal(unauthenticatedMeResponse.statusCode, 401)
       assert.deepEqual(unauthenticatedMeResponse.json(), { message: "not authenticated" })
 
-      await app.inject({
-        method: "POST",
-        url: "/auth/register",
-        payload: {
-          name: user.name,
-          email: user.email,
-          password: user.password,
-        },
-      })
+      await registerUser(app, user)
 
       const createdUser = await getUserByEmail(user.email)
       await AuthService.emailConfirmation(createdUser.id)
@@ -303,15 +291,7 @@ describe("auth workflow", { concurrency: false }, () => {
     const user = makeUser()
 
     try {
-      const registerResponse = await app.inject({
-        method: "POST",
-        url: "/auth/register",
-        payload: {
-          name: user.name,
-          email: user.email,
-          password: user.password,
-        },
-      })
+      const registerResponse = await registerUser(app, user)
 
       const authCookie = getAccessToken(registerResponse.headers["set-cookie"])
 
