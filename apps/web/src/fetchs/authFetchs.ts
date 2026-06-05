@@ -1,6 +1,6 @@
 import { apiUrl } from "./apiUrl";
 
-const EMAIL_NOT_VERIFIED_MESSAGE = "email not verified";
+const EMAIL_NOT_VERIFIED_MESSAGES = new Set(["email not verified", "email is not confirmed"]);
 
 class ApiError extends Error {
   status: number
@@ -31,7 +31,7 @@ async function parseJsonResponse(response) {
 }
 
 export function isEmailVerificationRequiredError(error) {
-  return error instanceof ApiError && error.status === 403 && error.message === EMAIL_NOT_VERIFIED_MESSAGE;
+  return error instanceof ApiError && error.status === 403 && EMAIL_NOT_VERIFIED_MESSAGES.has(error.message);
 }
 
 export async function getAuthenticatedUser() {

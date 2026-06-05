@@ -52,6 +52,22 @@ export default function Build() {
         global: false,
     })
 
+    app.setErrorHandler((error, _request, reply) => {
+        const statusCode = typeof error === "object" && error !== null && "statusCode" in error && typeof error.statusCode === "number"
+            ? error.statusCode
+            : 500
+        const message = typeof error === "object" && error !== null && "message" in error && typeof error.message === "string"
+            ? error.message
+            : "Request failed"
+
+        if (statusCode >= 500) {
+            console.error(error)
+            return reply.code(statusCode).send({ message: "Something went wrong. Please try again." })
+        }
+
+        return reply.code(statusCode).send({ message })
+    })
+
     app.addHook("onRequest", async (request, reply) => {
         if (request.routeOptions.config?.public) return
 
