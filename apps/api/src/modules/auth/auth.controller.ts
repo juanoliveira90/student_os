@@ -29,14 +29,14 @@ export async function AuthController(app: FastifyInstance) {
         return reply.code(201).send(result)
     })
 
-    app.post('/email-code/request', { config: { allowUnverifiedEmail: true, rateLimit: { max: 3, timeWindow: '10 minutes', keyGenerator: (request) => request.user.sub } } }, async (request, reply) => {
+    app.post('/email-code/request', { config: { allowUnverifiedEmail: true, rateLimit: { max: 3, timeWindow: '1 minute', keyGenerator: (request) => request.user.sub } } }, async (request, reply) => {
         const user = request.user as { sub: string, email: string }
         const result = await AuthService.requestEmailVerificationCode(parseInt(user.sub), user.email)
 
         return reply.code(result.statusCode).send({ message: result.message })
     })
     
-    app.post('/email-code', { config: { allowUnverifiedEmail: true, rateLimit: { max: 5, timeWindow: '15 minutes', keyGenerator: (request) => request.user.sub } } }, async (request, reply) => {
+    app.post('/email-code', { config: { allowUnverifiedEmail: true, rateLimit: { max: 5, timeWindow: '1 minute', keyGenerator: (request) => request.user.sub } } }, async (request, reply) => {
         const data = request.body as { userCode: number }
         const checkValidation = await AuthService.validateEmailVerificationCodeFromUser(parseInt(request.user.sub), data.userCode)
 
