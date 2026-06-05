@@ -3,7 +3,7 @@ import { DeleteSchema, InsertSchema } from "./schedule.schema.js"
 import { ScheduleService } from "./schedule.service.js"
 
 export async function ScheduleController(app: FastifyInstance) {
-    app.get('/', async (request, reply) => {
+    app.get('/', { config: { rateLimit: { max: 60, timeWindow: '1 minute', keyGenerator: (request) => request.user.sub } } }, async (request, reply) => {
         const query = await ScheduleService.getSchedule(parseInt(request.user.sub))
         if (query.error) {
             return reply.code(500).send(query.error)
@@ -12,7 +12,7 @@ export async function ScheduleController(app: FastifyInstance) {
         return reply.code(200).send(query)
     })
 
-    app.put('/', { schema: InsertSchema }, async (request, reply) => {
+    app.put('/', { schema: InsertSchema, config: { rateLimit: { max: 40, timeWindow: '1 minute', keyGenerator: (request) => request.user.sub } } }, async (request, reply) => {
         const data = request.body as Parameters<typeof ScheduleService.updateSchedule>[1]
         const query = await ScheduleService.updateSchedule(parseInt(request.user.sub), data)
         if (query.error) {
@@ -22,7 +22,7 @@ export async function ScheduleController(app: FastifyInstance) {
         return reply.code(201).send(query.message)
     })
 
-    app.delete('/delete', { schema: DeleteSchema }, async (request, reply) => {
+    app.delete('/delete', { schema: DeleteSchema, config: { rateLimit: { max: 15, timeWindow: '1 minute', keyGenerator: (request) => request.user.sub } } }, async (request, reply) => {
         const data = request.body as Parameters<typeof ScheduleService.deleteEvent>[1]
         const query = await ScheduleService.deleteEvent(parseInt(request.user.sub), data)
         if (query.error) {
