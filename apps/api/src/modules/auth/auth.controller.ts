@@ -29,7 +29,7 @@ export async function AuthController(app: FastifyInstance) {
         return reply.code(201).send(result)
     })
 
-    app.post('/email-code/request', { config: { allowUnverifiedEmail: true, rateLimit: { max: 3, timeWindow: '1 minute', keyGenerator: (request) => request.user.sub } } }, async (request, reply) => {
+    app.post('/email-code/request', { preHandler: [app.assertEmailNotVerified], config: { allowUnverifiedEmail: true, rateLimit: { max: 3, timeWindow: '1 minute', keyGenerator: (request) => request.user.sub } } }, async (request, reply) => {
         const user = request.user as { sub: string, email: string }
         const result = await AuthService.requestEmailVerificationCode(parseInt(user.sub), user.email)
 
@@ -76,7 +76,7 @@ export async function AuthController(app: FastifyInstance) {
         return reply.send(user)
     })
 
-    app.get('/me', async (request, reply) => {
+    app.get('/me', { preHandler: [app.assertEmailVerified] },async (request, reply) => {
         const user = request.user as { email: string }
         const info = await AuthService.userInformation(user)
 

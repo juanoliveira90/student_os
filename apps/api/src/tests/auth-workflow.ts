@@ -302,7 +302,7 @@ describe("auth workflow", { concurrency: false }, () => {
       })
 
       assert.equal(meResponse.statusCode, 403)
-      assert.deepEqual(meResponse.json(), { message: "email not verified" })
+      assert.deepEqual(meResponse.json(), { message: "email is not confirmed" })
 
       const codeRequestResponse = await app.inject({
         method: "POST",

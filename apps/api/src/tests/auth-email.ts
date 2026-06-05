@@ -1,4 +1,4 @@
-import { after, before, beforeEach, describe, it } from "node:test"
+import { after, afterEach, before, beforeEach, describe, it } from "node:test"
 import assert from "node:assert/strict"
 import { randomUUID } from "node:crypto"
 import { eq } from "drizzle-orm"
@@ -127,7 +127,7 @@ describe("Brevo email sender", { concurrency: false }, () => {
 })
 
 describe("auth email verification workflow", { concurrency: false }, () => {
-  const app = Build()
+  let app: ReturnType<typeof Build>
   const sentEmails: SentEmail[] = []
   let restoreSendEmail: (() => void) | undefined
 
@@ -142,12 +142,16 @@ describe("auth email verification workflow", { concurrency: false }, () => {
   })
 
   beforeEach(() => {
+    app = Build()
     sentEmails.length = 0
   })
 
-  after(async () => {
-    restoreSendEmail?.()
+  afterEach(async () => {
     await app.close()
+  })
+
+  after(() => {
+    restoreSendEmail?.()
   })
 
   it("sends verification emails to multiple users at the same time", async () => {
@@ -248,11 +252,11 @@ describe("auth email verification workflow", { concurrency: false }, () => {
     }
   })
 
-  it("handles 20 code requests from the same user and accepts the latest code", async () => {
+  it("rate-limits code requests from the same user", async () => {
     const { user, cookie } = await registerUser(app)
 
     try {
-      for (let index = 0; index < 20; index += 1) {
+      for (let index = 0; index < 3; index += 1) {
         const response = await app.inject({
           method: "POST",
           url: "/auth/email-code/request",
@@ -262,17 +266,26 @@ describe("auth email verification workflow", { concurrency: false }, () => {
         assert.equal(response.statusCode, 201)
       }
 
-      assert.equal(sentEmails.length, 21)
+      assert.equal(sentEmails.length, 4)
 
-      const response = await app.inject({
+      const limitedResponse = await app.inject({
+        method: "POST",
+        url: "/auth/email-code/request",
+        headers: { cookie },
+      })
+
+      assert.equal(limitedResponse.statusCode, 429)
+      assert.equal(sentEmails.length, 4)
+
+      const latestCodeResponse = await app.inject({
         method: "POST",
         url: "/auth/email-code",
         headers: { cookie },
         payload: { userCode: sentEmails.at(-1)!.code },
       })
 
-      assert.equal(response.statusCode, 200)
-      assert.deepEqual(response.json(), { message: "email confirmed!" })
+      assert.equal(latestCodeResponse.statusCode, 200)
+      assert.deepEqual(latestCodeResponse.json(), { message: "email confirmed!" })
     } finally {
       await deleteUserByEmail(user.email)
     }
@@ -299,7 +312,7 @@ describe("auth email verification workflow", { concurrency: false }, () => {
       })
 
       assert.equal(resendResponse.statusCode, 409)
-      assert.deepEqual(resendResponse.json(), { message: "email already verified" })
+      assert.deepEqual(resendResponse.json(), { message: "email already confirmed" })
       assert.equal(sentEmails.length, 0)
     } finally {
       await deleteUserByEmail(user.email)

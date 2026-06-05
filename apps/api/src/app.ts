@@ -67,14 +67,27 @@ export default function Build() {
         }
 
         if (request.routeOptions.config?.allowUnverifiedEmail) return
+    })
 
+    app.decorate('assertEmailNotVerified', async (request, reply) => {
+        const user = await AuthQueries.getUserByEmail(request.user.email)
+        if (!user) {
+            return reply.code(401).send({ message: "not authenticated" })
+        }
+
+        if (user.email_verified) {
+            return reply.code(409).send({ message: "email already confirmed" })
+        }
+    })
+
+    app.decorate('assertEmailVerified', async (request, reply) => {
         const user = await AuthQueries.getUserByEmail(request.user.email)
         if (!user) {
             return reply.code(401).send({ message: "not authenticated" })
         }
 
         if (!user.email_verified) {
-            return reply.code(403).send({ message: "email not verified" })
+            return reply.code(403).send({ message: "email is not confirmed" })
         }
     })
 

@@ -23,3 +23,10 @@ export interface storeEmailVerificationCode {
     code_hash: string,
     expires_at: Date
 }
+
+export interface User {
+    id: number,
+    name: string,
+    email: string,
+    email_verified: boolean
+}
