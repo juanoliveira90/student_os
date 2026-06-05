@@ -1,5 +1,17 @@
 import { apiUrl } from "./apiUrl";
 
+const EMAIL_NOT_VERIFIED_MESSAGE = "email not verified";
+
+class ApiError extends Error {
+  status: number
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+} 
+
 function getServerMessage(data) {
   if (!data) return "";
   if (typeof data.message === "string") return data.message;
@@ -12,10 +24,14 @@ async function parseJsonResponse(response) {
   const responseMessage = getServerMessage(data);
 
   if (!response.ok || data?.error) {
-    throw new Error(responseMessage || "Something went wrong. Please try again.");
+    throw new ApiError(responseMessage || "Something went wrong. Please try again.", response.status);
   }
 
   return data;
+}
+
+export function isEmailVerificationRequiredError(error) {
+  return error instanceof ApiError && error.status === 403 && error.message === EMAIL_NOT_VERIFIED_MESSAGE;
 }
 
 export async function getAuthenticatedUser() {
@@ -52,6 +68,15 @@ export async function verifyEmailCode(userCode) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ userCode }),
+    credentials: "include",
+  });
+
+  return parseJsonResponse(response);
+}
+
+export async function requestEmailVerificationCode() {
+  const response = await fetch(apiUrl("/auth/email-code/request"), {
+    method: "POST",
     credentials: "include",
   });
 

@@ -81,7 +81,11 @@
       "codePlaceholder": "00000",
       "codeFormat": "Digite um codigo valido de 5 digitos.",
       "verify": "Verificar",
-      "verifying": "Verificando..."
+      "verifying": "Verificando...",
+      "resend": "Reenviar email",
+      "resending": "Enviando...",
+      "resendIn": "Reenviar email em {{count}}s",
+      "rateLimit": "Muitas tentativas. Tente novamente em {{count}}s."
     }
   },
   "nav": {

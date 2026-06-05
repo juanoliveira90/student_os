@@ -13,7 +13,7 @@ import LandingPage from "./components/landing/LandingPage.jsx";
 import LoginPage from "./components/login/LoginPage.jsx";
 import VerifyEmailPage from "./components/login/VerifyEmailPage.jsx";
 import Studium from "./components/student-os/MainAppPage.jsx";
-import { getAuthenticatedUser } from "./fetchs/authFetchs";
+import { getAuthenticatedUser, isEmailVerificationRequiredError } from "./fetchs/authFetchs";
 import { scheduleQueryOptions } from "./fetchs/scheduleFetchs";
 import { studyPlanQueryOptions } from "./fetchs/studyPlanFetchs";
 import { queryClient } from "./lib/queryClient";
@@ -46,18 +46,32 @@ const verifyEmailRoute = createRoute({
   component: VerifyEmailRoute,
 });
 
+const publicPaths = new Set(["/", "/login", "/signup", "/verify-email"]);
+
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/app",
   beforeLoad: async ({ context }) => {
+    if (context.needsEmailVerification) {
+      throw redirect({ to: "/verify-email", replace: true });
+    }
+
     if (!context.user) {
       throw redirect({ to: "/login", replace: true });
     }
 
-    await Promise.all([
-      context.queryClient.prefetchQuery(scheduleQueryOptions(context.user.id)),
-      context.queryClient.prefetchQuery(studyPlanQueryOptions(context.user.id)),
-    ]);
+    try {
+      await Promise.all([
+        context.queryClient.prefetchQuery(scheduleQueryOptions(context.user.id)),
+        context.queryClient.prefetchQuery(studyPlanQueryOptions(context.user.id)),
+      ]);
+    } catch (error) {
+      if (isEmailVerificationRequiredError(error)) {
+        throw redirect({ to: "/verify-email", replace: true });
+      }
+
+      throw error;
+    }
   },
   component: AppRoute,
 });
@@ -72,12 +86,23 @@ const router = createRouter({
 export default function App() {
   const { t } = useTranslation();
   const [user, setUser] = useState(null);
+  const [needsEmailVerification, setNeedsEmailVerification] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     getAuthenticatedUser()
-      .then(setUser)
-      .catch(() => {
+      .then((authenticatedUser) => {
+        setNeedsEmailVerification(false);
+        setUser(authenticatedUser);
+      })
+      .catch((error) => {
+        if (isEmailVerificationRequiredError(error)) {
+          setNeedsEmailVerification(true);
+          if (!publicPaths.has(window.location.pathname)) {
+            void router.navigate({ to: "/verify-email", replace: true });
+          }
+        }
+
         setUser(null);
       })
       .finally(() => setIsLoading(false));
@@ -89,19 +114,25 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} context={{ user, setUser, queryClient }} />
+      <RouterProvider router={router} context={{ user, setUser, needsEmailVerification, setNeedsEmailVerification, queryClient }} />
     </QueryClientProvider>
   );
 }
 
 function LoginRoute() {
-  const { setUser, queryClient } = rootRoute.useRouteContext();
+  const { setUser, setNeedsEmailVerification, queryClient } = rootRoute.useRouteContext();
   return (
     <LoginPage
       mode="login"
       onAuthenticated={(authenticatedUser) => {
         queryClient.clear();
+        setNeedsEmailVerification(false);
         setUser(authenticatedUser);
+      }}
+      onNeedsEmailVerification={() => {
+        queryClient.clear();
+        setNeedsEmailVerification(true);
+        setUser(null);
       }}
     />
   );
@@ -113,16 +144,26 @@ function LandingRoute() {
 }
 
 function SignupRoute() {
-  const { setUser } = rootRoute.useRouteContext();
-  return <LoginPage mode="signup" onAuthenticated={setUser} />;
+  const { setUser, setNeedsEmailVerification } = rootRoute.useRouteContext();
+  return (
+    <LoginPage
+      mode="signup"
+      onAuthenticated={setUser}
+      onNeedsEmailVerification={() => {
+        setNeedsEmailVerification(true);
+        setUser(null);
+      }}
+    />
+  );
 }
 
 function VerifyEmailRoute() {
-  const { setUser, queryClient } = rootRoute.useRouteContext();
+  const { setUser, setNeedsEmailVerification, queryClient } = rootRoute.useRouteContext();
   return (
     <VerifyEmailPage
       onVerified={(authenticatedUser) => {
         queryClient.clear();
+        setNeedsEmailVerification(false);
         setUser(authenticatedUser);
       }}
     />

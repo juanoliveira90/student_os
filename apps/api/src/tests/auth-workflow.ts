@@ -153,6 +153,9 @@ describe("auth workflow", { concurrency: false }, () => {
         },
       })
 
+      const createdUser = await getUserByEmail(user.email)
+      await AuthService.emailConfirmation(createdUser.id)
+
       const loginResponse = await app.inject({
         method: "POST",
         url: "/auth/login",
@@ -259,6 +262,9 @@ describe("auth workflow", { concurrency: false }, () => {
         },
       })
 
+      const createdUser = await getUserByEmail(user.email)
+      await AuthService.emailConfirmation(createdUser.id)
+
       const missingUserResponse = await app.inject({
         method: "POST",
         url: "/auth/login",
@@ -288,6 +294,43 @@ describe("auth workflow", { concurrency: false }, () => {
         statusCode: 401,
         error: "wrong credentials",
       })
+    } finally {
+      await deleteUserByEmail(user.email)
+    }
+  })
+
+  it("blocks protected routes until email is verified", async () => {
+    const user = makeUser()
+
+    try {
+      const registerResponse = await app.inject({
+        method: "POST",
+        url: "/auth/register",
+        payload: {
+          name: user.name,
+          email: user.email,
+          password: user.password,
+        },
+      })
+
+      const authCookie = getAccessToken(registerResponse.headers["set-cookie"])
+
+      const meResponse = await app.inject({
+        method: "GET",
+        url: "/auth/me",
+        headers: { cookie: authCookie },
+      })
+
+      assert.equal(meResponse.statusCode, 403)
+      assert.deepEqual(meResponse.json(), { message: "email not verified" })
+
+      const codeRequestResponse = await app.inject({
+        method: "POST",
+        url: "/auth/email-code/request",
+        headers: { cookie: authCookie },
+      })
+
+      assert.notEqual(codeRequestResponse.statusCode, 403)
     } finally {
       await deleteUserByEmail(user.email)
     }

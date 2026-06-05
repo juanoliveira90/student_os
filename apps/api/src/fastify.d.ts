@@ -4,6 +4,7 @@ import "@fastify/jwt"
 declare module "fastify" {
     interface FastifyContextConfig {
         public?: boolean
+        allowUnverifiedEmail?: boolean
     }
 }
 

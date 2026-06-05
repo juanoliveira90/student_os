@@ -4,7 +4,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { getNextTheme, getResolvedTheme, getStoredAppearance, getSystemTheme, isDarkTheme, saveStoredTheme, themes } from "../student-os/data.js";
 import { Icon as AppIcon } from "../student-os/icons.jsx";
-import { getAuthenticatedUser, loginWithEmail, registerWithEmail } from "../../fetchs/authFetchs";
+import { getAuthenticatedUser, isEmailVerificationRequiredError, loginWithEmail, registerWithEmail } from "../../fetchs/authFetchs";
 import { saveLanguage } from "../../i18n";
 
 const Icon = {
@@ -40,7 +40,7 @@ const soonButton = (t) => ({
   opacity: 0.72,
 });
 
-export default function LoginPage({ mode = "login", onAuthenticated }) {
+export default function LoginPage({ mode = "login", onAuthenticated, onNeedsEmailVerification }) {
   const { t: tr, i18n } = useTranslation();
   const isSignup = mode === "signup";
   const navigate = useNavigate();
@@ -88,18 +88,27 @@ export default function LoginPage({ mode = "login", onAuthenticated }) {
         const authenticatedUser = await getAuthenticatedUser().catch(() => null);
         flushSync(() => {
           onAuthenticated?.(authenticatedUser);
+          onNeedsEmailVerification?.();
         });
         navigate({ to: "/verify-email" });
         return;
       }
 
-      const data = await loginWithEmail({ email, password });
-      const authenticatedUser = data?.email ? data : await getAuthenticatedUser();
+      await loginWithEmail({ email, password });
+      const authenticatedUser = await getAuthenticatedUser();
       flushSync(() => {
         onAuthenticated?.(authenticatedUser);
       });
       navigate({ to: "/app" });
     } catch (err) {
+      if (isEmailVerificationRequiredError(err)) {
+        flushSync(() => {
+          onNeedsEmailVerification?.();
+        });
+        navigate({ to: "/verify-email" });
+        return;
+      }
+
       console.error(err);
       setServerError(err instanceof Error ? err.message : tr("auth.genericError"));
     } finally {

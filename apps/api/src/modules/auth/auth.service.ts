@@ -86,7 +86,6 @@ export const AuthService = {
             const toCompare = userCode.toString() + PEPPER
 
             return await bcrypt.compare(toCompare, query[0]!.code_hash)
-
         } catch (error) {
             console.error(error)
             return false
@@ -94,15 +93,6 @@ export const AuthService = {
     },
 
     async requestEmailVerificationCode(userId: number, email: string) {
-        const user = await AuthQueries.getUserByEmail(email)
-        if (!user) {
-            throw { statusCode: 401, message: "user is not registered" }
-        }
-
-        if (user.email_verified) {
-            return { statusCode: 409, message: "email already verified" }
-        }
-
         const storeCode = await this.storeEmailVerificationCode(userId)
         if (!storeCode.code) {
             return { statusCode: 500, message: "could not create verification code" }

@@ -3,7 +3,7 @@ import { AuthService } from "./auth.service.js";
 import { registerSchema, loginSchema } from "./auth.schemas.js";
 
 export async function AuthController(app: FastifyInstance) {
-    app.post('/register', { schema: registerSchema, config: { public: true } }, async (request, reply) => {
+    app.post('/register', { schema: registerSchema, config: { public: true, rateLimit: { max: 3, timeWindow: '1 hour', keyGenerator: (request) => request.ip } } }, async (request, reply) => {
         const data = request.body as Parameters<typeof AuthService.register>[0]
         const result = await AuthService.register(data)
         const storeCode = await AuthService.storeEmailVerificationCode(result.user_id)
@@ -29,14 +29,14 @@ export async function AuthController(app: FastifyInstance) {
         return reply.code(201).send(result)
     })
 
-    app.post('/email-code/request', async (request, reply) => {
+    app.post('/email-code/request', { config: { allowUnverifiedEmail: true, rateLimit: { max: 3, timeWindow: '10 minutes', keyGenerator: (request) => request.user.sub } } }, async (request, reply) => {
         const user = request.user as { sub: string, email: string }
         const result = await AuthService.requestEmailVerificationCode(parseInt(user.sub), user.email)
 
         return reply.code(result.statusCode).send({ message: result.message })
     })
     
-    app.post('/email-code', async (request, reply) => {
+    app.post('/email-code', { config: { allowUnverifiedEmail: true, rateLimit: { max: 5, timeWindow: '15 minutes', keyGenerator: (request) => request.user.sub } } }, async (request, reply) => {
         const data = request.body as { userCode: number }
         const checkValidation = await AuthService.validateEmailVerificationCodeFromUser(parseInt(request.user.sub), data.userCode)
 
@@ -47,7 +47,7 @@ export async function AuthController(app: FastifyInstance) {
         return reply.code(200).send({ message: "email confirmed!" })
     })
     
-    app.post('/login', { schema: loginSchema, config: { public: true } }, async (request, reply) => {
+    app.post('/login', { schema: loginSchema, config: { public: true, rateLimit: { max: 5, timeWindow: '15 minutes', keyGenerator: (request) => request.ip } } }, async (request, reply) => {
         const data = request.body as Parameters<typeof AuthService.login>[0]
         const user = await AuthService.login(data)
         if ("error" in user) {

@@ -2,10 +2,12 @@ import fastify from "fastify"
 import fastifyCookie from "@fastify/cookie"
 import fastifyCors from "@fastify/cors"
 import fastifyJwt from "@fastify/jwt"
+import fastifyRateLimit from "@fastify/rate-limit"
 
 import 'dotenv/config'
 
 import { AuthController } from "./modules/auth/auth.controller.js"
+import { AuthQueries } from "./modules/auth/auth.queries.js"
 import { NotesController } from "./modules/notes/notes.controller.js"
 import { ScheduleController } from "./modules/schedule/schedule.controller.js"
 import { StudyPlanController } from "./modules/studyPlan/studyPlan.controller.js"
@@ -37,6 +39,7 @@ export default function Build() {
     app.register(fastifyCookie, {
         secret: process.env.COOKIE_SECRET! 
     })
+    
     app.register(fastifyJwt, {
         secret: process.env.JWT_SECRET!,
         cookie: {
@@ -44,6 +47,11 @@ export default function Build() {
             signed: false
         }
     })
+
+    app.register(fastifyRateLimit, {
+        global: false,
+    })
+
     app.addHook("onRequest", async (request, reply) => {
         if (request.routeOptions.config?.public) return
 
@@ -56,6 +64,17 @@ export default function Build() {
             await request.jwtVerify({ onlyCookie: true })
         } catch {
             return reply.code(401).send({ error: "Unauthorized" })
+        }
+
+        if (request.routeOptions.config?.allowUnverifiedEmail) return
+
+        const user = await AuthQueries.getUserByEmail(request.user.email)
+        if (!user) {
+            return reply.code(401).send({ message: "not authenticated" })
+        }
+
+        if (!user.email_verified) {
+            return reply.code(403).send({ message: "email not verified" })
         }
     })
 

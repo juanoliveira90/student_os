@@ -81,7 +81,11 @@
       "codePlaceholder": "00000",
       "codeFormat": "Enter a valid 5 digit code.",
       "verify": "Verify",
-      "verifying": "Verifying..."
+      "verifying": "Verifying...",
+      "resend": "Resend Email",
+      "resending": "Sending...",
+      "resendIn": "Resend Email in {{count}}s",
+      "rateLimit": "Too many attempts. Try again in {{count}}s."
     }
   },
   "nav": {
