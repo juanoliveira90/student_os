@@ -6,9 +6,6 @@ export async function AuthController(app: FastifyInstance) {
     app.post('/register', { schema: registerSchema, config: { public: true, rateLimit: { max: 3, timeWindow: '1 hour', keyGenerator: (request) => request.ip } } }, async (request, reply) => {
         const data = request.body as Parameters<typeof AuthService.register>[0]
         const result = await AuthService.register(data)
-        const storeCode = await AuthService.storeEmailVerificationCode(result.user_id)
-        await AuthService.sendEmail(data.email, storeCode.code!)
-        
 
         const token = app.jwt.sign({
             sub: result.user_id?.toString(),

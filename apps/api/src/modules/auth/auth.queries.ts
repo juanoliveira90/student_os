@@ -1,9 +1,8 @@
 "use server"
 
 import { db } from "../../db/client.js"
-import { Accounts, EmailVerification, Users } from "../../db/schema.js"
+import { EmailVerification, Users } from "../../db/schema.js"
 import { and, desc, eq } from "drizzle-orm"
-import type { storeEmailVerificationCode } from "./auth.types.js"
 
 export const AuthQueries = {
     async createUser(name: string, email: string, passwordHash: string) {
@@ -39,10 +38,6 @@ export const AuthQueries = {
     },
 
     async storeEmailVerificationCode(userId: number, code_hash: string, expires_at: Date) {
-        await db.update(EmailVerification)
-        .set({ used: true })
-        .where(eq(EmailVerification.user_id, userId))
-
         await db.insert(EmailVerification).values({ 
             user_id: userId, code_hash: code_hash, 
             expires_at: expires_at
@@ -50,10 +45,13 @@ export const AuthQueries = {
     },
 
     async getEmailVerificationCode(userId: number) {
-        return await db.select({ code_hash: EmailVerification.code_hash, expires_at: EmailVerification.expires_at })
+        return await db.select({
+            code_hash: EmailVerification.code_hash,
+            expires_at: EmailVerification.expires_at,
+            created_at: EmailVerification.created_at,
+        })
         .from(EmailVerification)
         .where(and(eq(EmailVerification.user_id, userId), eq(EmailVerification.used, false)))
         .orderBy(desc(EmailVerification.created_at), desc(EmailVerification.id))
-        .limit(1)
     }
 }

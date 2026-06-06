@@ -65,4 +65,20 @@ description: >
   ..
 ---
 
-Never leave any hard coded or mocked data without asking me first. If you are uncertain about making any changes, ask me instead of guessing
+
+## Code Rules
+- Never use request.body as any
+- Never use hardcoded credentials
+- Never leave mocked data
+- Never guess, always ask
+- Use 4 spaces
+
+## Code Structure
+- `.controller` - Handles http requests; passes user data to service.
+- `.service` - Calls .query, catch errors, business logic.
+- `.queries` - Database queries only.
+
+## Tests
+- Integration tests with one file for eachb block of testing. E.g: testing rate limit: `rate-limit.ts`; testing how the email service is flowing: `auth-email.ts`; testing how the whole auth flow is working: `auth-workflow.ts`
+- Coverage requirement: 80%+ for new code
+- Can use mock if http tests are not mandatory

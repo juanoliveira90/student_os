@@ -12,11 +12,11 @@ const Icon = {
   mail: () => <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>,
 };
 
-const RESEND_EMAIL_COOLDOWN_SECONDS = 15;
+const RESEND_EMAIL_COOLDOWN_SECONDS = 60;
 const RESEND_EMAIL_RATE_LIMIT = 1;
 const VERIFY_EMAIL_RATE_LIMIT = 5;
 const VERIFY_EMAIL_RATE_LIMIT_WINDOW_SECONDS = 60;
-const EMAIL_VERIFICATION_REQUEST_SENT_KEY = "hasLoaded";
+const EMAIL_VERIFICATION_REQUEST_SENT_KEY = "emailVerificationRequestSentAt";
 
 function getSecondsUntilNextWindow(rateLimiter) {
   return Math.ceil(rateLimiter.getMsUntilNextWindow() / 1000);
@@ -66,9 +66,10 @@ export default function VerifyEmailPage({ onVerified }) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (sessionStorage.getItem(EMAIL_VERIFICATION_REQUEST_SENT_KEY)) return;
+    const lastRequestSentAt = Number(sessionStorage.getItem(EMAIL_VERIFICATION_REQUEST_SENT_KEY) ?? 0);
+    if (Date.now() - lastRequestSentAt < RESEND_EMAIL_COOLDOWN_SECONDS * 1000) return;
 
-    sessionStorage.setItem(EMAIL_VERIFICATION_REQUEST_SENT_KEY, "true");
+    sessionStorage.setItem(EMAIL_VERIFICATION_REQUEST_SENT_KEY, Date.now().toString());
 
     requestEmailVerificationLimiter.maybeExecute().catch((err) => {
       console.error(err);
