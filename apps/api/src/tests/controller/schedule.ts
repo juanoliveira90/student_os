@@ -11,28 +11,40 @@ const { default: Build } = await import("../../app.js")
 const { db } = await import("../../db/client.js")
 const { Users } = await import("../../db/schema.js")
 
-type NotePayload = {
-    id: string
-    title: string
-    content: string
-}
-
 function makeUser() {
     const id = randomUUID()
 
     return {
-        name: `Notes Student ${id}`,
-        email: `notes.student.${id}@example.com`,
+        name: `Schedule Student ${id}`,
+        email: `schedule.student.${id}@example.com`,
     }
 }
 
-function makeNote(overrides: Partial<NotePayload> = {}) {
+function makeEvent(overrides: Partial<ScheduleEvent> = {}) {
     return {
         id: randomUUID(),
-        title: "Biology notes",
-        content: "Cell structure summary",
+        day_of_week: "Monday",
+        title: "Study biology",
+        tag: "biology",
+        description: "Cell structure review",
+        start_time: "09:00",
+        start_period: "AM",
+        end_time: "10:00",
+        end_period: "AM",
         ...overrides,
     }
+}
+
+type ScheduleEvent = {
+    id: string
+    day_of_week: string
+    title: string
+    tag?: string
+    description?: string | null
+    start_time: string
+    start_period: string
+    end_time: string
+    end_period: string
 }
 
 async function createUser(user: ReturnType<typeof makeUser>) {
@@ -60,10 +72,16 @@ function invalidSubjectCookie(app: ReturnType<typeof Build>, email: string) {
     return `access_token=${app.jwt.sign({ sub: "not-a-number", email })}`
 }
 
-function assertNote(actual: Record<string, unknown>, expected: NotePayload) {
+function assertScheduleEvent(actual: Record<string, unknown>, expected: ScheduleEvent) {
     assert.equal(actual.id, expected.id)
+    assert.equal(actual.day_of_week, expected.day_of_week)
     assert.equal(actual.title, expected.title)
-    assert.equal(actual.content, expected.content)
+    assert.equal(actual.tag, expected.tag)
+    assert.equal(actual.description, expected.description)
+    assert.match(String(actual.start_time), /^09:00/)
+    assert.equal(actual.start_period, expected.start_period)
+    assert.match(String(actual.end_time), /^10:00/)
+    assert.equal(actual.end_period, expected.end_period)
 }
 
 async function withExpectedErrorLogSilenced<T>(callback: () => Promise<T>) {
@@ -77,7 +95,7 @@ async function withExpectedErrorLogSilenced<T>(callback: () => Promise<T>) {
     }
 }
 
-describe("notes controller", { concurrency: false }, () => {
+describe("schedule controller", { concurrency: false }, () => {
     let app: ReturnType<typeof Build>
     let user: ReturnType<typeof makeUser>
     let cookie: string
@@ -96,193 +114,184 @@ describe("notes controller", { concurrency: false }, () => {
         await app.close()
     })
 
-    it("starts with an empty notes list for a user without notes", async () => {
+    it("starts with an empty schedule for a user without events", async () => {
         const response = await app.inject({
             method: "GET",
-            url: "/notes",
+            url: "/schedule",
             headers: { cookie },
         })
 
         assert.equal(response.statusCode, 200)
-        assert.deepEqual(response.json(), { notes: [] })
+        assert.deepEqual(response.json(), { events: [] })
     })
 
-    it("creates, reads, updates, and deletes notes through HTTP endpoints", async () => {
-        const note = makeNote()
+    it("creates, reads, updates, and deletes schedule events through HTTP endpoints", async () => {
+        const event = makeEvent()
 
         const createResponse = await app.inject({
-            method: "POST",
-            url: "/notes",
+            method: "PUT",
+            url: "/schedule",
             headers: { cookie },
-            payload: note,
+            payload: { events: [event] },
         })
 
         assert.equal(createResponse.statusCode, 201)
-        assert.deepEqual(createResponse.json(), { message: "note created!" })
+        assert.equal(createResponse.body, "schedule updated!")
 
-        const createdNotesResponse = await app.inject({
+        const createdScheduleResponse = await app.inject({
             method: "GET",
-            url: "/notes",
+            url: "/schedule",
             headers: { cookie },
         })
 
-        assert.equal(createdNotesResponse.statusCode, 200)
-        const createdNotes = createdNotesResponse.json().notes
-        assert.equal(createdNotes.length, 1)
-        assertNote(createdNotes[0], note)
+        assert.equal(createdScheduleResponse.statusCode, 200)
+        const createdEvents = createdScheduleResponse.json().events
+        assert.equal(createdEvents.length, 1)
+        assertScheduleEvent(createdEvents[0], event)
 
-        const updatedNote = makeNote({
-            ...note,
-            title: "Updated biology notes",
-            content: "Updated cell structure summary",
+        const updatedEvent = makeEvent({
+            ...event,
+            title: "Review chemistry",
+            tag: "chemistry",
+            description: null,
         })
 
         const updateResponse = await app.inject({
             method: "PUT",
-            url: "/notes",
+            url: "/schedule",
             headers: { cookie },
-            payload: updatedNote,
+            payload: { events: [updatedEvent] },
         })
 
-        assert.equal(updateResponse.statusCode, 200)
-        assert.deepEqual(updateResponse.json(), { message: "note updated!" })
+        assert.equal(updateResponse.statusCode, 201)
+        assert.equal(updateResponse.body, "schedule updated!")
 
-        const updatedNotesResponse = await app.inject({
+        const updatedScheduleResponse = await app.inject({
             method: "GET",
-            url: "/notes",
+            url: "/schedule",
             headers: { cookie },
         })
 
-        assert.equal(updatedNotesResponse.statusCode, 200)
-        const updatedNotes = updatedNotesResponse.json().notes
-        assert.equal(updatedNotes.length, 1)
-        assertNote(updatedNotes[0], updatedNote)
+        assert.equal(updatedScheduleResponse.statusCode, 200)
+        const updatedEvents = updatedScheduleResponse.json().events
+        assert.equal(updatedEvents.length, 1)
+        assertScheduleEvent(updatedEvents[0], updatedEvent)
 
         const deleteResponse = await app.inject({
             method: "DELETE",
-            url: "/notes",
+            url: "/schedule/delete",
             headers: { cookie },
-            payload: { id: note.id },
+            payload: { events: [{ id: event.id }] },
         })
 
         assert.equal(deleteResponse.statusCode, 200)
-        assert.deepEqual(deleteResponse.json(), { message: "note deleted!" })
+        assert.equal(deleteResponse.body, "event deleted!")
 
-        const emptyNotesResponse = await app.inject({
+        const emptyScheduleResponse = await app.inject({
             method: "GET",
-            url: "/notes",
+            url: "/schedule",
             headers: { cookie },
         })
 
-        assert.equal(emptyNotesResponse.statusCode, 200)
-        assert.deepEqual(emptyNotesResponse.json(), { notes: [] })
+        assert.equal(emptyScheduleResponse.statusCode, 200)
+        assert.deepEqual(emptyScheduleResponse.json(), { events: [] })
     })
 
-    it("does not expose another user's notes", async () => {
+    it("does not expose another user's schedule events", async () => {
         const otherUser = makeUser()
         const otherDbUser = await createUser(otherUser)
         const otherCookie = authCookie(app, otherDbUser.id, otherUser.email)
-        const note = makeNote({ title: "Private note" })
+        const event = makeEvent({ title: "Private event" })
 
         try {
             const createResponse = await app.inject({
-                method: "POST",
-                url: "/notes",
+                method: "PUT",
+                url: "/schedule",
                 headers: { cookie: otherCookie },
-                payload: note,
+                payload: { events: [event] },
             })
 
             assert.equal(createResponse.statusCode, 201)
 
             const response = await app.inject({
                 method: "GET",
-                url: "/notes",
+                url: "/schedule",
                 headers: { cookie },
             })
 
             assert.equal(response.statusCode, 200)
-            assert.deepEqual(response.json(), { notes: [] })
+            assert.deepEqual(response.json(), { events: [] })
         } finally {
             await deleteUserByEmail(otherUser.email)
         }
     })
 
-    it("rejects notes requests without authentication", async () => {
+    it("rejects schedule requests without authentication", async () => {
         const response = await app.inject({
             method: "GET",
-            url: "/notes",
+            url: "/schedule",
         })
 
         assert.equal(response.statusCode, 401)
         assert.deepEqual(response.json(), { message: "not authenticated" })
     })
 
-    it("rejects invalid create note payloads", async () => {
+    it("rejects invalid update payloads", async () => {
         const response = await app.inject({
-            method: "POST",
-            url: "/notes",
+            method: "PUT",
+            url: "/schedule",
             headers: { cookie },
             payload: {
-                title: "Missing id",
-                content: "Invalid payload",
+                events: [
+                    {
+                        id: randomUUID(),
+                        title: "Missing required fields",
+                    },
+                ],
             },
         })
 
         assert.equal(response.statusCode, 400)
     })
 
-    it("returns 500 when notes loading fails", async () => {
+    it("returns 500 when schedule loading fails", async () => {
         const response = await withExpectedErrorLogSilenced(async () => {
             return await app.inject({
                 method: "GET",
-                url: "/notes",
+                url: "/schedule",
                 headers: { cookie: invalidSubjectCookie(app, user.email) },
             })
         })
 
         assert.equal(response.statusCode, 500)
-        assert.equal(response.body, "could not load notes")
+        assert.equal(response.body, "could not load schedule")
     })
 
-    it("returns 500 when note creation fails", async () => {
-        const response = await withExpectedErrorLogSilenced(async () => {
-            return await app.inject({
-                method: "POST",
-                url: "/notes",
-                headers: { cookie: invalidSubjectCookie(app, user.email) },
-                payload: makeNote(),
-            })
-        })
-
-        assert.equal(response.statusCode, 500)
-        assert.deepEqual(response.json(), { error: "could not create note." })
-    })
-
-    it("returns 500 when note update fails", async () => {
+    it("returns 500 when schedule update fails", async () => {
         const response = await withExpectedErrorLogSilenced(async () => {
             return await app.inject({
                 method: "PUT",
-                url: "/notes",
+                url: "/schedule",
                 headers: { cookie: invalidSubjectCookie(app, user.email) },
-                payload: makeNote(),
+                payload: { events: [makeEvent()] },
             })
         })
 
         assert.equal(response.statusCode, 500)
-        assert.deepEqual(response.json(), { error: "could not update note." })
+        assert.equal(response.body, "nothing was changed")
     })
 
-    it("returns 500 when note delete fails", async () => {
+    it("returns 500 when schedule delete fails", async () => {
         const response = await withExpectedErrorLogSilenced(async () => {
             return await app.inject({
                 method: "DELETE",
-                url: "/notes",
+                url: "/schedule/delete",
                 headers: { cookie: invalidSubjectCookie(app, user.email) },
-                payload: { id: randomUUID() },
+                payload: { events: [{ id: randomUUID() }] },
             })
         })
 
         assert.equal(response.statusCode, 500)
-        assert.equal(response.body, "could not delete note.")
+        assert.equal(response.body, "nothing was changed")
     })
 })
