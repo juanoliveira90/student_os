@@ -14,6 +14,7 @@ type DashboardProps = {
   subjects: LooseRecord[];
   setActive: (active: string) => void;
   navigateToCreate: (page: string, type: string) => void;
+  timeFormat: string;
   t: Theme;
 };
 
@@ -30,19 +31,32 @@ function getEventTime(event: LooseRecord) {
   return String(event.time || "").split("-")[0]?.trim() || "09:00";
 }
 
-function formatTime(time: unknown, period?: unknown) {
+function formatTime(time: unknown, period?: unknown, timeFormat = "12h") {
   const raw = String(time || "");
   const match = raw.match(/^(\d{1,2}):(\d{2})/);
   if (!match) return raw;
 
-  if (period) {
-    const hour = Number(match[1]);
-    const isPm = String(period).toUpperCase() === "PM";
-    const hour24 = isPm && hour !== 12 ? hour + 12 : !isPm && hour === 12 ? 0 : hour;
-    return `${String(hour24).padStart(2, "0")}:${match[2]}`;
+  const rawHour = Number(match[1]);
+  const cleanPeriod = String(period || "").toUpperCase();
+  const hasPeriod = cleanPeriod === "AM" || cleanPeriod === "PM";
+  let hour24 = rawHour;
+
+  if (hasPeriod && cleanPeriod === "PM" && rawHour !== 12) {
+    hour24 = rawHour + 12;
+  } else if (hasPeriod && cleanPeriod === "AM" && rawHour === 12) {
+    hour24 = 0;
   }
 
-  return `${match[1].padStart(2, "0")}:${match[2]}`;
+  if (timeFormat === "24h") return `${String(hour24).padStart(2, "0")}:${match[2]}`;
+
+  const hour12 = hour24 % 12 || 12;
+  let displayPeriod = cleanPeriod;
+
+  if (!hasPeriod) {
+    displayPeriod = hour24 >= 12 ? "PM" : "AM";
+  }
+
+  return `${String(hour12).padStart(2, "0")}:${match[2]} ${displayPeriod}`;
 }
 
 function getSubjectStats(subject: LooseRecord) {
@@ -54,7 +68,7 @@ function getSubjectStats(subject: LooseRecord) {
   return { done, total, progress };
 }
 
-export default function Dashboard({ user, tasks, schedule, subjects, setActive, navigateToCreate, t }: DashboardProps) {
+export default function Dashboard({ user, tasks, schedule, subjects, setActive, navigateToCreate, timeFormat, t }: DashboardProps) {
   const { t: tr } = useTranslation();
   const [isScheduleExpanded, setIsScheduleExpanded] = useState(false);
   const [isStudyPlanExpanded, setIsStudyPlanExpanded] = useState(false);
@@ -71,6 +85,12 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
   const pendingTasks = allSubjects.reduce((sum, subject) => sum + (subject.subtasks || []).filter((task) => !task.done).length, 0);
   const continueSubject = allSubjects.find((subject) => (subject.subtasks || []).some((task) => !task.done)) || allSubjects[0];
   const continuePending = continueSubject ? (continueSubject.subtasks || []).filter((task) => !task.done).length : tasks.filter((task) => !task.done).length;
+  let continueTitle = tr("dashboard.noActiveStudyPlan");
+
+  if (continueSubject) {
+    continueTitle = titleCase(continueSubject.name);
+    if (continueSubject.tag) continueTitle += ` - ${titleCase(continueSubject.tag)}`;
+  }
 
   const card: CSSProperties = { ...s.card, boxShadow: "0 14px 42px rgba(102, 78, 50, 0.06)" };
   const metricCard: CSSProperties = { ...card, display: "flex", flexDirection: "column" };
@@ -121,7 +141,7 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
             {scheduleItems.length ? (
               scheduleItems.map((event, index) => (
                 <div key={event.id || `${event.title}-${index}`} style={{ display: "grid", gridTemplateColumns: "72px 24px 1fr", minHeight: 58, borderTop: index ? `1px solid ${t.border}` : "none" }}>
-                  <div style={{ color: t.accent, fontSize: 13, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{formatTime(getEventTime(event), event.start_period)}</div>
+                  <div style={{ color: t.accent, fontSize: 13, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{formatTime(getEventTime(event), event.start_period, timeFormat)}</div>
                   <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <span style={{ position: "absolute", top: index === 0 ? "50%" : 0, bottom: index === scheduleItems.length - 1 ? "50%" : 0, width: 1, background: t.borderLight }} />
                     <span style={{ width: 9, height: 9, borderRadius: "50%", background: index === 0 ? t.accent : t.accentLight, position: "relative" }} />
@@ -189,7 +209,7 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
         <div style={{ marginTop: 14, padding: "20px", borderRadius: 8, background: `linear-gradient(90deg, ${t.hover}, ${t.bgAlt})`, display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 18, alignItems: "center" }}>
           <div style={{ width: 50, height: 50, borderRadius: 8, background: `linear-gradient(135deg, ${t.accentLight}, ${t.accentDark})`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontFamily: "Georgia, serif" }}></div>
           <div>
-            <div style={{ color: t.text, fontSize: 18, fontWeight: 800 }}>{continueSubject ? `${titleCase(continueSubject.name)}${continueSubject.tag ? ` - ${titleCase(continueSubject.tag)}` : ""}` : tr("dashboard.noActiveStudyPlan")}</div>
+            <div style={{ color: t.text, fontSize: 18, fontWeight: 800 }}>{continueTitle}</div>
             <div style={{ color: t.text, fontSize: 13, marginTop: 4 }}>{continueSubject ? titleCase(continueSubject.subtasks?.find((task) => !task.done)?.text || tr("dashboard.allTasksComplete")) : tr("dashboard.createStudyPlan")}</div>
             <div style={{ color: t.textMutedMore, fontSize: 12, marginTop: 5 }}>{tr(continuePending === 1 ? "dashboard.pendingTask" : "dashboard.pendingTasks", { count: continuePending })}</div>
           </div>

@@ -23,6 +23,19 @@ const eventPayload = {
         },
     ],
 }
+const twentyFourHourEventPayload = {
+    events: [
+        {
+            id: "event-2",
+            day_of_week: "Tuesday",
+            title: "Study chemistry",
+            tag: "chemistry",
+            description: null,
+            start_time: "14:00",
+            end_time: "15:30",
+        },
+    ],
+}
 
 const restoreFns: Array<() => void> = []
 
@@ -102,6 +115,21 @@ describe("schedule service", { concurrency: false }, () => {
 
         assert.deepEqual(result, { message: "schedule updated!" })
         assert.deepEqual(calls, ["createScheduleReturningId", "createOrUpdateEvent"])
+    })
+
+    it("creates or updates schedule events without AM/PM periods", async () => {
+        replaceMethod(ScheduleQueries, "createScheduleReturningId", async (receivedUserId: number) => {
+            assert.equal(receivedUserId, userId)
+            return [{ id: scheduleId }]
+        })
+        replaceMethod(ScheduleQueries, "createOrUpdateEvent", async (data: typeof twentyFourHourEventPayload, receivedScheduleId: number) => {
+            assert.deepEqual(data, twentyFourHourEventPayload)
+            assert.equal(receivedScheduleId, scheduleId)
+        })
+
+        const result = await ScheduleService.updateSchedule(userId, twentyFourHourEventPayload)
+
+        assert.deepEqual(result, { message: "schedule updated!" })
     })
 
     it("returns a service error when schedule update fails", async () => {

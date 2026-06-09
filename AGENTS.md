@@ -31,6 +31,7 @@ node --test dist/tests/{test-folder}/{test-file}.js
 - Don't guess, always ask
 - Don't skip test
 - Don't add dependecies without asking and justificating
+- Don't do steps beyond what you was told to do.
 ### Do:
 - Use 4 spaces
 - Add tests for new feature

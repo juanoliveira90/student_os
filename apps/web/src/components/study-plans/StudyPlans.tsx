@@ -16,6 +16,7 @@ type StudyPlansProps = {
   setSchedule: (value: any) => void;
   createAction?: { id: number; type: string } | null;
   onCreateActionHandled?: () => void;
+  timeFormat: string;
   t: Theme;
 };
 
@@ -42,6 +43,28 @@ function normalizeText(value: unknown) {
   return String(value || "").trim();
 }
 
+function formatBlockTime(block: LooseRecord, timeFormat: string) {
+  const raw = String(block.start_time || "");
+  const match = raw.match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return raw;
+
+  const rawHour = Number(match[1]);
+  const period = String(block.start_period || "").toUpperCase();
+  const hasPeriod = period === "AM" || period === "PM";
+  const hour24 = hasPeriod
+    ? period === "PM" && rawHour !== 12
+      ? rawHour + 12
+      : period === "AM" && rawHour === 12
+        ? 0
+        : rawHour
+    : rawHour;
+
+  if (timeFormat === "24h") return `${String(hour24).padStart(2, "0")}:${match[2]}`;
+
+  const hour12 = hour24 % 12 || 12;
+  return `${String(hour12).padStart(2, "0")}:${match[2]} ${hasPeriod ? period : hour24 >= 12 ? "PM" : "AM"}`;
+}
+
 function normalizeSubtask(subtask: LooseRecord) {
   const name = normalizeText(subtask.name || subtask.text);
 
@@ -63,7 +86,7 @@ function toSubjectUpdate(subject: LooseRecord) {
   };
 }
 
-export default function StudyPlans({ subjects, setSubjects, schedule, setSchedule, createAction, onCreateActionHandled, t }: StudyPlansProps) {
+export default function StudyPlans({ subjects, setSubjects, schedule, setSchedule, createAction, onCreateActionHandled, timeFormat, t }: StudyPlansProps) {
   const { t: tr } = useTranslation();
   const s = getStyles(t);
   const queryClient = useQueryClient();
@@ -287,7 +310,7 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
   function linkedBlockLabel(blockId: string) {
     const block = studyBlocks.find((item) => item.id === blockId);
     if (!block) return tr("studyPlans.noScheduleBlockLinked");
-    return `${block.title} - ${tr(`days.${block.day}`)}, ${block.start_time || ""} ${block.start_period || ""}`;
+    return `${block.title} - ${tr(`days.${block.day}`)}, ${formatBlockTime(block, timeFormat)}`;
   }
 
   function updateFormSubtask(id: number, field: string, value: string) {

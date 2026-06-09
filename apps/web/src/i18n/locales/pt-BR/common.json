@@ -253,7 +253,11 @@
     "dark": "Escuro",
     "systemTheme": "Sistema",
     "language": "Idioma",
-    "languageCopy": "Escolha o idioma usado no aplicativo."
+    "languageCopy": "Escolha o idioma usado no aplicativo.",
+    "timeFormat": "Formato de horario",
+    "timeFormatCopy": "Escolha como os horarios aparecem e sao preenchidos.",
+    "timeFormat12": "Relogio de 12 horas",
+    "timeFormat24": "Relogio de 24 horas"
   },
   "focus": {
     "title": "Foco",

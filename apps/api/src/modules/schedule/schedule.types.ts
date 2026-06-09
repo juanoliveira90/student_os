@@ -7,9 +7,9 @@ export interface add {
             tag?: string
             description?: string | null,
             start_time: string,
-            start_period: string,
+            start_period?: string,
             end_time: string,
-            end_period: string,
+            end_period?: string,
         }
     >
 }

@@ -8,12 +8,18 @@ import { deleteScheduleEvents, saveScheduleEvents, scheduleQueryKey } from "../.
 
 const PERIODS = ["AM", "PM"];
 const DEFAULT_TAGS = ["study block", "task", "hobby"];
-const TIME_SUGGESTIONS = Array.from({ length: 24 * 12 }, (_, index) => {
+const TIME_SUGGESTIONS_12H = Array.from({ length: 24 * 12 }, (_, index) => {
   const hour = Math.floor(index / 12) % 12 || 12;
   const minute = (index % 12) * 5;
   const period = index < 12 * 12 ? "AM" : "PM";
 
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} ${period}`;
+});
+const TIME_SUGGESTIONS_24H = Array.from({ length: 24 * 12 }, (_, index) => {
+  const hour = Math.floor(index / 12);
+  const minute = (index % 12) * 5;
+
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 });
 
 type Theme = Record<string, string>;
@@ -28,6 +34,7 @@ type ScheduleProps = {
   isError: boolean;
   createAction?: { id: number; type: string } | null;
   onCreateActionHandled?: () => void;
+  timeFormat: string;
   t: Theme;
 };
 
@@ -39,11 +46,12 @@ type TimeFieldProps = {
   onChange: (value: string) => void;
   onPeriodChange: (period: string) => void;
   onEnter: () => void;
+  timeFormat: string;
   s: Record<string, CSSProperties>;
   t: Theme;
 };
 
-function normalizeTimeInput(value: unknown, fallbackPeriod = "AM") {
+function readTime(value: unknown, fallbackPeriod = "") {
   const rawValue = String(value || "").trim();
   const periodMatch = rawValue.match(/\s*(am|pm)\s*$/i);
   const period = periodMatch?.[1]?.toUpperCase() || fallbackPeriod;
@@ -52,30 +60,68 @@ function normalizeTimeInput(value: unknown, fallbackPeriod = "AM") {
   const digits = rawTime.replace(/\D/g, "");
   const match = rawTime.match(/^(\d{1,2})(?::(\d{1,2}))?$/);
 
-  if (!digits) return { time: rawValue, period };
+  if (!digits) return null;
 
   const hourValue = hasColon || digits.length <= 2 ? match?.[1] : digits.slice(0, -2);
   const minuteValue = hasColon ? match?.[2] ?? "0" : digits.length <= 2 ? "0" : digits.slice(-2);
-  const hour = Math.min(Math.max(Number(hourValue), 1), 12);
+  const rawHour = Math.max(Number(hourValue), 0);
   const minute = Math.min(Math.max(Number(minuteValue), 0), 59);
+  const hasExplicitPeriod = Boolean(periodMatch);
+  const hasPeriodContext = hasExplicitPeriod || (PERIODS.includes(period) && rawHour > 0 && rawHour <= 12);
+  const hour12 = Math.min(Math.max(rawHour || 12, 1), 12);
+  const isPm = period === "PM";
+  let hour24 = Math.min(rawHour, 23);
+
+  if (hasPeriodContext) {
+    hour24 = hour12;
+
+    if (isPm && hour12 !== 12) {
+      hour24 = hour12 + 12;
+    } else if (!isPm && hour12 === 12) {
+      hour24 = 0;
+    }
+  }
+
+  const displayHour12 = hour24 % 12 || 12;
 
   return {
-    time: `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
-    period,
+    time12: `${String(displayHour12).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
+    time24: `${String(hour24).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
+    period: hasPeriodContext ? period : hour24 >= 12 ? "PM" : "AM",
   };
 }
 
-function TimeField({ id, label, value, period, onChange, onPeriodChange, onEnter, s, t }: TimeFieldProps) {
+function normalizeTimeInput(value: unknown, fallbackPeriod = "AM", timeFormat = "12h") {
+  const parsed = readTime(value, timeFormat === "24h" ? "" : fallbackPeriod);
+  if (!parsed) return { time: String(value || "").trim(), period: fallbackPeriod };
+
+  return {
+    time: timeFormat === "24h" ? parsed.time24 : parsed.time12,
+    period: timeFormat === "24h" ? "" : parsed.period,
+  };
+}
+
+function formatTime(time: unknown, period: unknown, timeFormat: string) {
+  const parsed = readTime(time, String(period || "AM"));
+  if (!parsed) return String(time || "");
+
+  if (timeFormat === "24h") return parsed.time24;
+  return `${parsed.time12} ${String(period || parsed.period).toUpperCase()}`;
+}
+
+function TimeField({ id, label, value, period, onChange, onPeriodChange, onEnter, timeFormat, s, t }: TimeFieldProps) {
+  const is24Hour = timeFormat === "24h";
+
   function handleChange(nextValue: string) {
-    const parsed = normalizeTimeInput(nextValue, period);
+    const parsed = normalizeTimeInput(nextValue, period, timeFormat);
     const nextPeriod = /(?:am|pm)\s*$/i.test(nextValue) ? parsed.period : period;
 
     onChange(nextValue.replace(/\s*(am|pm)\s*$/i, ""));
-    if (nextPeriod !== period) onPeriodChange(nextPeriod);
+    if (!is24Hour && nextPeriod !== period) onPeriodChange(nextPeriod);
   }
 
   function handleBlur() {
-    const parsed = normalizeTimeInput(value, period);
+    const parsed = normalizeTimeInput(value, period, timeFormat);
 
     onChange(parsed.time);
     onPeriodChange(parsed.period);
@@ -84,22 +130,22 @@ function TimeField({ id, label, value, period, onChange, onPeriodChange, onEnter
   return (
     <>
       <label style={s.label}>{label}</label>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 8, marginBottom: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: is24Hour ? "1fr" : "1fr auto", gap: 8, marginBottom: 12 }}>
         <input
           value={value}
           onChange={(e) => handleChange(e.target.value)}
           onBlur={handleBlur}
           onKeyDown={(e) => e.key === "Enter" && onEnter()}
-          placeholder="09:32"
+          placeholder={is24Hour ? "21:32" : "09:32"}
           list={`${id}-suggestions`}
           style={{ ...s.input, marginBottom: 0 }}
         />
         <datalist id={`${id}-suggestions`}>
-          {TIME_SUGGESTIONS.map((time) => (
+          {(is24Hour ? TIME_SUGGESTIONS_24H : TIME_SUGGESTIONS_12H).map((time) => (
             <option key={time} value={time} />
           ))}
         </datalist>
-        <div style={{ display: "flex", background: t.select, border: `1px solid ${t.borderAlt}`, borderRadius: 8, overflow: "hidden", height: 42 }}>
+        {!is24Hour && <div style={{ display: "flex", background: t.select, border: `1px solid ${t.borderAlt}`, borderRadius: 8, overflow: "hidden", height: 42 }}>
           {PERIODS.map((item) => (
             <button
               key={item}
@@ -120,13 +166,13 @@ function TimeField({ id, label, value, period, onChange, onPeriodChange, onEnter
               {item}
             </button>
           ))}
-        </div>
+        </div>}
       </div>
     </>
   );
 }
 
-export default function Schedule({ schedule, setSchedule, subjects, setSubjects, isLoading, isError, createAction, onCreateActionHandled, t }: ScheduleProps) {
+export default function Schedule({ schedule, setSchedule, subjects, setSubjects, isLoading, isError, createAction, onCreateActionHandled, timeFormat, t }: ScheduleProps) {
   const { t: tr } = useTranslation();
   const s = getStyles(t);
   const queryClient = useQueryClient();
@@ -143,23 +189,25 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
   })
   function getEventTimes(event: LooseRecord) {
     if (event.start_time || event.end_time) {
-      const start = normalizeTimeInput(event.start_time || "", event.start_period || "AM");
-      const end = normalizeTimeInput(event.end_time || "", event.end_period || "AM");
+      const startValue = timeFormat === "24h" && event.start_period ? `${event.start_time} ${event.start_period}` : event.start_time || "";
+      const endValue = timeFormat === "24h" && event.end_period ? `${event.end_time} ${event.end_period}` : event.end_time || "";
+      const start = normalizeTimeInput(startValue, event.start_period || "AM", timeFormat);
+      const end = normalizeTimeInput(endValue, event.end_period || "AM", timeFormat);
 
       return { start_time: start.time, start_period: start.period, end_time: end.time, end_period: end.period };
     }
 
     const [start_time = "", end_time = ""] = (event.time || "").split(/\s*-\s*/);
-    const start = normalizeTimeInput(start_time, "AM");
-    const end = normalizeTimeInput(end_time, start.period);
+    const start = normalizeTimeInput(start_time, "AM", timeFormat);
+    const end = normalizeTimeInput(end_time, start.period || "AM", timeFormat);
 
     return { start_time: start.time, start_period: start.period, end_time: end.time, end_period: end.period };
   }
 
   function formatEventTime(event: LooseRecord) {
     const { start_time, start_period, end_time, end_period } = getEventTimes(event);
-    const start = start_time ? `${start_time} ${start_period}` : "";
-    const end = end_time ? `${end_time} ${end_period}` : "";
+    const start = start_time ? formatTime(start_time, start_period, timeFormat) : "";
+    const end = end_time ? formatTime(end_time, end_period, timeFormat) : "";
 
     return [start, end].filter(Boolean).join(" - ");
   }
@@ -168,14 +216,13 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
     return {
       id,
       day_of_week: day,
-      title: title.toLowerCase(),
+      title: title.trim(),
       description: description.trim() || null,
       tag,
       studyPlanId,
       start_time: start.time,
-      start_period: start.period,
       end_time: end.time,
-      end_period: end.period,
+      ...(timeFormat === "12h" ? { start_period: start.period, end_period: end.period } : {}),
     };
   }
 
@@ -187,9 +234,8 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
       tag: item.tag,
       description: item.description,
       start_time: item.start_time,
-      start_period: item.start_period,
       end_time: item.end_time,
-      end_period: item.end_period,
+      ...(timeFormat === "12h" ? { start_period: item.start_period, end_period: item.end_period } : {}),
     };
   }
 
@@ -237,11 +283,11 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
   }
 
   function add() {
-    const start = normalizeTimeInput(form.start_time, form.start_period);
-    const end = normalizeTimeInput(form.end_time, form.end_period);
+    const start = normalizeTimeInput(form.start_time, form.start_period, timeFormat);
+    const end = normalizeTimeInput(form.end_time, form.end_period, timeFormat);
 
     if (!form.title || !start.time || !end.time) return;
-    const tag = form.tag === "custom" ? form.customTag.trim().toLowerCase() : form.tag;
+    const tag = form.tag === "custom" ? form.customTag.trim() : form.tag;
     const studyPlanId = tag === "study block" ? Number(form.studyPlanId) || "" : "";
     const newItem = toScheduleItem({ id: crypto.randomUUID(), day: form.day, title: form.title, description: form.description, tag, studyPlanId, start, end });
 
@@ -254,9 +300,8 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
           title: newItem.title,
           description: newItem.description,
           start_time: newItem.start_time,
-          start_period: newItem.start_period,
           end_time: newItem.end_time,
-          end_period: newItem.end_period,
+          ...(timeFormat === "12h" ? { start_period: newItem.start_period, end_period: newItem.end_period } : {}),
           tag: newItem.tag,
           studyPlanId: newItem.studyPlanId,
         },
@@ -273,11 +318,11 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
   }
 
   function update() {
-    const start = normalizeTimeInput(form.start_time, form.start_period);
-    const end = normalizeTimeInput(form.end_time, form.end_period);
+    const start = normalizeTimeInput(form.start_time, form.start_period, timeFormat);
+    const end = normalizeTimeInput(form.end_time, form.end_period, timeFormat);
 
     if (!form.title || !start.time || !end.time) return;
-    const tag = form.tag === "custom" ? form.customTag.trim().toLowerCase() : form.tag;
+    const tag = form.tag === "custom" ? form.customTag.trim() : form.tag;
     const studyPlanId = tag === "study block" ? Number(form.studyPlanId) || "" : "";
     const updatedItem = toScheduleItem({ id: form.id, day: form.day, title: form.title, description: form.description, tag, studyPlanId, start, end });
 
@@ -291,9 +336,8 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
           title: updatedItem.title,
           description: updatedItem.description,
           start_time: updatedItem.start_time,
-          start_period: updatedItem.start_period,
           end_time: updatedItem.end_time,
-          end_period: updatedItem.end_period,
+          ...(timeFormat === "12h" ? { start_period: updatedItem.start_period, end_period: updatedItem.end_period } : {}),
           tag: updatedItem.tag,
           studyPlanId: updatedItem.studyPlanId,
         },
@@ -459,6 +503,7 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
               onChange={(start_time) => setForm((f) => ({ ...f, start_time }))}
               onPeriodChange={(start_period) => setForm((f) => ({ ...f, start_period }))}
               onEnter={form.id ? update : add}
+              timeFormat={timeFormat}
               s={s}
               t={t}
             />
@@ -470,6 +515,7 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
               onChange={(end_time) => setForm((f) => ({ ...f, end_time }))}
               onPeriodChange={(end_period) => setForm((f) => ({ ...f, end_period }))}
               onEnter={form.id ? update : add}
+              timeFormat={timeFormat}
               s={s}
               t={t}
             />

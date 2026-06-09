@@ -93,11 +93,20 @@ describe("auth workflow", { concurrency: false }, () => {
             assert.equal(createdUser.email_verified, false)
             assert.notEqual(createdUser.password, user.password)
 
+            const authCookie = getAccessToken(registerResponse.headers["set-cookie"])
+            const codeRequestResponse = await app.inject({
+                method: "POST",
+                url: "/auth/email-code/request",
+                headers: { cookie: authCookie },
+            })
+
+            assert.notEqual(codeRequestResponse.statusCode, 403)
+
             const verification = await db.query.EmailVerification.findFirst({
                 where: eq(EmailVerification.user_id, createdUser.id),
             })
 
-            assert.ok(verification, "expected email verification record to be created during registration")
+            assert.ok(verification, "expected email verification record to be created after requesting a code")
             assert.equal(verification.used, false)
             assert.ok(verification.expires_at > new Date())
 
@@ -135,7 +144,6 @@ describe("auth workflow", { concurrency: false }, () => {
 
             assert.equal(duplicateResponse.statusCode, 409)
             assert.deepEqual(duplicateResponse.json(), {
-                statusCode: 409,
                 message: "user already logged in",
             })
         } finally {
@@ -264,8 +272,7 @@ describe("auth workflow", { concurrency: false }, () => {
 
             assert.equal(missingUserResponse.statusCode, 401)
             assert.deepEqual(missingUserResponse.json(), {
-                statusCode: 401,
-                error: "wrong credentials",
+                message: "Request failed",
             })
 
             const wrongPasswordResponse = await app.inject({

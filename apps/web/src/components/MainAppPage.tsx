@@ -10,7 +10,7 @@ import Settings from "./settings/Settings.jsx";
 import Sidebar from "./Sidebar";
 import StudyPlans from "./study-plans/StudyPlans";
 import { Icon } from "./icons";
-import { getNextTheme, getResolvedTheme, getStoredAppearance, getSystemTheme, isDarkTheme, NAV_ITEMS, saveStoredTheme, themes } from "./data.js";
+import { getNextTheme, getResolvedTheme, getStoredAppearance, getStoredTimeFormat, getSystemTheme, isDarkTheme, NAV_ITEMS, saveStoredTheme, saveStoredTimeFormat, themes } from "./data.js";
 import { scheduleQueryOptions } from "../fetchs/scheduleFetchs";
 import { studyPlanQueryOptions } from "../fetchs/studyPlanFetchs";
 import { notesQueryOptions } from "../fetchs/notesFetchs";
@@ -39,6 +39,7 @@ export default function Studium({ user, onLogout }: StudiumProps) {
   const [habits, setHabits] = useState([]);
   const [docs, setDocs] = useState(null);
   const [appearance, setAppearance] = useState(getStoredAppearance);
+  const [timeFormat, setTimeFormat] = useState(getStoredTimeFormat);
   const [systemTheme, setSystemTheme] = useState(getSystemTheme);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [createAction, setCreateAction] = useState<CreateAction | null>(null);
@@ -79,6 +80,10 @@ export default function Studium({ user, onLogout }: StudiumProps) {
     style.setProperty("--sos-accent", t.accent);
     saveStoredTheme(appearance);
   }, [appearance, t]);
+
+  useEffect(() => {
+    saveStoredTimeFormat(timeFormat);
+  }, [timeFormat]);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -152,7 +157,7 @@ export default function Studium({ user, onLogout }: StudiumProps) {
           </div>
 
           <div style={{ flex: 1, overflow: isDoc ? "hidden" : "auto", padding: isDoc ? 0 : "28px", background: t.bg }}>
-            {active === "dashboard" && <Dashboard user={user} tasks={tasks} setTasks={setTasks} habits={habits} schedule={currentSchedule} subjects={currentSubjects} setActive={setActive} navigateToCreate={navigateToCreate} t={t} />}
+            {active === "dashboard" && <Dashboard user={user} tasks={tasks} setTasks={setTasks} habits={habits} schedule={currentSchedule} subjects={currentSubjects} setActive={setActive} navigateToCreate={navigateToCreate} timeFormat={timeFormat} t={t} />}
             {active === "schedule" && (
               <Schedule
                 schedule={currentSchedule}
@@ -163,13 +168,14 @@ export default function Studium({ user, onLogout }: StudiumProps) {
                 isError={scheduleQuery.isError}
                 createAction={createAction?.page === "schedule" ? createAction : null}
                 onCreateActionHandled={() => setCreateAction(null)}
+                timeFormat={timeFormat}
                 t={t}
               />
             )}
-            {active === "studyplans" && <StudyPlans subjects={currentSubjects} setSubjects={updateSubjects} schedule={currentSchedule} setSchedule={updateSchedule} createAction={createAction?.page === "studyplans" ? createAction : null} onCreateActionHandled={() => setCreateAction(null)} t={t} />}
+            {active === "studyplans" && <StudyPlans subjects={currentSubjects} setSubjects={updateSubjects} schedule={currentSchedule} setSchedule={updateSchedule} createAction={createAction?.page === "studyplans" ? createAction : null} onCreateActionHandled={() => setCreateAction(null)} timeFormat={timeFormat} t={t} />}
             {active === "habits" && <Habits habits={habits} setHabits={setHabits} t={t} />}
             {active === "focustime" && <FocusTime tasks={tasks} setTasks={setTasks} subjects={currentSubjects} schedule={currentSchedule} t={t} />}
-            {active === "settings" && <Settings user={user} appearance={appearance} setAppearance={setAppearance} t={t} />}
+            {active === "settings" && <Settings user={user} appearance={appearance} setAppearance={setAppearance} timeFormat={timeFormat} setTimeFormat={setTimeFormat} t={t} />}
             {active === "documents" && (
               <Documents
                 docs={currentDocs}
