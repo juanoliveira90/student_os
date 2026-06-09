@@ -26,7 +26,7 @@ const emptyChanges = {
 const emptySubtaskDraft = { name: "", description: "" };
 
 function normalizeText(value) {
-  return String(value || "").trim().toLowerCase();
+  return String(value || "").trim();
 }
 
 function normalizeSubtask(subtask) {
