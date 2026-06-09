@@ -1,21 +1,40 @@
-import { useEffect, useRef, useState } from "react";
+import { type KeyboardEvent as ReactKeyboardEvent, type MouseEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Icon } from "./icons.jsx";
-import { renderMarkdown } from "./markdown.js";
-import { getStyles } from "./ui.jsx";
+import { Icon } from "../icons";
+import { renderMarkdown } from "../markdown.js";
+import { getStyles } from "../ui";
 import { deleteNote, postNote, putNote } from "../../fetchs/notesFetchs";
 
-export default function Documents({ docs, setDocs, isLoading, isError, createAction, onCreateActionHandled, t }) {
+type Theme = Record<string, string>;
+
+type Note = {
+  id: string;
+  title: string;
+  date: string;
+  content: string;
+};
+
+type DocumentsProps = {
+  docs: Note[];
+  setDocs: (value: Note[] | ((items: Note[]) => Note[])) => void;
+  isLoading: boolean;
+  isError: boolean;
+  createAction?: { id: number; type: string } | null;
+  onCreateActionHandled?: () => void;
+  t: Theme;
+};
+
+export default function Documents({ docs, setDocs, isLoading, isError, createAction, onCreateActionHandled, t }: DocumentsProps) {
   const { t: tr } = useTranslation();
   const s = getStyles(t);
-  const [sel, setSel] = useState(null);
+  const [sel, setSel] = useState<Note | null>(null);
   const [editing, setEditing] = useState(false);
   const [search, setSearch] = useState("");
   const [eContent, setEContent] = useState("");
   const [eTitle, setETitle] = useState("");
   const [savingId, setSavingId] = useState("");
   const [isCreating, setIsCreating] = useState(false);
-  const handledCreateActionId = useRef(null);
+  const handledCreateActionId = useRef<number | null>(null);
   const filtered = docs.filter((d) => d.title.toLowerCase().includes(search.toLowerCase()));
 
   async function newDoc() {
@@ -56,14 +75,14 @@ export default function Documents({ docs, setDocs, isLoading, isError, createAct
     }
   }
 
-  function open(doc) {
+  function open(doc: Note) {
     setSel(doc);
     setEContent(doc.content);
     setETitle(doc.title);
     setEditing(false);
   }
 
-  async function remove(doc) {
+  async function remove(doc: Note) {
     try {
       await deleteNote(doc.id);
       setDocs((items) => items.filter((x) => x.id !== doc.id));
@@ -83,7 +102,7 @@ export default function Documents({ docs, setDocs, isLoading, isError, createAct
   }, [createAction?.id]);
 
   useEffect(() => {
-    function onKey(e) {
+    function onKey(e: KeyboardEvent) {
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
         e.preventDefault();
         if (editing) save();
@@ -114,7 +133,7 @@ export default function Documents({ docs, setDocs, isLoading, isError, createAct
                 </div>
                 <div style={{ fontSize: 12, color: t.textMutedMore }}>{doc.date}</div>
               </div>
-              <button onClick={(e) => { e.stopPropagation(); remove(doc); }} style={{ background: "none", border: "none", cursor: "pointer", color: t.textMutedMost, flexShrink: 0 }}><Icon.x /></button>
+              <button onClick={(e: MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); remove(doc); }} style={{ background: "none", border: "none", cursor: "pointer", color: t.textMutedMost, flexShrink: 0 }}><Icon.x /></button>
             </div>
           ))}
         </div>

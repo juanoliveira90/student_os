@@ -60,9 +60,9 @@ export const ScheduleItems = pgTable("schedule_items", {
     title: text().notNull(),
     description: text(),
     start_time: time().notNull(),
-    start_period: varchar({ length: 2 }).notNull(),
+    start_period: varchar({ length: 2 }),
     end_time: time().notNull(),
-    end_period: varchar({ length: 2 }).notNull(),
+    end_period: varchar({ length: 2 }),
     //is_recurring: boolean().notNull()
 })
 

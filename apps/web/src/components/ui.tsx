@@ -1,7 +1,45 @@
-import { useEffect } from "react";
-import { Icon } from "./icons.jsx";
+import { type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, useEffect } from "react";
+import { Icon } from "./icons";
 
-export function getStyles(t) {
+type Theme = Record<string, string>;
+
+type BasicStatProps = {
+  label: ReactNode;
+  value: ReactNode;
+  accent?: boolean;
+  ok?: boolean;
+  t: Theme;
+};
+
+type SecHdrProps = {
+  icon: ReactNode;
+  label: ReactNode;
+  t: Theme;
+};
+
+type PageHdrProps = {
+  label: ReactNode;
+  description?: ReactNode;
+  action?: {
+    label: ReactNode;
+    onClick: () => void;
+  };
+  t: Theme;
+};
+
+type KbdProps = {
+  k: ReactNode;
+  t: Theme;
+};
+
+type ModalProps = {
+  onClose: () => void;
+  title: ReactNode;
+  children: ReactNode;
+  t: Theme;
+};
+
+export function getStyles(t: Theme): Record<string, CSSProperties> {
   return {
     card: { background: t.bgAlt, border: `1px solid ${t.cardBorder}`, borderRadius: 8, padding: "18px", boxShadow: "0 10px 28px rgba(0,0,0,0.04)" },
     input: { width: "100%", background: t.select, border: `1px solid ${t.borderAlt}`, borderRadius: 8, color: t.text, fontSize: 14, padding: "11px 12px", outline: "none", marginBottom: 12, boxSizing: "border-box", fontFamily: "inherit" },
@@ -11,11 +49,11 @@ export function getStyles(t) {
   };
 }
 
-export function Divider({ t }) {
+export function Divider({ t }: { t: Theme }) {
   return <div style={{ height: 1, background: t.border, margin: "10px 0" }} />;
 }
 
-export function Stat({ label, value, accent, ok, t }) {
+export function Stat({ label, value, accent, ok, t }: BasicStatProps) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0" }}>
       <span style={{ fontSize: 11, color: t.textMutedMore }}>{label}</span>
@@ -24,7 +62,7 @@ export function Stat({ label, value, accent, ok, t }) {
   );
 }
 
-export function MiniStat({ label, value, accent, ok, t }) {
+export function MiniStat({ label, value, accent, ok, t }: BasicStatProps) {
   return (
     <div style={{ background: t.hover, borderRadius: 8, padding: "12px" }}>
       <div style={{ fontSize: 12, color: t.textMutedMore, marginBottom: 4 }}>{label}</div>
@@ -33,7 +71,7 @@ export function MiniStat({ label, value, accent, ok, t }) {
   );
 }
 
-export function SecHdr({ icon, label, t }) {
+export function SecHdr({ icon, label, t }: SecHdrProps) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, color: t.text, fontSize: 15, fontWeight: 700 }}>
       {icon} {label}
@@ -41,7 +79,7 @@ export function SecHdr({ icon, label, t }) {
   );
 }
 
-export function PageHdr({ label, description, action, t }) {
+export function PageHdr({ label, description, action, t }: PageHdrProps) {
   const s = getStyles(t);
   return (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
@@ -54,13 +92,13 @@ export function PageHdr({ label, description, action, t }) {
   );
 }
 
-export function Kbd({ k, t }) {
+export function Kbd({ k, t }: KbdProps) {
   return <kbd style={{ background: t.bgAlt, border: `1px solid ${t.borderLight}`, borderRadius: 3, padding: "1px 5px", fontFamily: "inherit", fontSize: 10, color: t.textMutedMore }}>{k}</kbd>;
 }
 
-export function Modal({ onClose, title, children, t }) {
+export function Modal({ onClose, title, children, t }: ModalProps) {
   useEffect(() => {
-    const fn = (e) => {
+    const fn = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     window.addEventListener("keydown", fn);

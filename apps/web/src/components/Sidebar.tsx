@@ -1,11 +1,43 @@
 import { NAV_ITEMS } from "./data.js";
-import { Icon } from "./icons.jsx";
+import { Icon } from "./icons";
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { type CSSProperties, type Dispatch, type MouseEvent, type SetStateAction, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { getAuthenticatedUser, logout } from "../../fetchs/authFetchs";
+import { getAuthenticatedUser, logout } from "../fetchs/authFetchs";
 
-export default function Sidebar({ active, setActive, t, collapsed, setCollapsed, onLogout }) {
+type Theme = Record<string, string>;
+
+type UserProfile = {
+  user?: UserProfile;
+  name?: string;
+  email?: string;
+  picture?: string;
+  avatar?: string;
+  avatarUrl?: string;
+  image?: string;
+};
+
+type SidebarProps = {
+  active: string;
+  setActive: (active: string) => void;
+  t: Theme;
+  collapsed: boolean;
+  setCollapsed: Dispatch<SetStateAction<boolean>>;
+  onLogout?: () => void;
+};
+
+type NavButtonProps = {
+  item: {
+    id: string;
+  };
+  active: string;
+  setActive: (active: string) => void;
+  icons: Record<string, () => JSX.Element>;
+  collapsed: boolean;
+  t: Theme;
+};
+
+export default function Sidebar({ active, setActive, t, collapsed, setCollapsed, onLogout }: SidebarProps) {
   const { t: tr } = useTranslation();
   const navigate = useNavigate();
   const icons = { dashboard: Icon.grid, schedule: Icon.cal, studyplans: Icon.book, habits: Icon.target, focustime: Icon.timer, documents: Icon.file, settings: Icon.settings };
@@ -14,9 +46,9 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed,
   const settingsItem = NAV_ITEMS.find((item) => item.id === "settings");
   const width = collapsed ? 64 : 216;
 
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
-  const profileRef = useRef(null);
+  const profileRef = useRef<HTMLDivElement | null>(null);
   const profile = user?.user ?? user ?? {};
   const displayName = profile.name || profile.email || "student";
   const avatarUrl = profile.picture || profile.avatar || profile.avatarUrl || profile.image;
@@ -29,8 +61,8 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed,
   }, []);
 
   useEffect(() => {
-    function onPointerDown(e) {
-      if (!profileRef.current?.contains(e.target)) setProfileOpen(false);
+    function onPointerDown(e: PointerEvent) {
+      if (e.target instanceof Node && !profileRef.current?.contains(e.target)) setProfileOpen(false);
     }
 
     
@@ -173,7 +205,7 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed,
   );
 }
 
-function NavButton({ item, active, setActive, icons, collapsed, t }) {
+function NavButton({ item, active, setActive, icons, collapsed, t }: NavButtonProps) {
   const { t: tr } = useTranslation();
   const { id } = item;
   const translatedLabel = tr(`nav.${id}.label`);
@@ -229,7 +261,7 @@ function NavButton({ item, active, setActive, icons, collapsed, t }) {
   );
 }
 
-function profileMenuItem(t) {
+function profileMenuItem(t: Theme): CSSProperties {
   return {
     width: "100%",
     height: 34,

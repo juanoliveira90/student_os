@@ -40,6 +40,28 @@ export const themes = {
 export const THEME_ORDER = ["dark", "light"];
 export const APPEARANCE_ORDER = ["dark", "light", "system"];
 export const THEME_STORAGE_KEY = "studium_theme";
+export const TIME_FORMATS = ["12h", "24h"];
+export const TIME_FORMAT_STORAGE_KEY = "studium_time_format";
+
+export function detectSystemTimeFormat() {
+  if (typeof Intl === "undefined") return "12h";
+
+  const parts = new Intl.DateTimeFormat(undefined, { hour: "numeric" }).formatToParts(new Date());
+  return parts.some((part) => part.type === "dayPeriod") ? "12h" : "24h";
+}
+
+export function getStoredTimeFormat() {
+  if (typeof window === "undefined") return detectSystemTimeFormat();
+
+  const storedFormat = window.localStorage.getItem(TIME_FORMAT_STORAGE_KEY);
+  return TIME_FORMATS.includes(storedFormat) ? storedFormat : detectSystemTimeFormat();
+}
+
+export function saveStoredTimeFormat(timeFormat) {
+  if (typeof window === "undefined" || !TIME_FORMATS.includes(timeFormat)) return;
+
+  window.localStorage.setItem(TIME_FORMAT_STORAGE_KEY, timeFormat);
+}
 
 export function getSystemTheme() {
   if (typeof window === "undefined") return "dark";

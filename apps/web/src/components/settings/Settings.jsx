@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Icon } from "./icons.jsx";
-import { getStyles } from "./ui.jsx";
+import { Icon } from "../icons";
+import { getStyles } from "../ui";
 import { updatePassword, updateProfile } from "../../fetchs/authFetchs";
 import { saveLanguage } from "../../i18n";
 
-export default function Settings({ user, appearance, setAppearance, t }) {
+export default function Settings({ user, appearance, setAppearance, timeFormat, setTimeFormat, t }) {
   const { t: tr, i18n } = useTranslation();
   const s = getStyles(t);
   const profile = user?.user ?? user ?? {};
@@ -60,7 +60,7 @@ export default function Settings({ user, appearance, setAppearance, t }) {
           {tab === "profile" ? (
             <ProfileTab form={form} setForm={setForm} s={s} t={t} />
           ) : (
-            <SystemTab form={form} setForm={setForm} appearance={appearance} setAppearance={setAppearance} s={s} t={t} />
+            <SystemTab form={form} setForm={setForm} appearance={appearance} setAppearance={setAppearance} timeFormat={timeFormat} setTimeFormat={setTimeFormat} s={s} t={t} />
           )}
         </div>
       </section>
@@ -246,12 +246,16 @@ function PasswordUpdatedPanel({ onClose, s, t }) {
   );
 }
 
-function SystemTab({ form, setForm, appearance, setAppearance, s, t }) {
+function SystemTab({ form, setForm, appearance, setAppearance, timeFormat, setTimeFormat, s, t }) {
   const { t: tr, i18n } = useTranslation();
   const options = [
     { id: "light", label: tr("settings.light"), icon: Icon.sun },
     { id: "dark", label: tr("settings.dark"), icon: Icon.moon },
     { id: "system", label: tr("settings.systemTheme"), icon: Icon.panelSoft },
+  ];
+  const timeOptions = [
+    { id: "12h", label: tr("settings.timeFormat12") },
+    { id: "24h", label: tr("settings.timeFormat24") },
   ];
 
   return (
@@ -316,6 +320,45 @@ function SystemTab({ form, setForm, appearance, setAppearance, s, t }) {
         <option value="en">{tr("language.english")}</option>
         <option value="pt-BR">{tr("language.portuguese")}</option>
       </select>
+
+      <div style={{ height: 1, background: t.border, margin: "30px 0" }} />
+
+      <h3 style={groupTitle(t)}>{tr("settings.timeFormat")}</h3>
+      <p style={sectionCopy(t)}>{tr("settings.timeFormatCopy")}</p>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 18, marginTop: 18 }}>
+        {timeOptions.map((option) => {
+          const on = timeFormat === option.id;
+
+          return (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => setTimeFormat(option.id)}
+              style={{
+                height: 56,
+                background: t.bgAlt,
+                border: `1px solid ${on ? t.accent : t.borderAlt}`,
+                borderRadius: 8,
+                color: t.text,
+                cursor: "pointer",
+                display: "grid",
+                gridTemplateColumns: "1fr auto",
+                alignItems: "center",
+                gap: 14,
+                padding: "0 18px",
+                fontFamily: "inherit",
+                fontSize: 14,
+                fontWeight: 750,
+              }}
+            >
+              <span style={{ textAlign: "left" }}>{option.label}</span>
+              <span style={{ width: 14, height: 14, borderRadius: "50%", border: `1px solid ${on ? t.accent : t.borderLight}`, background: on ? t.accent : "transparent", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+                {on && <Icon.check />}
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

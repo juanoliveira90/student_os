@@ -2,23 +2,35 @@ import { useEffect, useState } from "react";
 import {
   Outlet,
   RouterProvider,
-  createRootRoute,
+  createRootRouteWithContext,
   createRoute,
   createRouter,
   redirect,
 } from "@tanstack/react-router";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import LandingPage from "./components/landing/LandingPage.jsx";
-import LoginPage from "./components/login/LoginPage.jsx";
-import VerifyEmailPage from "./components/login/VerifyEmailPage.jsx";
-import Studium from "./components/student-os/MainAppPage.jsx";
+import LandingPage from "./components/landing/LandingPage";
+import LoginPage from "./components/login/LoginPage";
+import VerifyEmailPage from "./components/login/VerifyEmailPage";
+import Studium from "./components/MainAppPage";
 import { getAuthenticatedUser, isEmailVerificationRequiredError } from "./fetchs/authFetchs";
 import { scheduleQueryOptions } from "./fetchs/scheduleFetchs";
 import { studyPlanQueryOptions } from "./fetchs/studyPlanFetchs";
 import { queryClient } from "./lib/queryClient";
 
-const rootRoute = createRootRoute({
+type AuthenticatedUser = {
+  id: string | number;
+} & Record<string, unknown>;
+
+type AppRouteContext = {
+  user: AuthenticatedUser | null;
+  setUser: (user: AuthenticatedUser | null) => void;
+  needsEmailVerification: boolean;
+  setNeedsEmailVerification: (value: boolean) => void;
+  queryClient: QueryClient;
+};
+
+const rootRoute = createRootRouteWithContext<AppRouteContext>()({
   component: () => <Outlet />,
 });
 
@@ -85,7 +97,7 @@ const router = createRouter({
 
 export default function App() {
   const { t } = useTranslation();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<AuthenticatedUser | null>(null);
   const [needsEmailVerification, setNeedsEmailVerification] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -93,7 +105,7 @@ export default function App() {
     getAuthenticatedUser()
       .then((authenticatedUser) => {
         setNeedsEmailVerification(false);
-        setUser(authenticatedUser);
+        setUser(authenticatedUser as AuthenticatedUser);
       })
       .catch((error) => {
         if (isEmailVerificationRequiredError(error)) {
@@ -127,7 +139,7 @@ function LoginRoute() {
       onAuthenticated={(authenticatedUser) => {
         queryClient.clear();
         setNeedsEmailVerification(false);
-        setUser(authenticatedUser);
+        setUser(authenticatedUser as AuthenticatedUser);
       }}
       onNeedsEmailVerification={() => {
         queryClient.clear();
@@ -148,7 +160,7 @@ function SignupRoute() {
   return (
     <LoginPage
       mode="signup"
-      onAuthenticated={setUser}
+      onAuthenticated={(authenticatedUser) => setUser(authenticatedUser as AuthenticatedUser)}
       onNeedsEmailVerification={() => {
         setNeedsEmailVerification(true);
         setUser(null);
@@ -164,7 +176,7 @@ function VerifyEmailRoute() {
       onVerified={(authenticatedUser) => {
         queryClient.clear();
         setNeedsEmailVerification(false);
-        setUser(authenticatedUser);
+        setUser(authenticatedUser as AuthenticatedUser);
       }}
     />
   );

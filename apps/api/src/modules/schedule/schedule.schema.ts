@@ -19,7 +19,7 @@ export const InsertSchema =
                 end_time: { type: "string" },
                 end_period: { type: "string", enum: ["AM", "PM"] }
             },
-            required: ["id", "day_of_week", "title", "start_time", "start_period", "end_time", "end_period"]
+            required: ["id", "day_of_week", "title", "start_time" , "end_time"]
             }
         }
         },
@@ -48,7 +48,7 @@ export const updateSchema =
                     end_time: { type: "string" },
                     end_period: { type: "string", enum: ["AM", "PM"] }
                 },
-                required: ["id", "day_of_week", "title", "start_time", "start_period", "end_time", "end_period"]
+                required: ["id", "day_of_week", "title", "start_time", "end_time"]
                 }
             }
         },
