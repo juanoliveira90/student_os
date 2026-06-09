@@ -183,7 +183,7 @@
     "eventTitle": "Título",
     "eventName": "nome do evento",
     "eventDescription": "Descrição",
-    "optionalNotes": "notas opcionais",
+    "optionalNotes": "notas (opcional)",
     "tag": "Tag",
     "customTag": "Tag personalizada",
     "customTagPlaceholder": "ex.: laboratório, revisão",
@@ -255,9 +255,9 @@
     "language": "Idioma",
     "languageCopy": "Escolha o idioma usado no aplicativo.",
     "timeFormat": "Formato de horario",
-    "timeFormatCopy": "Escolha como os horarios aparecem e sao preenchidos.",
-    "timeFormat12": "Relogio de 12 horas",
-    "timeFormat24": "Relogio de 24 horas"
+    "timeFormatCopy": "Escolha como os horarios aparecem e são preenchidos.",
+    "timeFormat12": "Relógio de 12 horas",
+    "timeFormat24": "Relógio de 24 horas"
   },
   "focus": {
     "title": "Foco",
