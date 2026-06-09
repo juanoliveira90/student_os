@@ -6,7 +6,7 @@ import Documents from "./documents/Documents";
 import FocusTime from "./focus-time/FocusTime.jsx";
 import Habits from "./habits/Habits.jsx";
 import Schedule from "./schedule/Schedule";
-import Settings from "./settings/Settings.jsx";
+import Settings from "./settings/Settings";
 import Sidebar from "./Sidebar";
 import StudyPlans from "./study-plans/StudyPlans";
 import { Icon } from "./icons";
