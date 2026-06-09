@@ -1,12 +1,25 @@
-import { useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { DAY_LABELS } from "./data.js";
-import { Icon } from "./icons.jsx";
-import { getStyles, Modal } from "./ui.jsx";
+import { DAY_LABELS } from "../data.js";
+import { Icon } from "../icons";
+import { getStyles, Modal } from "../ui";
 import { saveStudyPlanChanges, studyPlanQueryKey } from "../../fetchs/studyPlanFetchs";
 
-function getStudyBlocks(schedule) {
+type Theme = Record<string, string>;
+type LooseRecord = Record<string, any>;
+
+type StudyPlansProps = {
+  subjects: LooseRecord[];
+  setSubjects: (value: any) => void;
+  schedule: Record<string, LooseRecord[]>;
+  setSchedule: (value: any) => void;
+  createAction?: { id: number; type: string } | null;
+  onCreateActionHandled?: () => void;
+  t: Theme;
+};
+
+function getStudyBlocks(schedule: Record<string, LooseRecord[]>) {
   return DAY_LABELS.flatMap((day) =>
     (schedule?.[day] || [])
       .filter((event) => event.tag === "study block")
@@ -25,11 +38,11 @@ const emptyChanges = {
 
 const emptySubtaskDraft = { name: "", description: "" };
 
-function normalizeText(value) {
+function normalizeText(value: unknown) {
   return String(value || "").trim();
 }
 
-function normalizeSubtask(subtask) {
+function normalizeSubtask(subtask: LooseRecord) {
   const name = normalizeText(subtask.name || subtask.text);
 
   return {
@@ -41,7 +54,7 @@ function normalizeSubtask(subtask) {
   };
 }
 
-function toSubjectUpdate(subject) {
+function toSubjectUpdate(subject: LooseRecord) {
   return {
     id: subject.id,
     name: normalizeText(subject.name),
@@ -50,7 +63,7 @@ function toSubjectUpdate(subject) {
   };
 }
 
-export default function StudyPlans({ subjects, setSubjects, schedule, setSchedule, createAction, onCreateActionHandled, t }) {
+export default function StudyPlans({ subjects, setSubjects, schedule, setSchedule, createAction, onCreateActionHandled, t }: StudyPlansProps) {
   const { t: tr } = useTranslation();
   const s = getStyles(t);
   const queryClient = useQueryClient();
@@ -77,7 +90,7 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     setSaveMessage("");
   }
 
-  function queueSubjectUpdate(subject) {
+  function queueSubjectUpdate(subject: LooseRecord) {
     setPendingChanges((current) => {
       if (current.deleteSubjects.includes(subject.id)) return current;
 
@@ -96,7 +109,7 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     });
   }
 
-  function syncLinkedSchedule(subjectId, blockId) {
+  function syncLinkedSchedule(subjectId: string, blockId: string) {
     setSchedule((days) =>
       Object.fromEntries(
         Object.entries(days).map(([day, events]) => [
@@ -111,7 +124,7 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     );
   }
 
-  function linkBlockToSubject(subjectId, blockId) {
+  function linkBlockToSubject(subjectId: string, blockId: string) {
     const subject = subjects.find((item) => item.id === subjectId);
 
     setSubjects((items) =>
@@ -151,7 +164,7 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     setIsAdding(false);
   }
 
-  function addSubtask(subjectId, draft) {
+  function addSubtask(subjectId: string, draft: LooseRecord) {
     const cleanName = draft.name.trim();
     if (!cleanName) return false;
 
@@ -188,7 +201,7 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     return true;
   }
 
-  function toggleSubtask(subjectId, subtaskId) {
+  function toggleSubtask(subjectId: string, subtaskId: string) {
     const subject = subjects.find((item) => item.id === subjectId);
     const subtask = subject?.subtasks?.find((item) => item.id === subtaskId);
     if (!subtask) return;
@@ -230,7 +243,7 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     markChanged();
   }
 
-  function removeSubtask(subjectId, subtaskId) {
+  function removeSubtask(subjectId: string, subtaskId: string) {
     setSubjects((items) => items.map((item) => (item.id === subjectId ? { ...item, subtasks: (item.subtasks || []).filter((subtask) => subtask.id !== subtaskId) } : item)));
     setPendingChanges((current) => {
       const createSubject = current.createSubjects.find((item) => item.id === subjectId);
@@ -254,7 +267,7 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     markChanged();
   }
 
-  function deleteSubject(subjectId) {
+  function deleteSubject(subjectId: string) {
     setSubjects((items) => items.filter((item) => item.id !== subjectId));
     setPendingChanges((current) => {
       const wasNew = current.createSubjects.some((item) => item.id === subjectId);
@@ -271,13 +284,13 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     markChanged();
   }
 
-  function linkedBlockLabel(blockId) {
+  function linkedBlockLabel(blockId: string) {
     const block = studyBlocks.find((item) => item.id === blockId);
     if (!block) return tr("studyPlans.noScheduleBlockLinked");
     return `${block.title} - ${tr(`days.${block.day}`)}, ${block.start_time || ""} ${block.start_period || ""}`;
   }
 
-  function updateFormSubtask(id, field, value) {
+  function updateFormSubtask(id: number, field: string, value: string) {
     setForm((current) => ({
       ...current,
       subtasks: current.subtasks.map((subtask) => (subtask.id === id ? { ...subtask, [field]: value } : subtask)),
@@ -291,14 +304,14 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     }));
   }
 
-  function removeFormSubtask(id) {
+  function removeFormSubtask(id: number) {
     setForm((current) => ({
       ...current,
       subtasks: current.subtasks.length === 1 ? current.subtasks : current.subtasks.filter((subtask) => subtask.id !== id),
     }));
   }
 
-  function startEdit(subject) {
+  function startEdit(subject: LooseRecord) {
     setEditForm({
       id: subject.id,
       name: subject.name || "",
@@ -308,14 +321,14 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     });
   }
 
-  function updateEditSubtask(id, field, value) {
+  function updateEditSubtask(id: string, field: string, value: string) {
     setEditForm((current) => ({
       ...current,
       subtasks: current.subtasks.map((subtask) => (subtask.id === id ? { ...subtask, [field]: value } : subtask)),
     }));
   }
 
-  function updateSubject(event) {
+  function updateSubject(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
     if (!editForm?.name.trim()) return;
     const updatedSubject = toSubjectUpdate(editForm);
@@ -327,7 +340,7 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
     setEditForm((current) => ({ ...current, ...updatedSubject }));
   }
 
-  function updateSubtask(subjectId, subtask) {
+  function updateSubtask(subjectId: string, subtask: LooseRecord) {
     if (!subtask.name.trim()) return;
     const updatedSubtask = normalizeSubtask(subtask);
 

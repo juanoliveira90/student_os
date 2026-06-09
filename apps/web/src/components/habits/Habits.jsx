@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { DAYS } from "./data.js";
-import { Icon } from "./icons.jsx";
-import { getStyles, Modal, PageHdr } from "./ui.jsx";
+import { DAYS } from "../data.js";
+import { Icon } from "../icons";
+import { getStyles, Modal, PageHdr } from "../ui";
 
 export default function Habits({ habits, setHabits, t }) {
   const { t: tr } = useTranslation();

@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { type CSSProperties, type FormEvent, useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import { useAsyncRateLimiter } from "@tanstack/react-pacer";
 import { useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { getNextTheme, getResolvedTheme, getStoredAppearance, getSystemTheme, isDarkTheme, saveStoredTheme, themes } from "../student-os/data.js";
-import { Icon as AppIcon } from "../student-os/icons.jsx";
+import { getNextTheme, getResolvedTheme, getStoredAppearance, getSystemTheme, isDarkTheme, saveStoredTheme, themes } from "../data.js";
+import { Icon as AppIcon } from "../icons";
 import { getAuthenticatedUser, requestEmailVerificationCode, verifyEmailCode } from "../../fetchs/authFetchs";
 import { saveLanguage } from "../../i18n";
 
@@ -18,11 +18,19 @@ const VERIFY_EMAIL_RATE_LIMIT = 5;
 const VERIFY_EMAIL_RATE_LIMIT_WINDOW_SECONDS = 60;
 const EMAIL_VERIFICATION_REQUEST_SENT_KEY = "emailVerificationRequestSentAt";
 
-function getSecondsUntilNextWindow(rateLimiter) {
+type VerifyEmailPageProps = {
+  onVerified?: (authenticatedUser: unknown) => void;
+};
+
+type RateLimiterWindow = {
+  getMsUntilNextWindow: () => number;
+};
+
+function getSecondsUntilNextWindow(rateLimiter: RateLimiterWindow) {
   return Math.ceil(rateLimiter.getMsUntilNextWindow() / 1000);
 }
 
-export default function VerifyEmailPage({ onVerified }) {
+export default function VerifyEmailPage({ onVerified }: VerifyEmailPageProps) {
   const { t: tr, i18n } = useTranslation();
   const navigate = useNavigate();
   const [code, setCode] = useState("");
@@ -105,7 +113,7 @@ export default function VerifyEmailPage({ onVerified }) {
     return () => media.removeEventListener("change", onChange);
   }, []);
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const normalizedCode = code.trim();
 
@@ -238,7 +246,7 @@ export default function VerifyEmailPage({ onVerified }) {
   );
 }
 
-const inputStyle = (t) => ({
+const inputStyle = (t: Record<string, string>): CSSProperties => ({
   width: "100%",
   background: "transparent",
   border: "none",

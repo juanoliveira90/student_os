@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { DAY_LABELS } from "./data.js";
-import { Icon } from "./icons.jsx";
-import { getStyles, Modal, PageHdr, SecHdr } from "./ui.jsx";
+import { DAY_LABELS } from "../data.js";
+import { Icon } from "../icons";
+import { getStyles, Modal, PageHdr, SecHdr } from "../ui";
 
 function getScheduleItems(schedule, tag) {
   return DAY_LABELS.flatMap((day) =>

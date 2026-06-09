@@ -1,4 +1,4 @@
-import { DAY_LABELS } from "../components/student-os/data.js";
+import { DAY_LABELS } from "../components/data.js";
 import { apiUrl } from "./apiUrl";
 
 export const scheduleQueryKey = ["schedule"];

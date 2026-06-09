@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Icon } from "./icons.jsx";
-import { getStyles } from "./ui.jsx";
+import { Icon } from "../icons";
+import { getStyles } from "../ui";
 import { updatePassword, updateProfile } from "../../fetchs/authFetchs";
 import { saveLanguage } from "../../i18n";
 

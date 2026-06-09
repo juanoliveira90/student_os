@@ -1,21 +1,36 @@
-import { useEffect, useState } from "react";
+import { type KeyboardEvent as ReactKeyboardEvent, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import Dashboard from "./Dashboard.jsx";
-import Documents from "./Documents.jsx";
-import FocusTime from "./FocusTime.jsx";
-import Habits from "./Habits.jsx";
-import Schedule from "./Schedule.jsx";
-import Settings from "./Settings.jsx";
-import Sidebar from "./Sidebar.jsx";
-import StudyPlans from "./StudyPlans.jsx";
-import { Icon } from "./icons.jsx";
+import Dashboard from "./dashboard/Dashboard";
+import Documents from "./documents/Documents";
+import FocusTime from "./focus-time/FocusTime.jsx";
+import Habits from "./habits/Habits.jsx";
+import Schedule from "./schedule/Schedule";
+import Settings from "./settings/Settings.jsx";
+import Sidebar from "./Sidebar";
+import StudyPlans from "./study-plans/StudyPlans";
+import { Icon } from "./icons";
 import { getNextTheme, getResolvedTheme, getStoredAppearance, getSystemTheme, isDarkTheme, NAV_ITEMS, saveStoredTheme, themes } from "./data.js";
-import { scheduleQueryOptions } from "../../fetchs/scheduleFetchs";
-import { studyPlanQueryOptions } from "../../fetchs/studyPlanFetchs";
-import { notesQueryOptions } from "../../fetchs/notesFetchs";
+import { scheduleQueryOptions } from "../fetchs/scheduleFetchs";
+import { studyPlanQueryOptions } from "../fetchs/studyPlanFetchs";
+import { notesQueryOptions } from "../fetchs/notesFetchs";
 
-export default function Studium({ user, onLogout }) {
+type Theme = Record<string, string>;
+
+type StudiumProps = {
+  user: {
+    id: string | number;
+  } | null;
+  onLogout?: () => void;
+};
+
+type CreateAction = {
+  page: string;
+  type: string;
+  id: number;
+};
+
+export default function Studium({ user, onLogout }: StudiumProps) {
   const { t: tr } = useTranslation();
   const [active, setActive] = useState("dashboard");
   const [tasks, setTasks] = useState([]);
@@ -26,7 +41,7 @@ export default function Studium({ user, onLogout }) {
   const [appearance, setAppearance] = useState(getStoredAppearance);
   const [systemTheme, setSystemTheme] = useState(getSystemTheme);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [createAction, setCreateAction] = useState(null);
+  const [createAction, setCreateAction] = useState<CreateAction | null>(null);
   const theme = getResolvedTheme(appearance, systemTheme);
   const t = themes[theme];
   const isDoc = active === "documents";
@@ -47,7 +62,7 @@ export default function Studium({ user, onLogout }) {
   };
 
   useEffect(() => {
-    function onKey(e) {
+    function onKey(e: KeyboardEvent) {
       const tag = document.activeElement?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       const item = NAV_ITEMS.find((n) => n.key === e.key && !["habits", "focustime"].includes(n.id));
@@ -94,7 +109,7 @@ export default function Studium({ user, onLogout }) {
   }, [docs, notesQuery.data]);
 
   const currentPage = NAV_ITEMS.find((n) => n.id === active);
-  const navigateToCreate = (page, type) => {
+  const navigateToCreate = (page: string, type: string) => {
     setCreateAction({ page, type, id: Date.now() });
     setActive(page);
   };

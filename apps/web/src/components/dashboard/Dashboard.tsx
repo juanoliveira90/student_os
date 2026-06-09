@@ -1,10 +1,23 @@
-import { useState } from "react";
+import { type CSSProperties, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { DAY_LABELS } from "./data.js";
-import { Icon } from "./icons.jsx";
-import { getStyles, SecHdr } from "./ui.jsx";
+import { DAY_LABELS } from "../data.js";
+import { Icon } from "../icons";
+import { getStyles, SecHdr } from "../ui";
 
-function titleCase(value) {
+type Theme = Record<string, string>;
+type LooseRecord = Record<string, any>;
+
+type DashboardProps = {
+  user: LooseRecord | null;
+  tasks: LooseRecord[];
+  schedule: Record<string, LooseRecord[]>;
+  subjects: LooseRecord[];
+  setActive: (active: string) => void;
+  navigateToCreate: (page: string, type: string) => void;
+  t: Theme;
+};
+
+function titleCase(value: unknown) {
   return String(value || "")
     .split(" ")
     .filter(Boolean)
@@ -12,12 +25,12 @@ function titleCase(value) {
     .join(" ");
 }
 
-function getEventTime(event) {
+function getEventTime(event: LooseRecord) {
   if (event.start_time) return event.start_time;
   return String(event.time || "").split("-")[0]?.trim() || "09:00";
 }
 
-function formatTime(time, period) {
+function formatTime(time: unknown, period?: unknown) {
   const raw = String(time || "");
   const match = raw.match(/^(\d{1,2}):(\d{2})/);
   if (!match) return raw;
@@ -32,7 +45,7 @@ function formatTime(time, period) {
   return `${match[1].padStart(2, "0")}:${match[2]}`;
 }
 
-function getSubjectStats(subject) {
+function getSubjectStats(subject: LooseRecord) {
   const subtasks = subject.subtasks || [];
   const total = subtasks.length || 0;
   const done = subtasks.filter((task) => task.done).length;
@@ -41,7 +54,7 @@ function getSubjectStats(subject) {
   return { done, total, progress };
 }
 
-export default function Dashboard({ user, tasks, schedule, subjects, setActive, navigateToCreate, t }) {
+export default function Dashboard({ user, tasks, schedule, subjects, setActive, navigateToCreate, t }: DashboardProps) {
   const { t: tr } = useTranslation();
   const [isScheduleExpanded, setIsScheduleExpanded] = useState(false);
   const [isStudyPlanExpanded, setIsStudyPlanExpanded] = useState(false);
@@ -59,9 +72,9 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
   const continueSubject = allSubjects.find((subject) => (subject.subtasks || []).some((task) => !task.done)) || allSubjects[0];
   const continuePending = continueSubject ? (continueSubject.subtasks || []).filter((task) => !task.done).length : tasks.filter((task) => !task.done).length;
 
-  const card = { ...s.card, boxShadow: "0 14px 42px rgba(102, 78, 50, 0.06)" };
-  const metricCard = { ...card, display: "flex", flexDirection: "column" };
-  const metricList = { border: `1px solid ${t.border}`, borderRadius: 8, overflow: "hidden", background: t.bgAlt, flex: 1 };
+  const card: CSSProperties = { ...s.card, boxShadow: "0 14px 42px rgba(102, 78, 50, 0.06)" };
+  const metricCard: CSSProperties = { ...card, display: "flex", flexDirection: "column" };
+  const metricList: CSSProperties = { border: `1px solid ${t.border}`, borderRadius: 8, overflow: "hidden", background: t.bgAlt, flex: 1 };
   const scheduleList = {
     ...metricList,
     flex: "initial",
@@ -196,7 +209,7 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
   );
 }
 
-function EmptyState({ t, label }) {
+function EmptyState({ t, label }: { t: Theme; label: string }) {
   return (
     <div style={{ minHeight: 174, display: "flex", alignItems: "center", justifyContent: "center", color: t.textMutedMore, fontSize: 13 }}>
       {label}

@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { type CSSProperties, type KeyboardEvent, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { DAY_LABELS } from "./data.js";
-import { Icon } from "./icons.jsx";
-import { getStyles, Modal } from "./ui.jsx";
+import { DAY_LABELS } from "../data.js";
+import { Icon } from "../icons";
+import { getStyles, Modal } from "../ui";
 import { deleteScheduleEvents, saveScheduleEvents, scheduleQueryKey } from "../../fetchs/scheduleFetchs";
 
 const PERIODS = ["AM", "PM"];
@@ -16,7 +16,34 @@ const TIME_SUGGESTIONS = Array.from({ length: 24 * 12 }, (_, index) => {
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")} ${period}`;
 });
 
-function normalizeTimeInput(value, fallbackPeriod = "AM") {
+type Theme = Record<string, string>;
+type LooseRecord = Record<string, any>;
+
+type ScheduleProps = {
+  schedule: Record<string, LooseRecord[]>;
+  setSchedule: (value: any) => void;
+  subjects: LooseRecord[];
+  setSubjects: (value: any) => void;
+  isLoading: boolean;
+  isError: boolean;
+  createAction?: { id: number; type: string } | null;
+  onCreateActionHandled?: () => void;
+  t: Theme;
+};
+
+type TimeFieldProps = {
+  id: string;
+  label: string;
+  value: string;
+  period: string;
+  onChange: (value: string) => void;
+  onPeriodChange: (period: string) => void;
+  onEnter: () => void;
+  s: Record<string, CSSProperties>;
+  t: Theme;
+};
+
+function normalizeTimeInput(value: unknown, fallbackPeriod = "AM") {
   const rawValue = String(value || "").trim();
   const periodMatch = rawValue.match(/\s*(am|pm)\s*$/i);
   const period = periodMatch?.[1]?.toUpperCase() || fallbackPeriod;
@@ -38,8 +65,8 @@ function normalizeTimeInput(value, fallbackPeriod = "AM") {
   };
 }
 
-function TimeField({ id, label, value, period, onChange, onPeriodChange, onEnter, s, t }) {
-  function handleChange(nextValue) {
+function TimeField({ id, label, value, period, onChange, onPeriodChange, onEnter, s, t }: TimeFieldProps) {
+  function handleChange(nextValue: string) {
     const parsed = normalizeTimeInput(nextValue, period);
     const nextPeriod = /(?:am|pm)\s*$/i.test(nextValue) ? parsed.period : period;
 
@@ -99,7 +126,7 @@ function TimeField({ id, label, value, period, onChange, onPeriodChange, onEnter
   );
 }
 
-export default function Schedule({ schedule, setSchedule, subjects, setSubjects, isLoading, isError, createAction, onCreateActionHandled, t }) {
+export default function Schedule({ schedule, setSchedule, subjects, setSubjects, isLoading, isError, createAction, onCreateActionHandled, t }: ScheduleProps) {
   const { t: tr } = useTranslation();
   const s = getStyles(t);
   const queryClient = useQueryClient();
@@ -114,7 +141,7 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
     createOrUpdate: [],
     delete: [],
   })
-  function getEventTimes(event) {
+  function getEventTimes(event: LooseRecord) {
     if (event.start_time || event.end_time) {
       const start = normalizeTimeInput(event.start_time || "", event.start_period || "AM");
       const end = normalizeTimeInput(event.end_time || "", event.end_period || "AM");
@@ -129,7 +156,7 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
     return { start_time: start.time, start_period: start.period, end_time: end.time, end_period: end.period };
   }
 
-  function formatEventTime(event) {
+  function formatEventTime(event: LooseRecord) {
     const { start_time, start_period, end_time, end_period } = getEventTimes(event);
     const start = start_time ? `${start_time} ${start_period}` : "";
     const end = end_time ? `${end_time} ${end_period}` : "";
@@ -137,7 +164,7 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
     return [start, end].filter(Boolean).join(" - ");
   }
 
-  function toScheduleItem({ id, day, title, description, tag, studyPlanId, start, end }) {
+  function toScheduleItem({ id, day, title, description, tag, studyPlanId, start, end }: LooseRecord) {
     return {
       id,
       day_of_week: day,
@@ -152,7 +179,7 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
     };
   }
 
-  function toPersistedItem(item) {
+  function toPersistedItem(item: LooseRecord) {
     return {
       id: item.id,
       day_of_week: item.day_of_week,
@@ -187,14 +214,14 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
     onCreateActionHandled?.();
   }, [createAction?.id]);
 
-  function openEditModal(day, event) {
+  function openEditModal(day: string, event: LooseRecord) {
     const { start_time, start_period, end_time, end_period } = getEventTimes(event);
     const tag = event.tag || "";
     setForm({ day, title: event.title, description: event.description || "", tag: DEFAULT_TAGS.includes(tag) ? tag : "custom", customTag: DEFAULT_TAGS.includes(tag) ? "" : tag, studyPlanId: event.studyPlanId || "", start_time, start_period, end_time, end_period, id: event.id, originalDay: day });
     setModal(true);
   }
 
-  function syncLinkedSubject(blockId, studyPlanId) {
+  function syncLinkedSubject(blockId: string, studyPlanId: string | number) {
     setSubjects((items) =>
       items.map((item) => {
         if (item.id === studyPlanId) return { ...item, scheduleBlockId: blockId };
@@ -284,7 +311,7 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
     }))
   }
 
-  function remove(day, eventId) {
+  function remove(day: string, eventId: string) {
     const eventToRemove = schedule[day]?.find((event) => event.id === eventId);
     const removedItem = eventToRemove
       ? {

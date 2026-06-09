@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { type CSSProperties, type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { getNextTheme, getResolvedTheme, getStoredAppearance, getSystemTheme, isDarkTheme, saveStoredTheme, themes } from "../student-os/data.js";
-import { Icon as AppIcon } from "../student-os/icons.jsx";
+import { getNextTheme, getResolvedTheme, getStoredAppearance, getSystemTheme, isDarkTheme, saveStoredTheme, themes } from "../data.js";
+import { Icon as AppIcon } from "../icons";
 import { getAuthenticatedUser, isEmailVerificationRequiredError, loginWithEmail, registerWithEmail } from "../../fetchs/authFetchs";
 import { saveLanguage } from "../../i18n";
 
@@ -16,7 +16,20 @@ const Icon = {
   arrow: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>,
 };
 
-const ghostButton = (loading, t) => ({
+type LoginPageProps = {
+  mode?: "login" | "signup";
+  onAuthenticated?: (authenticatedUser: unknown) => void;
+  onNeedsEmailVerification?: () => void;
+};
+
+type FieldProps = {
+  label: string;
+  icon: ReactNode;
+  children: ReactNode;
+  t: Record<string, string>;
+};
+
+const ghostButton = (loading: boolean, t: Record<string, string>): CSSProperties => ({
   width: "100%",
   background: t.hover,
   border: `1px solid ${t.borderLight}`,
@@ -35,12 +48,12 @@ const ghostButton = (loading, t) => ({
   opacity: loading ? 0.7 : 1,
 });
 
-const soonButton = (t) => ({
+const soonButton = (t: Record<string, string>): CSSProperties => ({
   ...ghostButton(true, t),
   opacity: 0.72,
 });
 
-export default function LoginPage({ mode = "login", onAuthenticated, onNeedsEmailVerification }) {
+export default function LoginPage({ mode = "login", onAuthenticated, onNeedsEmailVerification }: LoginPageProps) {
   const { t: tr, i18n } = useTranslation();
   const isSignup = mode === "signup";
   const navigate = useNavigate();
@@ -77,7 +90,7 @@ export default function LoginPage({ mode = "login", onAuthenticated, onNeedsEmai
     return () => media.removeEventListener("change", onChange);
   }, []);
 
-  async function handleEmailSubmit(e) {
+  async function handleEmailSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setServerError("");
@@ -241,7 +254,7 @@ export default function LoginPage({ mode = "login", onAuthenticated, onNeedsEmai
   );
 }
 
-function Field({ label, icon, children, t }) {
+function Field({ label, icon, children, t }: FieldProps) {
   return (
     <div style={{ marginBottom: 16 }}>
       <label style={{ fontSize: 11, color: t.textMutedMore, display: "block", marginBottom: 6 }}>{label}</label>
@@ -253,7 +266,7 @@ function Field({ label, icon, children, t }) {
   );
 }
 
-const inputStyle = (t) => ({
+const inputStyle = (t: Record<string, string>): CSSProperties => ({
   flex: 1,
   background: "transparent",
   border: "none",
