@@ -20,7 +20,8 @@ export async function AuthController(app: FastifyInstance) {
             httpOnly: true,
             sameSite,
             secure,
-            maxAge: 60 * 60 * 24 * 7
+            maxAge: 60 * 60 * 24 * 7,
+            partitioned: true
         })
 
         return reply.code(201).send(result)
@@ -67,7 +68,8 @@ export async function AuthController(app: FastifyInstance) {
             httpOnly: true,
             sameSite,
             secure,
-            maxAge: 60 * 60 * 24 * 7
+            maxAge: 60 * 60 * 24 * 7,
+            partitioned: true
         })
 
         return reply.send(user)
