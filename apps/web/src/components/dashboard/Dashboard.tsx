@@ -123,10 +123,10 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
-      <section style={{ ...card, minHeight: 130, padding: "28px 30px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24 }}>
+      <section style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, marginBottom: 4 }}>
         <div>
-          <h2 style={{ margin: 0, color: t.text, fontSize: 25, lineHeight: 1.15, fontWeight: 800 }}>{tr("dashboard.greeting", { name: titleCase(displayName) })}</h2>
-          <p style={{ margin: "10px 0 0", color: t.textMuted, fontSize: 15 }}>{tr("dashboard.todaySummary")}</p>
+          <h1 style={{ fontSize: 28, lineHeight: 1.1, fontWeight: 750, color: t.text, margin: 0 }}>{tr("dashboard.greeting", { name: titleCase(displayName) })}</h1>
+          <div style={{ fontSize: 14, color: t.textMutedMore, marginTop: 6 }}>{tr("dashboard.todaySummary")}</div>
         </div>
       </section>
 

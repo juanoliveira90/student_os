@@ -114,8 +114,13 @@ export default function Documents({ docs, setDocs, isLoading, isError, createAct
   }, [editing, eContent, eTitle, sel]);
 
   return (
-    <div style={{ display: "flex", height: "calc(100vh - 72px)" }}>
-      <div style={{ width: 300, borderRight: `1px solid ${t.border}`, display: "flex", flexDirection: "column", flexShrink: 0, background: t.bgAlt }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 72px)", overflow: "hidden" }}>
+      <div style={{ padding: "28px 28px 20px" }}>
+        <h1 style={{ fontSize: 28, lineHeight: 1.1, fontWeight: 750, color: t.text, margin: 0 }}>{tr("nav.documents.label")}</h1>
+      </div>
+
+      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+        <div style={{ width: 300, borderRight: `1px solid ${t.border}`, display: "flex", flexDirection: "column", flexShrink: 0, background: t.bgAlt }}>
         <button onClick={newDoc} disabled={isCreating} style={{ ...s.btn, margin: 14, marginBottom: 10, opacity: isCreating ? 0.65 : 1 }}>{isCreating ? tr("documents.creating") : tr("documents.newNote")}</button>
         <div style={{ position: "relative", margin: "0 12px 8px" }}>
           <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: t.textMutedMore }}><Icon.search /></span>
@@ -137,9 +142,9 @@ export default function Documents({ docs, setDocs, isLoading, isError, createAct
             </div>
           ))}
         </div>
-      </div>
+        </div>
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: t.bgAlt }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: t.bgAlt }}>
         {sel ? (
           <>
             <div style={{ padding: "14px 24px", borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -166,6 +171,7 @@ export default function Documents({ docs, setDocs, isLoading, isError, createAct
             <span style={{ fontSize: 14 }}>{tr("documents.selectNote")}</span>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

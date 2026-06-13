@@ -31,7 +31,7 @@ type CreateAction = {
 };
 
 export default function Studium({ user, onLogout }: StudiumProps) {
-  const { t: tr } = useTranslation();
+  const { t: tr, i18n } = useTranslation();
   const [active, setActive] = useState("dashboard");
   const [tasks, setTasks] = useState([]);
   const [schedule, setSchedule] = useState(null);
@@ -113,7 +113,7 @@ export default function Studium({ user, onLogout }: StudiumProps) {
     setDocs(notesQuery.data);
   }, [docs, notesQuery.data]);
 
-  const currentPage = NAV_ITEMS.find((n) => n.id === active);
+  const todaysDate = new Intl.DateTimeFormat(i18n.language, { month: "short", day: "numeric", year: "numeric" }).format(new Date());
   const navigateToCreate = (page: string, type: string) => {
     setCreateAction({ page, type, id: Date.now() });
     setActive(page);
@@ -125,10 +125,10 @@ export default function Studium({ user, onLogout }: StudiumProps) {
         <Sidebar active={active} setActive={setActive} t={t} collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} onLogout={onLogout} />
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          <div style={{ minHeight: 72, borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, flexShrink: 0, background: t.bgAlt, padding: "0 28px" }}>
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 750, color: t.text }}>{tr(`nav.${currentPage?.id}.label`)}</div>
-              <div style={{ fontSize: 13, color: t.textMutedMore, marginTop: 3 }}>{tr(`nav.${currentPage?.id}.description`)}</div>
+          <div style={{ minHeight: 72, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 18, flexShrink: 0, background: t.bg, padding: "0 28px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, color: t.textMuted, fontSize: 13, fontWeight: 650 }}>
+              <Icon.cal />
+              <span>{todaysDate}</span>
             </div>
             <button
               onClick={() => setAppearance(getNextTheme(theme))}
@@ -136,9 +136,9 @@ export default function Studium({ user, onLogout }: StudiumProps) {
                 minWidth: 112,
                 height: 38,
                 borderRadius: 999,
-                background: t.hover,
-                border: `1px solid ${t.borderLight}`,
-                color: t.text,
+                background: "transparent",
+                border: "none",
+                color: t.textMuted,
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -147,6 +147,7 @@ export default function Studium({ user, onLogout }: StudiumProps) {
                 fontSize: 13,
                 fontWeight: 650,
                 fontFamily: "inherit",
+                padding: "0 10px",
               }}
               aria-label={tr("common.cycleTheme")}
               title={`theme: ${appearance}`}

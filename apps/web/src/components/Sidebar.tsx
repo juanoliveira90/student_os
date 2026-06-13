@@ -156,7 +156,6 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed,
         {pendingItems.map(({ id }) => {
           const Ic = icons[id];
           const translatedLabel = tr(`nav.${id}.label`);
-          const translatedDescription = tr(`nav.${id}.description`);
           return (
             <button
               key={id}
@@ -188,7 +187,6 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed,
                     {translatedLabel}
                     <span style={{ background: t.hover, border: `1px solid ${t.border}`, color: t.textMuted, borderRadius: 7, padding: "2px 7px", fontSize: 11, fontWeight: 650 }}>{tr("common.pending")}</span>
                   </span>
-                  <span style={{ display: "block", fontSize: 11, color: t.textMutedMore, fontWeight: 500, marginTop: 2 }}>{translatedDescription}</span>
                 </span>
               </span>
             </button>
@@ -209,7 +207,6 @@ function NavButton({ item, active, setActive, icons, collapsed, t }: NavButtonPr
   const { t: tr } = useTranslation();
   const { id } = item;
   const translatedLabel = tr(`nav.${id}.label`);
-  const translatedDescription = tr(`nav.${id}.description`);
   const Ic = icons[id];
   const on = active === id;
 
@@ -254,7 +251,6 @@ function NavButton({ item, active, setActive, icons, collapsed, t }: NavButtonPr
         <span style={{ color: on ? t.accent : t.textMuted, display: "flex" }}><Ic /></span>
         <span style={{ maxWidth: collapsed ? 0 : 140, opacity: collapsed ? 0 : 1, overflow: "hidden", whiteSpace: "nowrap", transition: "max-width 0.2s ease, opacity 0.16s ease" }}>
           <span style={{ display: "block" }}>{translatedLabel}</span>
-          <span style={{ display: "block", fontSize: 11, color: t.textMutedMore, fontWeight: 500, marginTop: 2 }}>{translatedDescription}</span>
         </span>
       </span>
     </button>

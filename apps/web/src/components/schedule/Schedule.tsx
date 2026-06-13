@@ -21,6 +21,9 @@ const TIME_SUGGESTIONS_24H = Array.from({ length: 24 * 12 }, (_, index) => {
 
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 });
+const HOUR_HEIGHT = 64;
+const DEFAULT_START_HOUR = 6;
+const DEFAULT_END_HOUR = 21;
 
 type Theme = Record<string, string>;
 type LooseRecord = Record<string, any>;
@@ -109,6 +112,63 @@ function formatTime(time: unknown, period: unknown, timeFormat: string) {
   return `${parsed.time12} ${String(period || parsed.period).toUpperCase()}`;
 }
 
+function formatHourLabel(hour: number, timeFormat: string) {
+  if (timeFormat === "24h") return `${String(hour).padStart(2, "0")}:00`;
+
+  const hour12 = hour % 12 || 12;
+  return `${hour12} ${hour < 12 ? "AM" : "PM"}`;
+}
+
+function minutesToFormTime(totalMinutes: number, timeFormat: string) {
+  const minutesInDay = 24 * 60;
+  const normalized = ((totalMinutes % minutesInDay) + minutesInDay) % minutesInDay;
+  const hour = Math.floor(normalized / 60);
+  const minute = normalized % 60;
+
+  if (timeFormat === "24h") {
+    return {
+      time: `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
+      period: "",
+    };
+  }
+
+  return {
+    time: `${String(hour % 12 || 12).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
+    period: hour < 12 ? "AM" : "PM",
+  };
+}
+
+function getEventMinuteRange(event: LooseRecord, timeFormat: string) {
+  const { start_time, start_period, end_time, end_period } = getEventTimesFromRecord(event, timeFormat);
+  const start = readTime(start_time, start_period || "AM");
+  const end = readTime(end_time, end_period || start?.period || "AM");
+
+  if (!start || !end) return null;
+
+  const startMinutes = Number(start.time24.slice(0, 2)) * 60 + Number(start.time24.slice(3, 5));
+  let endMinutes = Number(end.time24.slice(0, 2)) * 60 + Number(end.time24.slice(3, 5));
+  if (endMinutes <= startMinutes) endMinutes += 24 * 60;
+
+  return { startMinutes, endMinutes };
+}
+
+function getEventTimesFromRecord(event: LooseRecord, timeFormat: string) {
+  if (event.start_time || event.end_time) {
+    const startValue = timeFormat === "24h" && event.start_period ? `${event.start_time} ${event.start_period}` : event.start_time || "";
+    const endValue = timeFormat === "24h" && event.end_period ? `${event.end_time} ${event.end_period}` : event.end_time || "";
+    const start = normalizeTimeInput(startValue, event.start_period || "AM", timeFormat);
+    const end = normalizeTimeInput(endValue, event.end_period || "AM", timeFormat);
+
+    return { start_time: start.time, start_period: start.period, end_time: end.time, end_period: end.period };
+  }
+
+  const [start_time = "", end_time = ""] = (event.time || "").split(/\s*-\s*/);
+  const start = normalizeTimeInput(start_time, "AM", timeFormat);
+  const end = normalizeTimeInput(end_time, start.period || "AM", timeFormat);
+
+  return { start_time: start.time, start_period: start.period, end_time: end.time, end_period: end.period };
+}
+
 function TimeField({ id, label, value, period, onChange, onPeriodChange, onEnter, timeFormat, s, t }: TimeFieldProps) {
   const is24Hour = timeFormat === "24h";
 
@@ -182,26 +242,15 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
   const [hasChanges, setHasChanges] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
+  const [gridStartHour, setGridStartHour] = useState(DEFAULT_START_HOUR);
+  const [gridEndHour, setGridEndHour] = useState(DEFAULT_END_HOUR);
 
   const [pendingChanges, setPendingChanges] = useState({
     createOrUpdate: [],
     delete: [],
   })
   function getEventTimes(event: LooseRecord) {
-    if (event.start_time || event.end_time) {
-      const startValue = timeFormat === "24h" && event.start_period ? `${event.start_time} ${event.start_period}` : event.start_time || "";
-      const endValue = timeFormat === "24h" && event.end_period ? `${event.end_time} ${event.end_period}` : event.end_time || "";
-      const start = normalizeTimeInput(startValue, event.start_period || "AM", timeFormat);
-      const end = normalizeTimeInput(endValue, event.end_period || "AM", timeFormat);
-
-      return { start_time: start.time, start_period: start.period, end_time: end.time, end_period: end.period };
-    }
-
-    const [start_time = "", end_time = ""] = (event.time || "").split(/\s*-\s*/);
-    const start = normalizeTimeInput(start_time, "AM", timeFormat);
-    const end = normalizeTimeInput(end_time, start.period || "AM", timeFormat);
-
-    return { start_time: start.time, start_period: start.period, end_time: end.time, end_period: end.period };
+    return getEventTimesFromRecord(event, timeFormat);
   }
 
   function formatEventTime(event: LooseRecord) {
@@ -239,8 +288,11 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
     };
   }
 
-  function openAddModal() {
-    setForm(emptyForm);
+  function openAddModal(day = "monday", startHour = DEFAULT_START_HOUR) {
+    const start = minutesToFormTime(startHour * 60, timeFormat);
+    const end = minutesToFormTime((startHour + 1) * 60, timeFormat);
+
+    setForm({ ...emptyForm, day, start_time: start.time, start_period: start.period || "AM", end_time: end.time, end_period: end.period || "AM" });
     setModal(true);
   }
 
@@ -397,6 +449,21 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
     }
   }
 
+  const visibleHours = Array.from({ length: gridEndHour - gridStartHour + 1 }, (_, index) => gridStartHour + index);
+  const gridStartMinutes = gridStartHour * 60;
+  const gridEndMinutes = (gridEndHour + 1) * 60;
+  const gridHeight = visibleHours.length * HOUR_HEIGHT;
+
+  function updateGridStart(value: string) {
+    const nextHour = Math.max(0, Math.min(Number(value), gridEndHour - 1));
+    if (!Number.isNaN(nextHour)) setGridStartHour(nextHour);
+  }
+
+  function updateGridEnd(value: string) {
+    const nextHour = Math.min(23, Math.max(Number(value), gridStartHour + 1));
+    if (!Number.isNaN(nextHour)) setGridEndHour(nextHour);
+  }
+
     return (
       <div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
@@ -414,50 +481,124 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
             >
               {saving ? tr("common.saving") : tr("common.save")}
             </button>
-            <button onClick={openAddModal} style={s.btn}>{tr("schedule.addEvent")}</button>
+            <button onClick={() => openAddModal()} style={s.btn}>{tr("schedule.addEvent")}</button>
           </div>
         </div>
         {isLoading && <div style={{ fontSize: 13, color: t.textMutedMore, marginBottom: 12 }}>{tr("schedule.loading")}</div>}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 14 }}>
-          {DAY_LABELS.map((day) => (
-            <div key={day} style={s.card}>
-              <div style={{ fontSize: 16, color: t.text, marginBottom: 12, fontWeight: 750, textTransform: "capitalize" }}>{tr(`days.${day}`)}</div>
-              {!schedule[day]?.length ? (
-                <span style={{ fontSize: 13, color: t.textMutedMore }}>{tr("schedule.noEventsPlanned")}</span>
-              ) : schedule[day].map((ev) => (
-                <div key={ev.id} style={{ background: t.hover, border: `1px solid ${t.borderAlt}`, borderLeft: `4px solid ${t.accent}`, borderRadius: 8, padding: "12px 14px", marginBottom: 8, position: "relative" }}>
-                  <button onClick={() => remove(day, ev.id)} style={{ position: "absolute", top: 6, right: 6, background: "none", border: "none", cursor: "pointer", color: t.textMutedMore, padding: 2 }}><Icon.x /></button>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, paddingRight: 16, flexWrap: "wrap" }}>
-                    <div style={{ fontSize: 14, color: t.text, fontWeight: 650 }}>{ev.title}</div>
-                    <span style={{ border: `1px solid ${t.borderLight}`, background: ev.tag === "study block" ? t.accent : t.select, color: ev.tag === "study block" ? "#fff" : t.textMuted, borderRadius: 999, padding: "2px 7px", fontSize: 10, fontWeight: 750 }}>
-                      {tr(`tags.${ev.tag || "event"}`, { defaultValue: ev.tag || tr("tags.event") })}
-                    </span>
-                  </div>
-                  {ev.description && (
-                    <div
-                      title={ev.description}
-                      style={{
-                        fontSize: 12,
-                        color: t.textMutedMore,
-                        marginTop: 6,
-                        paddingRight: 12,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {ev.description}
-                    </div>
-                  )}
-                  {ev.studyPlanId && (
-                    <div style={{ fontSize: 12, color: t.accent, marginTop: 6, display: "flex", alignItems: "center", gap: 5 }}><Icon.book /> {subjects.find((subject) => subject.id === ev.studyPlanId)?.name || tr("schedule.linkedStudyPlan")}</div>
-                  )}
-                  <div style={{ fontSize: 12, color: t.textMutedMore, marginTop: 6, display: "flex", alignItems: "center", gap: 5 }}><Icon.clock /> {formatEventTime(ev)}</div>
-                  <button onClick={() => openEditModal(day, ev)} style={{ ...s.ghost, padding: "6px 9px", fontSize: 11, marginTop: 10 }}>{tr("common.edit")}</button>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 12, color: t.textMutedMore, fontWeight: 650 }}>{tr("schedule.timeRange")}</span>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: t.textMuted }}>
+            {tr("schedule.starts")}
+            <input type="number" min={0} max={gridEndHour - 1} value={gridStartHour} onChange={(e) => updateGridStart(e.target.value)} style={{ ...s.input, width: 68, marginBottom: 0, padding: "8px 9px" }} />
+          </label>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: t.textMuted }}>
+            {tr("schedule.ends")}
+            <input type="number" min={gridStartHour + 1} max={23} value={gridEndHour} onChange={(e) => updateGridEnd(e.target.value)} style={{ ...s.input, width: 68, marginBottom: 0, padding: "8px 9px" }} />
+          </label>
+        </div>
+        <div style={{ overflowX: "auto", border: `1px solid ${t.border}`, borderRadius: 8, background: t.bgAlt }}>
+          <div style={{ minWidth: 920, display: "grid", gridTemplateColumns: "64px repeat(7, minmax(112px, 1fr))" }}>
+            <div style={{ minHeight: 44, borderRight: `1px solid ${t.border}`, borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: t.textMutedMore, fontSize: 11, fontWeight: 750, textTransform: "uppercase" }}>
+              {tr("schedule.time")}
+            </div>
+            {DAY_LABELS.map((day) => (
+              <div key={day} style={{ minHeight: 44, borderRight: day === DAY_LABELS[DAY_LABELS.length - 1] ? "none" : `1px solid ${t.border}`, borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: t.text, fontSize: 12, fontWeight: 800, textTransform: "uppercase" }}>
+                {tr(`days.${day}`)}
+              </div>
+            ))}
+
+            <div style={{ borderRight: `1px solid ${t.border}`, height: gridHeight }}>
+              {visibleHours.map((hour) => (
+                <div key={hour} style={{ height: HOUR_HEIGHT, borderBottom: hour === visibleHours[visibleHours.length - 1] ? "none" : `1px solid ${t.border}`, color: t.textMutedMore, fontSize: 12, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 8, boxSizing: "border-box" }}>
+                  {formatHourLabel(hour, timeFormat)}
                 </div>
               ))}
             </div>
-          ))}
+
+            {DAY_LABELS.map((day, dayIndex) => (
+              <div key={day} style={{ position: "relative", height: gridHeight, borderRight: dayIndex === DAY_LABELS.length - 1 ? "none" : `1px solid ${t.border}` }}>
+                {visibleHours.map((hour) => (
+                  <button
+                    key={hour}
+                    type="button"
+                    onClick={() => openAddModal(day, hour)}
+                    aria-label={`${tr("schedule.addEvent")} ${tr(`days.${day}`)} ${formatHourLabel(hour, timeFormat)}`}
+                    style={{
+                      width: "100%",
+                      height: HOUR_HEIGHT,
+                      border: "none",
+                      borderBottom: hour === visibleHours[visibleHours.length - 1] ? "none" : `1px solid ${t.border}`,
+                      background: "transparent",
+                      cursor: "pointer",
+                      display: "block",
+                      padding: 0,
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = t.hover;
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "transparent";
+                    }}
+                  />
+                ))}
+                {(schedule[day] || []).map((ev) => {
+                  const range = getEventMinuteRange(ev, timeFormat);
+                  if (!range || range.endMinutes <= gridStartMinutes || range.startMinutes >= gridEndMinutes) return null;
+
+                  const visibleStart = Math.max(range.startMinutes, gridStartMinutes);
+                  const visibleEnd = Math.min(range.endMinutes, gridEndMinutes);
+                  const top = ((visibleStart - gridStartMinutes) / 60) * HOUR_HEIGHT;
+                  const height = Math.max(((visibleEnd - visibleStart) / 60) * HOUR_HEIGHT, 34);
+
+                  return (
+                    <div
+                      key={ev.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openEditModal(day, ev)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") openEditModal(day, ev);
+                      }}
+                      style={{
+                        position: "absolute",
+                        zIndex: 2,
+                        top: top + 4,
+                        left: 8,
+                        right: 8,
+                        height: Math.max(height - 8, 30),
+                        overflow: "hidden",
+                        background: ev.tag === "study block" ? t.hover : t.select,
+                        border: `1px solid ${t.borderAlt}`,
+                        borderLeft: `4px solid ${ev.tag === "study block" ? t.accent : t.accentLight}`,
+                        borderRadius: 7,
+                        padding: "8px 10px",
+                        boxSizing: "border-box",
+                        cursor: "pointer",
+                        boxShadow: "0 8px 22px rgba(0,0,0,0.05)",
+                      }}
+                    >
+                      <button
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          remove(day, ev.id);
+                        }}
+                        style={{ position: "absolute", top: 4, right: 4, background: "none", border: "none", cursor: "pointer", color: t.textMutedMore, padding: 2 }}
+                        aria-label={tr("common.delete")}
+                      >
+                        <Icon.x />
+                      </button>
+                      <div style={{ color: t.text, fontSize: 12, fontWeight: 750, paddingRight: 18, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.title}</div>
+                      <div style={{ color: t.textMutedMore, fontSize: 11, marginTop: 4, display: "flex", alignItems: "center", gap: 5 }}>
+                        <Icon.clock /> {formatEventTime(ev)}
+                      </div>
+                      {ev.description && <div style={{ color: t.textMutedMore, fontSize: 11, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.description}</div>}
+                      {ev.studyPlanId && <div style={{ color: t.accent, fontSize: 11, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{subjects.find((subject) => subject.id === ev.studyPlanId)?.name || tr("schedule.linkedStudyPlan")}</div>}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
         </div>
         {modal && (
           <Modal onClose={() => setModal(false)} title={form.id ? tr("schedule.editEvent") : tr("schedule.addEvent")} t={t}>
@@ -525,5 +666,3 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
       </div>
     );
   }
-
-
