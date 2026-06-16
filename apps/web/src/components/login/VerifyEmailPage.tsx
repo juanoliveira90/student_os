@@ -169,18 +169,18 @@ export default function VerifyEmailPage({ onVerified }: VerifyEmailPageProps) {
   if (!mounted) return null;
 
   return (
-    <div style={{ minHeight: "100vh", background: t.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', 'SF Pro Text', 'Segoe UI', system-ui, sans-serif", color: t.text, transition: "background 0.2s, color 0.2s" }}>
+    <div style={{ minHeight: "100vh", background: t.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--sos-font-ui)", color: t.text, transition: "background 0.2s, color 0.2s" }}>
       <div style={{ width: "100%", maxWidth: 420, padding: "20px" }}>
         <div style={{ marginBottom: 28, textAlign: "center" }}>
-          <div style={{ fontSize: 34, color: t.text, marginBottom: 8, fontWeight: 800 }}>Studium</div>
+          <div className="sos-heading" style={{ fontSize: 34, color: t.text, marginBottom: 8, fontWeight: 600 }}>Studium</div>
           <div style={{ fontSize: 14, color: t.textMutedMore }}>{tr("auth.verifyEmail.subtitle")}</div>
         </div>
 
-        <div style={{ background: t.card, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 28, boxShadow: "0 18px 48px rgba(0,0,0,0.08)" }}>
+        <div style={{ background: t.card, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 28, boxShadow: t.cardShadow }}>
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 14, color: t.textMuted }}>
             <Icon.mail />
           </div>
-          <h1 style={{ margin: "0 0 8px", textAlign: "center", fontSize: 20, lineHeight: 1.2, fontWeight: 750, color: t.text }}>{tr("auth.verifyEmail.title")}</h1>
+          <h1 style={{ margin: "0 0 8px", textAlign: "center", fontSize: 20, lineHeight: 1.2, fontWeight: 600, color: t.text }}>{tr("auth.verifyEmail.title")}</h1>
           <p style={{ margin: "0 0 22px", textAlign: "center", color: t.textMutedMore, fontSize: 13, lineHeight: 1.5 }}>{tr("auth.verifyEmail.body")}</p>
 
           <form onSubmit={handleSubmit}>
@@ -206,11 +206,11 @@ export default function VerifyEmailPage({ onVerified }: VerifyEmailPageProps) {
               </div>
             )}
 
-            <button type="submit" disabled={loading} style={{ width: "100%", background: t.accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, padding: "12px 14px", cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", fontWeight: 700, opacity: loading ? 0.7 : 1, transition: "all 0.12s" }}>
+            <button type="submit" disabled={loading} style={{ width: "100%", background: t.accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, padding: "12px 14px", cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", fontWeight: 600, opacity: loading ? 0.7 : 1, transition: "all 0.12s" }}>
               {loading ? tr("auth.verifyEmail.verifying") : tr("auth.verifyEmail.verify")}
             </button>
 
-            <button type="button" onClick={handleResendEmail} disabled={resendLoading || resendCooldown > 0} style={{ width: "100%", background: t.hover, border: `1px solid ${t.borderLight}`, borderRadius: 8, color: t.text, fontSize: 13, padding: "12px 14px", cursor: resendLoading || resendCooldown > 0 ? "not-allowed" : "pointer", fontFamily: "inherit", fontWeight: 650, opacity: resendLoading || resendCooldown > 0 ? 0.7 : 1, marginTop: 10, transition: "all 0.12s" }}>
+            <button type="button" onClick={handleResendEmail} disabled={resendLoading || resendCooldown > 0} style={{ width: "100%", background: t.hover, border: `1px solid ${t.borderLight}`, borderRadius: 8, color: t.text, fontSize: 13, padding: "12px 14px", cursor: resendLoading || resendCooldown > 0 ? "not-allowed" : "pointer", fontFamily: "inherit", fontWeight: 550, opacity: resendLoading || resendCooldown > 0 ? 0.7 : 1, marginTop: 10, transition: "all 0.12s" }}>
               {resendLoading
                 ? tr("auth.verifyEmail.resending")
                 : resendCooldown > 0
@@ -236,7 +236,7 @@ export default function VerifyEmailPage({ onVerified }: VerifyEmailPageProps) {
           void i18n.changeLanguage(nextLanguage);
           saveLanguage(nextLanguage);
         }}
-        style={{ position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)", height: 32, borderRadius: 999, background: t.hover, border: `1px solid ${t.borderLight}`, color: t.textMuted, cursor: "pointer", padding: "0 12px", fontSize: 12, fontFamily: "inherit", fontWeight: 650, zIndex: 9999 }}
+        style={{ position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)", height: 32, borderRadius: 999, background: t.hover, border: `1px solid ${t.borderLight}`, color: t.textMuted, cursor: "pointer", padding: "0 12px", fontSize: 12, fontFamily: "inherit", fontWeight: 550, zIndex: 9999 }}
         aria-label={tr("language.switchTo", { language: i18n.language?.startsWith("pt") ? tr("language.english") : tr("language.portuguese") })}
         title={tr("language.switchTo", { language: i18n.language?.startsWith("pt") ? tr("language.english") : tr("language.portuguese") })}
       >
@@ -257,5 +257,5 @@ const inputStyle = (t: Record<string, string>): CSSProperties => ({
   outline: "none",
   fontFamily: "inherit",
   textAlign: "center",
-  fontWeight: 700,
+  fontWeight: 600,
 });

@@ -13,6 +13,7 @@ import LandingPage from "./components/landing/LandingPage";
 import LoginPage from "./components/login/LoginPage";
 import VerifyEmailPage from "./components/login/VerifyEmailPage";
 import Studium from "./components/MainAppPage";
+import { getResolvedTheme, getStoredAppearance, getSystemTheme, themes } from "./components/data.js";
 import { getAuthenticatedUser, isEmailVerificationRequiredError } from "./fetchs/authFetchs";
 import { scheduleQueryOptions } from "./fetchs/scheduleFetchs";
 import { studyPlanQueryOptions } from "./fetchs/studyPlanFetchs";
@@ -121,13 +122,64 @@ export default function App() {
   }, []);
 
   if (isLoading) {
-    return <div>{t("app.checkingAuth")}</div>;
+    return <AuthLoadingPage label={t("app.checkingAuth")} />;
   }
 
   return (
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} context={{ user, setUser, needsEmailVerification, setNeedsEmailVerification, queryClient }} />
     </QueryClientProvider>
+  );
+}
+
+function AuthLoadingPage({ label }: { label: string }) {
+  const [systemTheme, setSystemTheme] = useState(getSystemTheme);
+  const appearance = getStoredAppearance();
+  const theme = getResolvedTheme(appearance, systemTheme);
+  const t = themes[theme];
+
+  useEffect(() => {
+    const style = document.documentElement.style;
+    style.background = t.bg;
+    style.color = t.text;
+    style.setProperty("--sos-accent", t.accent);
+  }, [t]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => setSystemTheme(media.matches ? "dark" : "light");
+    onChange();
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
+
+  return (
+    <div
+      aria-busy="true"
+      aria-label={label}
+      role="status"
+      style={{
+        minHeight: "100vh",
+        background: t.bg,
+        color: t.text,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontFamily: "var(--sos-font-ui)",
+        transition: "background 0.2s, color 0.2s",
+      }}
+    >
+      <div
+        className="sos-auth-loader"
+        style={{
+          borderColor: t.borderAlt,
+          borderTopColor: t.accent,
+        }}
+      />
+      <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>{label}</span>
+    </div>
   );
 }
 

@@ -31,6 +31,7 @@ export const ScheduleQueries = {
             data.events.map((event) => ({
                 id: event.id,
                 schedule_id: scheduleId,
+                study_plan_id: event.study_plan_id ?? null,
                 day_of_week: event.day_of_week,
                 title: event.title,
                 tag: event.tag,
@@ -46,6 +47,7 @@ export const ScheduleQueries = {
             setWhere: eq(ScheduleItems.schedule_id, scheduleId),
             set: {
                 day_of_week: sql`excluded.day_of_week`,
+                study_plan_id: sql`excluded.study_plan_id`,
                 title: sql`excluded.title`,
                 tag: sql`excluded.tag`,
                 description: sql`excluded.description`,

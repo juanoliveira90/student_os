@@ -2,6 +2,7 @@ export interface add {
     events: Array<
         {
             id: string,
+            study_plan_id?: string | null,
             day_of_week: string,
             title: string,
             tag?: string

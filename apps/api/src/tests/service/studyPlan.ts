@@ -8,9 +8,21 @@ const { StudyPlanService } = await import("../../modules/studyPlan/studyPlan.ser
 type MutableRecord = Record<string, unknown>
 
 const userId = 42
+const studyPlanPayload = {
+    id: randomUUID(),
+    name: "Final Exams Preparation",
+    day_of_week: "Monday",
+    start_time: "09:00",
+    start_period: "AM",
+    end_time: "10:00",
+    end_period: "AM",
+    schedule_block: null,
+}
 const subjectPayload = {
     id: randomUUID(),
+    study_plan_id: studyPlanPayload.id,
     name: "Biology",
+    description: "Cell structure and genetics fundamentals",
     tag: "science",
     schedule_block: null,
     subtasks: [
@@ -33,8 +45,20 @@ const subtaskPayload = {
 }
 const subjectUpdatePayload = {
     id: subjectPayload.id,
+    study_plan_id: studyPlanPayload.id,
     name: "Chemistry",
+    description: "Atoms, bonding, and reactions",
     tag: "science-updated",
+    schedule_block: null,
+}
+const studyPlanUpdatePayload = {
+    id: studyPlanPayload.id,
+    name: "Final Exams Updated",
+    day_of_week: "Tuesday",
+    start_time: "14:00",
+    start_period: "PM",
+    end_time: "15:00",
+    end_period: "PM",
     schedule_block: null,
 }
 const subtaskUpdatePayload = {
@@ -45,16 +69,21 @@ const subtaskUpdatePayload = {
 }
 const plans = [
     {
-        id: subjectPayload.id,
-        name: subjectPayload.name,
-        tag: subjectPayload.tag,
-        schedule_block: subjectPayload.schedule_block,
-        subtasks: [
+        ...studyPlanPayload,
+        subjects: [
             {
-                id: subtaskPayload.subtasks[0]!.id,
-                name: subtaskPayload.subtasks[0]!.name,
-                description: subtaskPayload.subtasks[0]!.description,
-                done: false,
+                id: subjectPayload.id,
+                name: subjectPayload.name,
+                tag: subjectPayload.tag,
+                schedule_block: subjectPayload.schedule_block,
+                subtasks: [
+                    {
+                        id: subtaskPayload.subtasks[0]!.id,
+                        name: subtaskPayload.subtasks[0]!.name,
+                        description: subtaskPayload.subtasks[0]!.description,
+                        done: false,
+                    },
+                ],
             },
         ],
     },
@@ -89,6 +118,48 @@ describe("study plan service", { concurrency: false }, () => {
         const result = await StudyPlanService.getStudyPlans(userId)
 
         assert.deepEqual(result, { plans })
+    })
+
+    it("creates a parent study plan for a user", async () => {
+        replaceMethod(StudyPlanQueries, "createStudyPlan", async (receivedUserId: number, data: typeof studyPlanPayload) => {
+            assert.equal(receivedUserId, userId)
+            assert.deepEqual(data, studyPlanPayload)
+        })
+
+        const service = StudyPlanService as unknown as {
+            createStudyPlan(userId: number, data: typeof studyPlanPayload): Promise<unknown>
+        }
+        const result = await service.createStudyPlan(userId, studyPlanPayload)
+
+        assert.deepEqual(result, { message: "study plan created!" })
+    })
+
+    it("updates a parent study plan schedule assignment for a user", async () => {
+        replaceMethod(StudyPlanQueries, "updateStudyPlan", async (receivedUserId: number, data: typeof studyPlanUpdatePayload) => {
+            assert.equal(receivedUserId, userId)
+            assert.deepEqual(data, studyPlanUpdatePayload)
+        })
+
+        const service = StudyPlanService as unknown as {
+            updateStudyPlan(userId: number, data: typeof studyPlanUpdatePayload): Promise<unknown>
+        }
+        const result = await service.updateStudyPlan(userId, studyPlanUpdatePayload)
+
+        assert.deepEqual(result, { message: "study plan updated!" })
+    })
+
+    it("deletes a parent study plan for a user", async () => {
+        replaceMethod(StudyPlanQueries, "deleteStudyPlan", async (receivedUserId: number, studyPlanId: string) => {
+            assert.equal(receivedUserId, userId)
+            assert.equal(studyPlanId, studyPlanPayload.id)
+        })
+
+        const service = StudyPlanService as unknown as {
+            deleteStudyPlan(userId: number, studyPlanId: string): Promise<unknown>
+        }
+        const result = await service.deleteStudyPlan(userId, studyPlanPayload.id)
+
+        assert.deepEqual(result, { message: "study plan deleted!" })
     })
 
     it("returns a service error when study plans cannot be loaded", async () => {

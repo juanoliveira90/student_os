@@ -29,17 +29,17 @@ export default function Habits({ habits, setHabits, t }) {
                   {habit.done && <Icon.check />}
                 </button>
                 <div>
-                  <div style={{ fontSize: 15, color: t.text, fontWeight: 750 }}>{habit.name}</div>
-                  <div style={{ fontSize: 12, color: t.textMutedMore, marginTop: 2 }}>{tr(`habits.categories.${habit.category}`, { defaultValue: habit.category })}</div>
+                  <div style={{ fontSize: 15, color: t.text, fontWeight: 550 }}>{habit.name}</div>
+                  <div style={{ fontSize: 14, color: t.textMutedMore, marginTop: 2 }}>{tr(`habits.categories.${habit.category}`, { defaultValue: habit.category })}</div>
                 </div>
               </div>
               <button onClick={() => setHabits((items) => items.filter((x) => x.id !== habit.id))} style={{ background: "none", border: "none", cursor: "pointer", color: t.textMutedMost }}><Icon.x /></button>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: t.accent, marginBottom: 12, fontWeight: 700 }}><Icon.fire /> {tr("habits.dayStreak", { count: habit.streak })}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: t.accent, marginBottom: 12, fontWeight: 600 }}><Icon.fire /> {tr("habits.dayStreak", { count: habit.streak })}</div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 4 }}>
               {DAYS.map((d, i) => (
                 <div key={d} style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 9, color: t.textMutedMost, marginBottom: 3 }}>{tr(`dayShort.${d}`)}</div>
+                  <div style={{ fontSize: 13, color: t.textMutedMost, marginBottom: 3 }}>{tr(`dayShort.${d}`)}</div>
                   <div style={{ height: 22, borderRadius: 3, background: habit.week[i] ? t.accent : t.hover }} />
                 </div>
               ))}

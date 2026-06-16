@@ -130,11 +130,11 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed,
             e.currentTarget.style.background = "transparent";
           }}
         >
-          <span style={{ width: 32, height: 32, borderRadius: "50%", background: t.bgAlt, border: `1px solid ${t.borderLight}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: t.textMuted, overflow: "hidden", flexShrink: 0, fontWeight: 750 }}>
+          <span style={{ width: 32, height: 32, borderRadius: "50%", background: t.bgAlt, border: `1px solid ${t.borderLight}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: t.textMuted, overflow: "hidden", flexShrink: 0, fontWeight: 600 }}>
             {avatarUrl ? <img src={avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : initial}
           </span>
           <span style={{ maxWidth: collapsed ? 0 : 116, opacity: collapsed ? 0 : 1, overflow: "hidden", whiteSpace: "nowrap", transition: "max-width 0.2s ease, opacity 0.16s ease", textAlign: "left" }}>
-            <span style={{ display: "block", fontSize: 13, color: t.text, overflow: "hidden", textOverflow: "ellipsis", fontWeight: 750 }}>{displayName}</span>
+            <span style={{ display: "block", fontSize: 13, color: t.text, overflow: "hidden", textOverflow: "ellipsis", fontWeight: 550 }}>{displayName}</span>
             <span style={{ display: "block", fontSize: 11, color: t.textMutedMore }}>{tr("common.student")}</span>
           </span>
         </button>
@@ -147,7 +147,7 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed,
         ))}
         <div style={{ height: 1, background: t.border, margin: collapsed ? "12px 8px" : "18px 44px 14px" }} />
         {!collapsed && (
-          <div style={{ display: "flex", alignItems: "center", gap: 10, color: t.textMutedMore, fontSize: 11, fontWeight: 750, letterSpacing: 2.4, textTransform: "uppercase", margin: "0 10px 10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, color: t.textMutedMore, fontSize: 11, fontWeight: 600, letterSpacing: 2.4, textTransform: "uppercase", margin: "0 10px 10px" }}>
             <span style={{ height: 1, flex: 1, background: t.border }} />
             {tr("common.comingSoon")}
             <span style={{ height: 1, flex: 1, background: t.border }} />
@@ -173,7 +173,7 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed,
                 background: "transparent",
                 color: t.textMutedMore,
                 fontSize: 14,
-                fontWeight: 650,
+                fontWeight: 550,
                 borderRadius: 8,
                 fontFamily: "inherit",
                 opacity: 0.78,
@@ -185,7 +185,7 @@ export default function Sidebar({ active, setActive, t, collapsed, setCollapsed,
                 <span style={{ maxWidth: collapsed ? 0 : 140, opacity: collapsed ? 0 : 1, overflow: "hidden", whiteSpace: "nowrap", transition: "max-width 0.2s ease, opacity 0.16s ease" }}>
                   <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     {translatedLabel}
-                    <span style={{ background: t.hover, border: `1px solid ${t.border}`, color: t.textMuted, borderRadius: 7, padding: "2px 7px", fontSize: 11, fontWeight: 650 }}>{tr("common.pending")}</span>
+                    <span style={{ background: t.hover, border: `1px solid ${t.border}`, color: t.textMuted, borderRadius: 7, padding: "2px 7px", fontSize: 11, fontWeight: 550 }}>{tr("common.pending")}</span>
                   </span>
                 </span>
               </span>

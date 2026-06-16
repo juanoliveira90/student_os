@@ -13,7 +13,9 @@ const { Users } = await import("../../db/schema.js")
 
 type SubjectPayload = {
     id: string
+    study_plan_id?: string
     name: string
+    description?: string | null
     tag?: string | null
     schedule_block?: string | null
     subtasks?: Array<{
@@ -21,6 +23,29 @@ type SubjectPayload = {
         name: string
         description?: string
     }>
+}
+
+type StudyPlanPayload = {
+    id: string
+    name: string
+    day_of_week?: string | null
+    start_time?: string | null
+    start_period?: string | null
+    end_time?: string | null
+    end_period?: string | null
+    schedule_block?: string | null
+}
+
+type ScheduleEvent = {
+    id: string
+    day_of_week: string
+    title: string
+    tag?: string
+    description?: string | null
+    start_time: string
+    start_period: string
+    end_time: string
+    end_period: string
 }
 
 type SubtaskPayload = {
@@ -43,6 +68,7 @@ function makeSubject(overrides: Partial<SubjectPayload> = {}) {
     return {
         id: randomUUID(),
         name: "Biology",
+        description: "Cell structure and genetics fundamentals",
         tag: "science",
         schedule_block: null,
         subtasks: [
@@ -52,6 +78,35 @@ function makeSubject(overrides: Partial<SubjectPayload> = {}) {
                 description: "Cells and organelles",
             },
         ],
+        ...overrides,
+    }
+}
+
+function makeStudyPlan(overrides: Partial<StudyPlanPayload> = {}) {
+    return {
+        id: randomUUID(),
+        name: "Final Exams Preparation",
+        day_of_week: "Monday",
+        start_time: "09:00",
+        start_period: "AM",
+        end_time: "10:00",
+        end_period: "AM",
+        schedule_block: null,
+        ...overrides,
+    }
+}
+
+function makeScheduleEvent(overrides: Partial<ScheduleEvent> = {}) {
+    return {
+        id: randomUUID(),
+        day_of_week: "Wednesday",
+        title: "Existing calculus block",
+        tag: "calculus",
+        description: "Already on the weekly schedule",
+        start_time: "13:00",
+        start_period: "PM",
+        end_time: "14:00",
+        end_period: "PM",
         ...overrides,
     }
 }
@@ -92,8 +147,23 @@ function invalidSubjectCookie(app: ReturnType<typeof Build>, email: string) {
 
 function assertSubject(actual: Record<string, unknown>, expected: SubjectPayload) {
     assert.equal(actual.id, expected.id)
+    if (expected.study_plan_id !== undefined) {
+        assert.equal(actual.study_plan_id, expected.study_plan_id)
+    }
     assert.equal(actual.name, expected.name)
+    assert.equal(actual.description, expected.description)
     assert.equal(actual.tag, expected.tag)
+    assert.equal(actual.schedule_block, expected.schedule_block)
+}
+
+function assertStudyPlan(actual: Record<string, unknown>, expected: StudyPlanPayload) {
+    assert.equal(actual.id, expected.id)
+    assert.equal(actual.name, expected.name)
+    assert.equal(actual.day_of_week, expected.day_of_week)
+    assert.match(String(actual.start_time), new RegExp(`^${expected.start_time}`))
+    assert.equal(actual.start_period, expected.start_period)
+    assert.match(String(actual.end_time), new RegExp(`^${expected.end_time}`))
+    assert.equal(actual.end_period, expected.end_period)
     assert.equal(actual.schedule_block, expected.schedule_block)
 }
 
@@ -147,6 +217,173 @@ describe("study plan controller", { concurrency: false }, () => {
         assert.deepEqual(response.json(), { plans: [] })
     })
 
+    it("creates a parent study plan with a scheduled time and nests subjects under it", async () => {
+        const studyPlan = makeStudyPlan()
+        const subject = makeSubject({ study_plan_id: studyPlan.id })
+        const firstSubtask = subject.subtasks![0]!
+
+        const createStudyPlanResponse = await app.inject({
+            method: "POST",
+            url: "/plan",
+            headers: { cookie },
+            payload: studyPlan,
+        })
+
+        assert.equal(createStudyPlanResponse.statusCode, 201)
+        assert.deepEqual(createStudyPlanResponse.json(), { message: "study plan created!" })
+
+        const createSubjectResponse = await app.inject({
+            method: "POST",
+            url: "/plan/subject",
+            headers: { cookie },
+            payload: subject,
+        })
+
+        assert.equal(createSubjectResponse.statusCode, 201)
+
+        const plansResponse = await app.inject({
+            method: "GET",
+            url: "/plan",
+            headers: { cookie },
+        })
+
+        assert.equal(plansResponse.statusCode, 200)
+        const plans = plansResponse.json().plans
+        assert.equal(plans.length, 1)
+        assertStudyPlan(plans[0], studyPlan)
+        assert.equal(plans[0].subjects.length, 1)
+        assertSubject(plans[0].subjects[0], subject)
+        assert.equal(plans[0].subjects[0].subtasks.length, 1)
+        assertSubtask(plans[0].subjects[0].subtasks[0], { ...firstSubtask, done: false })
+
+        const scheduleResponse = await app.inject({
+            method: "GET",
+            url: "/schedule",
+            headers: { cookie },
+        })
+
+        assert.equal(scheduleResponse.statusCode, 200)
+        const events = scheduleResponse.json().events
+        assert.equal(events.length, 1)
+        assert.equal(events[0].study_plan_id, studyPlan.id)
+        assert.equal(events[0].title, studyPlan.name)
+        assert.equal(events[0].day_of_week, studyPlan.day_of_week)
+        assert.match(String(events[0].start_time), /^09:00/)
+        assert.match(String(events[0].end_time), /^10:00/)
+    })
+
+    it("assigns an existing schedule block to a parent study plan", async () => {
+        const event = makeScheduleEvent()
+        const studyPlan = makeStudyPlan({
+            day_of_week: null,
+            start_time: null,
+            start_period: null,
+            end_time: null,
+            end_period: null,
+            schedule_block: event.id,
+        })
+
+        const createEventResponse = await app.inject({
+            method: "PUT",
+            url: "/schedule",
+            headers: { cookie },
+            payload: { events: [event] },
+        })
+
+        assert.equal(createEventResponse.statusCode, 201)
+
+        const createStudyPlanResponse = await app.inject({
+            method: "POST",
+            url: "/plan",
+            headers: { cookie },
+            payload: studyPlan,
+        })
+
+        assert.equal(createStudyPlanResponse.statusCode, 201)
+        assert.deepEqual(createStudyPlanResponse.json(), { message: "study plan created!" })
+
+        const scheduleResponse = await app.inject({
+            method: "GET",
+            url: "/schedule",
+            headers: { cookie },
+        })
+
+        assert.equal(scheduleResponse.statusCode, 200)
+        const events = scheduleResponse.json().events
+        assert.equal(events.length, 1)
+        assert.equal(events[0].id, event.id)
+        assert.equal(events[0].study_plan_id, studyPlan.id)
+        assert.equal(events[0].title, event.title)
+    })
+
+    it("updates and deletes a parent study plan schedule assignment", async () => {
+        const initialBlock = makeScheduleEvent({ day_of_week: "Monday" })
+        const updatedBlock = makeScheduleEvent({ day_of_week: "Thursday" })
+        const studyPlan = makeStudyPlan({ schedule_block: initialBlock.id })
+
+        const createEventsResponse = await app.inject({
+            method: "PUT",
+            url: "/schedule",
+            headers: { cookie },
+            payload: { events: [initialBlock, updatedBlock] },
+        })
+
+        assert.equal(createEventsResponse.statusCode, 201)
+
+        const createStudyPlanResponse = await app.inject({
+            method: "POST",
+            url: "/plan",
+            headers: { cookie },
+            payload: studyPlan,
+        })
+
+        assert.equal(createStudyPlanResponse.statusCode, 201)
+
+        const updateStudyPlanResponse = await app.inject({
+            method: "PUT",
+            url: "/plan",
+            headers: { cookie },
+            payload: {
+                ...studyPlan,
+                name: "Final Exams Updated",
+                schedule_block: updatedBlock.id,
+            },
+        })
+
+        assert.equal(updateStudyPlanResponse.statusCode, 200)
+        assert.deepEqual(updateStudyPlanResponse.json(), { message: "study plan updated!" })
+
+        const updatedScheduleResponse = await app.inject({
+            method: "GET",
+            url: "/schedule",
+            headers: { cookie },
+        })
+
+        assert.equal(updatedScheduleResponse.statusCode, 200)
+        const updatedEvents = updatedScheduleResponse.json().events
+        assert.equal(updatedEvents.find((event: Record<string, unknown>) => event.id === initialBlock.id).study_plan_id, null)
+        assert.equal(updatedEvents.find((event: Record<string, unknown>) => event.id === updatedBlock.id).study_plan_id, studyPlan.id)
+
+        const deleteStudyPlanResponse = await app.inject({
+            method: "DELETE",
+            url: "/plan",
+            headers: { cookie },
+            payload: { id: studyPlan.id },
+        })
+
+        assert.equal(deleteStudyPlanResponse.statusCode, 200)
+        assert.deepEqual(deleteStudyPlanResponse.json(), { message: "study plan deleted!" })
+
+        const emptyPlansResponse = await app.inject({
+            method: "GET",
+            url: "/plan",
+            headers: { cookie },
+        })
+
+        assert.equal(emptyPlansResponse.statusCode, 200)
+        assert.deepEqual(emptyPlansResponse.json(), { plans: [] })
+    })
+
     it("creates, reads, updates, and deletes subjects and subtasks through HTTP endpoints", async () => {
         const subject = makeSubject()
         const firstSubtask = subject.subtasks![0]!
@@ -191,6 +428,7 @@ describe("study plan controller", { concurrency: false }, () => {
         const updatedSubject = {
             id: subject.id,
             name: "Chemistry",
+            description: "Atoms, bonding, and reactions",
             tag: "science-updated",
             schedule_block: null,
         }
@@ -372,6 +610,7 @@ describe("study plan controller", { concurrency: false }, () => {
                 payload: {
                     id: randomUUID(),
                     name: "Missing subject",
+                    description: null,
                     tag: null,
                     schedule_block: null,
                 },

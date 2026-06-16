@@ -220,7 +220,7 @@ function TimeField({ id, label, value, period, onChange, onPeriodChange, onEnter
                 cursor: "pointer",
                 fontFamily: "inherit",
                 fontSize: 12,
-                fontWeight: 750,
+                fontWeight: 600,
               }}
             >
               {item}
@@ -244,6 +244,9 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
   const [saveMessage, setSaveMessage] = useState("");
   const [gridStartHour, setGridStartHour] = useState(DEFAULT_START_HOUR);
   const [gridEndHour, setGridEndHour] = useState(DEFAULT_END_HOUR);
+  const studyPlans = subjects
+    .filter((subject) => subject.studyPlanId || subject.isStudyPlanPlaceholder)
+    .filter((subject, index, items) => items.findIndex((item) => (item.studyPlanId || item.id) === (subject.studyPlanId || subject.id)) === index);
 
   const [pendingChanges, setPendingChanges] = useState({
     createOrUpdate: [],
@@ -269,6 +272,7 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
       description: description.trim() || null,
       tag,
       studyPlanId,
+      study_plan_id: studyPlanId || null,
       start_time: start.time,
       end_time: end.time,
       ...(timeFormat === "12h" ? { start_period: start.period, end_period: end.period } : {}),
@@ -281,6 +285,7 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
       day_of_week: item.day_of_week,
       title: item.title,
       tag: item.tag,
+      study_plan_id: item.studyPlanId || item.study_plan_id || null,
       description: item.description,
       start_time: item.start_time,
       end_time: item.end_time,
@@ -322,8 +327,8 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
   function syncLinkedSubject(blockId: string, studyPlanId: string | number) {
     setSubjects((items) =>
       items.map((item) => {
-        if (item.id === studyPlanId) return { ...item, scheduleBlockId: blockId };
-        if (item.scheduleBlockId === blockId) return { ...item, scheduleBlockId: "" };
+        if (item.studyPlanId === studyPlanId || item.id === studyPlanId) return { ...item, studyPlanScheduleBlockId: blockId };
+        if (item.studyPlanScheduleBlockId === blockId) return { ...item, studyPlanScheduleBlockId: "" };
         return item;
       })
     );
@@ -340,7 +345,7 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
 
     if (!form.title || !start.time || !end.time) return;
     const tag = form.tag === "custom" ? form.customTag.trim() : form.tag;
-    const studyPlanId = tag === "study block" ? Number(form.studyPlanId) || "" : "";
+    const studyPlanId = tag === "study block" ? form.studyPlanId || "" : "";
     const newItem = toScheduleItem({ id: crypto.randomUUID(), day: form.day, title: form.title, description: form.description, tag, studyPlanId, start, end });
 
     setSchedule((sch) => ({
@@ -375,7 +380,7 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
 
     if (!form.title || !start.time || !end.time) return;
     const tag = form.tag === "custom" ? form.customTag.trim() : form.tag;
-    const studyPlanId = tag === "study block" ? Number(form.studyPlanId) || "" : "";
+    const studyPlanId = tag === "study block" ? form.studyPlanId || "" : "";
     const updatedItem = toScheduleItem({ id: form.id, day: form.day, title: form.title, description: form.description, tag, studyPlanId, start, end });
 
     setSchedule((sch) => {
@@ -416,7 +421,7 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
       : { id: eventId, day_of_week: day };
 
     setSchedule((sch) => ({ ...sch, [day]: sch[day].filter((event) => event.id !== eventId) }));
-    setSubjects((items) => items.map((item) => (item.scheduleBlockId === eventId ? { ...item, scheduleBlockId: "" } : item)));
+    setSubjects((items) => items.map((item) => (item.studyPlanScheduleBlockId === eventId ? { ...item, studyPlanScheduleBlockId: "" } : item)));
     markChanged();
     setPendingChanges(prev => ({
       ...prev,
@@ -468,10 +473,10 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
       <div>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
           <div>
-            <h1 style={{ fontSize: 28, lineHeight: 1.1, fontWeight: 750, color: t.text, margin: 0 }}>{tr("schedule.title")}</h1>
+            <h1 style={{ fontSize: 40, lineHeight: 1.1, fontWeight: 600, color: t.text, margin: 0 }}>{tr("schedule.title")}</h1>
             <div style={{ fontSize: 14, color: t.textMutedMore, marginTop: 6 }}>{tr("schedule.description")}</div>
-            {saveMessage && <div style={{ fontSize: 12, color: saveMessage === "saved" ? t.accent : t.textMutedMore, marginTop: 8 }}>{tr(saveMessage === "saved" ? "common.saved" : "common.couldNotSave")}</div>}
-            {isError && <div style={{ fontSize: 12, color: t.textMutedMore, marginTop: 8 }}>{tr("schedule.loadError")}</div>}
+            {saveMessage && <div style={{ fontSize: 13, color: saveMessage === "saved" ? t.accent : t.textMutedMore, marginTop: 8 }}>{tr(saveMessage === "saved" ? "common.saved" : "common.couldNotSave")}</div>}
+            {isError && <div style={{ fontSize: 13, color: t.textMutedMore, marginTop: 8 }}>{tr("schedule.loadError")}</div>}
           </div>
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
             <button
@@ -486,30 +491,30 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
         </div>
         {isLoading && <div style={{ fontSize: 13, color: t.textMutedMore, marginBottom: 12 }}>{tr("schedule.loading")}</div>}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 12, color: t.textMutedMore, fontWeight: 650 }}>{tr("schedule.timeRange")}</span>
-          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: t.textMuted }}>
+          <span style={{ fontSize: 13, color: t.textMutedMore, fontWeight: 550 }}>{tr("schedule.timeRange")}</span>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: t.textMuted }}>
             {tr("schedule.starts")}
             <input type="number" min={0} max={gridEndHour - 1} value={gridStartHour} onChange={(e) => updateGridStart(e.target.value)} style={{ ...s.input, width: 68, marginBottom: 0, padding: "8px 9px" }} />
           </label>
-          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: t.textMuted }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: t.textMuted }}>
             {tr("schedule.ends")}
             <input type="number" min={gridStartHour + 1} max={23} value={gridEndHour} onChange={(e) => updateGridEnd(e.target.value)} style={{ ...s.input, width: 68, marginBottom: 0, padding: "8px 9px" }} />
           </label>
         </div>
-        <div style={{ overflowX: "auto", border: `1px solid ${t.border}`, borderRadius: 8, background: t.bgAlt }}>
+        <div style={{ overflowX: "auto", border: `1px solid ${t.cardBorder}`, borderRadius: 8, background: t.card, boxShadow: t.cardShadow }}>
           <div style={{ minWidth: 920, display: "grid", gridTemplateColumns: "64px repeat(7, minmax(112px, 1fr))" }}>
-            <div style={{ minHeight: 44, borderRight: `1px solid ${t.border}`, borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: t.textMutedMore, fontSize: 11, fontWeight: 750, textTransform: "uppercase" }}>
+            <div style={{ minHeight: 44, borderRight: `1px solid ${t.border}`, borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: t.textMutedMore, fontSize: 13, fontWeight: 600, textTransform: "uppercase" }}>
               {tr("schedule.time")}
             </div>
             {DAY_LABELS.map((day) => (
-              <div key={day} style={{ minHeight: 44, borderRight: day === DAY_LABELS[DAY_LABELS.length - 1] ? "none" : `1px solid ${t.border}`, borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: t.text, fontSize: 12, fontWeight: 800, textTransform: "uppercase" }}>
+              <div key={day} style={{ minHeight: 44, borderRight: day === DAY_LABELS[DAY_LABELS.length - 1] ? "none" : `1px solid ${t.border}`, borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: t.text, fontSize: 13, fontWeight: 600, textTransform: "uppercase" }}>
                 {tr(`days.${day}`)}
               </div>
             ))}
 
             <div style={{ borderRight: `1px solid ${t.border}`, height: gridHeight }}>
               {visibleHours.map((hour) => (
-                <div key={hour} style={{ height: HOUR_HEIGHT, borderBottom: hour === visibleHours[visibleHours.length - 1] ? "none" : `1px solid ${t.border}`, color: t.textMutedMore, fontSize: 12, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 8, boxSizing: "border-box" }}>
+                <div key={hour} style={{ height: HOUR_HEIGHT, borderBottom: hour === visibleHours[visibleHours.length - 1] ? "none" : `1px solid ${t.border}`, color: t.textMutedMore, fontSize: 14, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 8, boxSizing: "border-box" }}>
                   {formatHourLabel(hour, timeFormat)}
                 </div>
               ))}
@@ -546,7 +551,8 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
                   if (!range || range.endMinutes <= gridStartMinutes || range.startMinutes >= gridEndMinutes) return null;
 
                   const visibleStart = Math.max(range.startMinutes, gridStartMinutes);
-                  const visibleEnd = Math.min(range.endMinutes, gridEndMinutes);
+                  const inclusiveEndMinutes = (Math.floor(range.endMinutes / 60) + 1) * 60;
+                  const visibleEnd = Math.min(inclusiveEndMinutes, gridEndMinutes);
                   const top = ((visibleStart - gridStartMinutes) / 60) * HOUR_HEIGHT;
                   const height = Math.max(((visibleEnd - visibleStart) / 60) * HOUR_HEIGHT, 34);
 
@@ -587,12 +593,12 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
                       >
                         <Icon.x />
                       </button>
-                      <div style={{ color: t.text, fontSize: 12, fontWeight: 750, paddingRight: 18, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.title}</div>
-                      <div style={{ color: t.textMutedMore, fontSize: 11, marginTop: 4, display: "flex", alignItems: "center", gap: 5 }}>
+                      <div style={{ color: t.text, fontSize: 15, fontWeight: 550, paddingRight: 18, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.title}</div>
+                      <div style={{ color: t.textMutedMore, fontSize: 14, marginTop: 4, display: "flex", alignItems: "center", gap: 5 }}>
                         <Icon.clock /> {formatEventTime(ev)}
                       </div>
-                      {ev.description && <div style={{ color: t.textMutedMore, fontSize: 11, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.description}</div>}
-                      {ev.studyPlanId && <div style={{ color: t.accent, fontSize: 11, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{subjects.find((subject) => subject.id === ev.studyPlanId)?.name || tr("schedule.linkedStudyPlan")}</div>}
+                      {ev.description && <div style={{ color: t.textMutedMore, fontSize: 14, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.description}</div>}
+                      {ev.studyPlanId && <div style={{ color: t.accent, fontSize: 14, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{subjects.find((subject) => subject.studyPlanId === ev.studyPlanId || subject.id === ev.studyPlanId)?.studyPlanName || subjects.find((subject) => subject.id === ev.studyPlanId)?.name || tr("schedule.linkedStudyPlan")}</div>}
                     </div>
                   );
                 })}
@@ -632,7 +638,7 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
                 <label style={s.label}>{tr("schedule.studyPlan")}</label>
                 <select value={form.studyPlanId} onChange={(e) => setForm((f) => ({ ...f, studyPlanId: e.target.value }))} style={s.input}>
                   <option value="">{tr("schedule.noLinkedStudyPlan")}</option>
-                  {subjects.map((subject) => <option key={subject.id} value={subject.id}>{subject.name}</option>)}
+                  {studyPlans.map((subject) => <option key={subject.studyPlanId || subject.id} value={subject.studyPlanId || subject.id}>{subject.studyPlanName || subject.name}</option>)}
                 </select>
               </>
             )}

@@ -116,7 +116,7 @@ export default function Documents({ docs, setDocs, isLoading, isError, createAct
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 72px)", overflow: "hidden" }}>
       <div style={{ padding: "28px 28px 20px" }}>
-        <h1 style={{ fontSize: 28, lineHeight: 1.1, fontWeight: 750, color: t.text, margin: 0 }}>{tr("nav.documents.label")}</h1>
+        <h1 style={{ fontSize: 40, lineHeight: 1.1, fontWeight: 600, color: t.text, margin: 0 }}>{tr("nav.documents.label")}</h1>
       </div>
 
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
@@ -134,9 +134,9 @@ export default function Documents({ docs, setDocs, isLoading, isError, createAct
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 2 }}>
                   <span style={{ color: t.accent }}><Icon.file /></span>
-                  <span style={{ fontSize: 14, color: t.text, fontWeight: 650 }}>{doc.title}</span>
+                  <span style={{ fontSize: 15, color: t.text, fontWeight: 550 }}>{doc.title}</span>
                 </div>
-                <div style={{ fontSize: 12, color: t.textMutedMore }}>{doc.date}</div>
+                <div style={{ fontSize: 14, color: t.textMutedMore }}>{doc.date}</div>
               </div>
               <button onClick={(e: MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); remove(doc); }} style={{ background: "none", border: "none", cursor: "pointer", color: t.textMutedMost, flexShrink: 0 }}><Icon.x /></button>
             </div>
@@ -149,9 +149,9 @@ export default function Documents({ docs, setDocs, isLoading, isError, createAct
           <>
             <div style={{ padding: "14px 24px", borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               {editing ? (
-                <input value={eTitle} onChange={(e) => setETitle(e.target.value)} style={{ ...s.input, marginBottom: 0, fontSize: 16, flex: 1, marginRight: 12, fontWeight: 750 }} />
+                <input value={eTitle} onChange={(e) => setETitle(e.target.value)} style={{ ...s.input, marginBottom: 0, fontSize: 28, flex: 1, marginRight: 12, fontWeight: 600, fontFamily: "var(--sos-font-display)" }} />
               ) : (
-                <span style={{ fontSize: 18, color: t.text, fontWeight: 750 }}>{sel.title}</span>
+                <span style={{ fontSize: 28, color: t.text, fontWeight: 600, fontFamily: "var(--sos-font-display)" }}>{sel.title}</span>
               )}
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 {editing ? <button onClick={save} disabled={savingId === sel.id} style={{ ...s.btn, opacity: savingId === sel.id ? 0.65 : 1 }}>{savingId === sel.id ? tr("documents.saving") : tr("documents.save")}</button> : <button onClick={() => { setEditing(true); setEContent(sel.content); setETitle(sel.title); }} style={s.btn}>{tr("documents.editNote")}</button>}

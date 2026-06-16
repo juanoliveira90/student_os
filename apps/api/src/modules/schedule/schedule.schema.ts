@@ -10,6 +10,7 @@ export const InsertSchema =
             type: "object",
             properties: {
                 id: { type: "string" },
+                study_plan_id: { type: "string", nullable: true },
                 day_of_week: { type: "string" },
                 title: { type: "string" },
                 tag: { type: "string" },
@@ -39,6 +40,7 @@ export const updateSchema =
                 type: "object",
                 properties: {
                     id: { type: "string" },
+                    study_plan_id: { type: "string", nullable: true },
                     day_of_week: { type: "string" },
                     title: { type: "string" },
                     tag: { type: "string" },

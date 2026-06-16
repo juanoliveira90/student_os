@@ -1,8 +1,8 @@
-import { type CSSProperties, useState } from "react";
+import { type CSSProperties, type ReactNode, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DAY_LABELS } from "../data.js";
 import { Icon } from "../icons";
-import { getStyles, SecHdr } from "../ui";
+import { getStyles } from "../ui";
 
 type Theme = Record<string, string>;
 type LooseRecord = Record<string, any>;
@@ -92,22 +92,22 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
     if (continueSubject.tag) continueTitle += ` - ${titleCase(continueSubject.tag)}`;
   }
 
-  const card: CSSProperties = { ...s.card, boxShadow: "0 14px 42px rgba(102, 78, 50, 0.06)" };
+  const card: CSSProperties = { ...s.card };
   const metricCard: CSSProperties = { ...card, display: "flex", flexDirection: "column" };
-  const metricList: CSSProperties = { border: `1px solid ${t.border}`, borderRadius: 8, overflow: "hidden", background: t.bgAlt, flex: 1 };
+  const metricList: CSSProperties = { border: `1px solid ${t.cardBorder}`, borderRadius: 8, overflow: "hidden", background: t.card, flex: 1 };
   const scheduleList = {
-    ...metricList,
     flex: "initial",
     maxHeight: scheduleItems.length ? scheduleItems.length * 78 : 174,
+    overflow: "hidden",
     transition: "max-height 220ms ease",
   };
   const subjectList = {
-    ...metricList,
     flex: "initial",
     maxHeight: subjectItems.length ? subjectItems.length * 74 : 174,
+    overflow: "hidden",
     transition: "max-height 220ms ease",
   };
-  const pillButton = { ...s.ghost, borderRadius: 999, padding: "7px 14px", background: t.hover };
+  const pillButton = { ...s.ghost, borderRadius: 999, padding: "7px 14px", background: t.card };
   const expandButton = { ...s.ghost, width: "100%", marginTop: 10, padding: "8px 12px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 };
   const actionButton = {
     ...s.ghost,
@@ -116,16 +116,21 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    fontSize: 14,
+    fontSize: 15,
     color: t.text,
-    background: t.bgAlt,
+    background: t.card,
   };
+  const dashboardHeader = (icon: ReactNode, label: string) => (
+    <div className="sos-heading" style={{ display: "flex", alignItems: "center", gap: 8, color: t.text, fontSize: 15, fontWeight: 600 }}>
+      {icon} {label}
+    </div>
+  );
 
   return (
     <div style={{ display: "grid", gap: 16 }}>
       <section style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 24, marginBottom: 4 }}>
         <div>
-          <h1 style={{ fontSize: 28, lineHeight: 1.1, fontWeight: 750, color: t.text, margin: 0 }}>{tr("dashboard.greeting", { name: titleCase(displayName) })}</h1>
+          <h1 style={{ fontSize: 40, lineHeight: 1.1, fontWeight: 600, color: t.text, margin: 0 }}>{tr("dashboard.greeting", { name: titleCase(displayName) })}</h1>
           <div style={{ fontSize: 14, color: t.textMutedMore, marginTop: 6 }}>{tr("dashboard.todaySummary")}</div>
         </div>
       </section>
@@ -133,22 +138,22 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
         <section style={metricCard}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <SecHdr icon={<Icon.cal />} label={tr("dashboard.todaysSchedule")} t={t} />
+            {dashboardHeader(<Icon.cal />, tr("dashboard.todaysSchedule"))}
             <button type="button" onClick={() => setActive("schedule")} style={pillButton}>{tr("dashboard.viewFullSchedule")}</button>
           </div>
 
           <div style={scheduleList}>
             {scheduleItems.length ? (
               scheduleItems.map((event, index) => (
-                <div key={event.id || `${event.title}-${index}`} style={{ display: "grid", gridTemplateColumns: "72px 24px 1fr", minHeight: 58, borderTop: index ? `1px solid ${t.border}` : "none" }}>
-                  <div style={{ color: t.accent, fontSize: 13, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>{formatTime(getEventTime(event), event.start_period, timeFormat)}</div>
+                <div key={event.id || `${event.title}-${index}`} style={{ display: "grid", gridTemplateColumns: "72px 24px 1fr", minHeight: 58 }}>
+                  <div style={{ color: t.accent, fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center" }}>{formatTime(getEventTime(event), event.start_period, timeFormat)}</div>
                   <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <span style={{ position: "absolute", top: index === 0 ? "50%" : 0, bottom: index === scheduleItems.length - 1 ? "50%" : 0, width: 1, background: t.borderLight }} />
                     <span style={{ width: 9, height: 9, borderRadius: "50%", background: index === 0 ? t.accent : t.accentLight, position: "relative" }} />
                   </div>
                   <div style={{ padding: "12px 14px" }}>
-                    <div style={{ color: t.text, fontSize: 14, fontWeight: 750 }}>{titleCase(event.title)}</div>
-                    <div style={{ color: t.textMutedMore, fontSize: 13, marginTop: 3 }}>{event.description ? titleCase(event.description) : tr(`tags.${event.tag || "study block"}`)}</div>
+                    <div style={{ color: t.text, fontSize: 15, fontWeight: 550 }}>{titleCase(event.title)}</div>
+                    <div style={{ color: t.textMutedMore, fontSize: 12, marginTop: 3 }}>{event.description ? titleCase(event.description) : tr(`tags.${event.tag || "study block"}`)}</div>
                   </div>
                 </div>
               ))
@@ -167,7 +172,7 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
 
         <section style={metricCard}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <SecHdr icon={<Icon.book />} label={tr("dashboard.studyPlanProgress")} t={t} />
+            {dashboardHeader(<Icon.book />, tr("dashboard.studyPlanProgress"))}
             <button type="button" onClick={() => setActive("studyplans")} style={pillButton}>{tr("dashboard.viewAll")}</button>
           </div>
 
@@ -176,13 +181,13 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
               subjectItems.map((subject, index) => {
                 const stats = getSubjectStats(subject);
                 return (
-                  <div key={subject.id || subject.name} style={{ display: "grid", gridTemplateColumns: "1fr minmax(120px, 44%)", gap: 16, alignItems: "center", padding: "12px 16px", borderTop: index ? `1px solid ${t.border}` : "none" }}>
+                  <div key={subject.id || subject.name} style={{ display: "grid", gridTemplateColumns: "1fr minmax(120px, 44%)", gap: 16, alignItems: "center", padding: "12px 16px" }}>
                     <div>
-                      <div style={{ color: t.text, fontSize: 14, fontWeight: 750 }}>{titleCase(subject.name)}</div>
-                      <div style={{ color: t.textMutedMore, fontSize: 13, marginTop: 3 }}>{subject.tag ? titleCase(subject.tag) : tr("dashboard.studyPlan")}</div>
+                      <div style={{ color: t.text, fontSize: 15, fontWeight: 550 }}>{titleCase(subject.name)}</div>
+                      <div style={{ color: t.textMutedMore, fontSize: 12, marginTop: 3 }}>{subject.tag ? titleCase(subject.tag) : tr("dashboard.studyPlan")}</div>
                     </div>
                     <div>
-                      <div style={{ color: t.textMuted, fontSize: 12, textAlign: "right", marginBottom: 9 }}>{tr("dashboard.tasksCount", { done: stats.done, total: stats.total })}</div>
+                      <div style={{ color: t.textMuted, fontSize: 11, textAlign: "right", marginBottom: 9 }}>{tr("dashboard.tasksCount", { done: stats.done, total: stats.total })}</div>
                       <div style={{ height: 7, background: t.hover, borderRadius: 999, overflow: "hidden" }}>
                         <div style={{ width: `${stats.progress}%`, height: "100%", background: t.accent, borderRadius: 999 }} />
                       </div>
@@ -205,20 +210,20 @@ export default function Dashboard({ user, tasks, schedule, subjects, setActive, 
       </div>
 
       <section style={card}>
-        <SecHdr icon={<Icon.clock />} label={tr("dashboard.continueStudying")} t={t} />
-        <div style={{ marginTop: 14, padding: "20px", borderRadius: 8, background: `linear-gradient(90deg, ${t.hover}, ${t.bgAlt})`, display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 18, alignItems: "center" }}>
-          <div style={{ width: 50, height: 50, borderRadius: 8, background: `linear-gradient(135deg, ${t.accentLight}, ${t.accentDark})`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontFamily: "Georgia, serif" }}></div>
+        {dashboardHeader(<Icon.clock />, tr("dashboard.continueStudying"))}
+        <div style={{ marginTop: 14, padding: "20px", borderRadius: 8, background: t.card, border: `1px solid ${t.cardBorder}`, display: "grid", gridTemplateColumns: "auto 1fr auto", gap: 18, alignItems: "center" }}>
+          <div style={{ width: 50, height: 50, borderRadius: 8, background: `linear-gradient(135deg, ${t.accentLight}, ${t.accentDark})`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28, fontFamily: "var(--sos-font-display)" }}></div>
           <div>
-            <div style={{ color: t.text, fontSize: 18, fontWeight: 800 }}>{continueTitle}</div>
-            <div style={{ color: t.text, fontSize: 13, marginTop: 4 }}>{continueSubject ? titleCase(continueSubject.subtasks?.find((task) => !task.done)?.text || tr("dashboard.allTasksComplete")) : tr("dashboard.createStudyPlan")}</div>
-            <div style={{ color: t.textMutedMore, fontSize: 12, marginTop: 5 }}>{tr(continuePending === 1 ? "dashboard.pendingTask" : "dashboard.pendingTasks", { count: continuePending })}</div>
+            <div style={{ color: t.text, fontSize: 22, fontWeight: 600, fontFamily: "var(--sos-font-display)" }}>{continueTitle}</div>
+            <div style={{ color: t.text, fontSize: 12, marginTop: 4 }}>{continueSubject ? titleCase(continueSubject.subtasks?.find((task) => !task.done)?.text || tr("dashboard.allTasksComplete")) : tr("dashboard.createStudyPlan")}</div>
+            <div style={{ color: t.textMutedMore, fontSize: 11, marginTop: 5 }}>{tr(continuePending === 1 ? "dashboard.pendingTask" : "dashboard.pendingTasks", { count: continuePending })}</div>
           </div>
           <button type="button" onClick={() => setActive("studyplans")} style={{ ...s.btn, minWidth: 92, height: 40 }}>{tr("common.continue")}</button>
         </div>
       </section>
 
       <section style={card}>
-        <SecHdr icon={<Icon.zap />} label={tr("dashboard.quickActions")} t={t} />
+        {dashboardHeader(<Icon.zap />, tr("dashboard.quickActions"))}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 14, marginTop: 16 }}>
           <button type="button" onClick={() => navigateToCreate("schedule", "study-block")} style={actionButton}><Icon.plus />{tr("dashboard.addScheduleBlock")}</button>
           <button type="button" onClick={() => navigateToCreate("studyplans", "subject")} style={actionButton}><Icon.plus />{tr("dashboard.addSubjectPlan")}</button>

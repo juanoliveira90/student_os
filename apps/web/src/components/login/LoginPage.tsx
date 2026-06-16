@@ -39,7 +39,7 @@ const ghostButton = (loading: boolean, t: Record<string, string>): CSSProperties
   padding: "12px 14px",
   cursor: loading ? "not-allowed" : "pointer",
   fontFamily: "inherit",
-  fontWeight: 650,
+  fontWeight: 550,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -132,16 +132,16 @@ export default function LoginPage({ mode = "login", onAuthenticated, onNeedsEmai
   if (!mounted) return null;
 
   return (
-    <div style={{ minHeight: "100vh", background: t.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter', 'SF Pro Text', 'Segoe UI', system-ui, sans-serif", color: t.text, transition: "background 0.2s, color 0.2s" }}>
+    <div style={{ minHeight: "100vh", background: t.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--sos-font-ui)", color: t.text, transition: "background 0.2s, color 0.2s" }}>
       <div style={{ width: "100%", maxWidth: 420, padding: "20px" }}>
         <div style={{ marginBottom: 34, textAlign: "center" }}>
-          <div style={{ fontSize: 34, color: t.text, marginBottom: 8, fontWeight: 800 }}>Studium</div>
+          <div className="sos-heading" style={{ fontSize: 34, color: t.text, marginBottom: 8, fontWeight: 600 }}>Studium</div>
           <div style={{ fontSize: 14, color: t.textMutedMore }}>
             {isSignup ? tr("auth.subtitleSignup") : tr("auth.subtitleLogin")}
           </div>
         </div>
 
-        <div style={{ background: t.card, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 28, boxShadow: "0 18px 48px rgba(0,0,0,0.08)" }}>
+        <div style={{ background: t.card, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 28, boxShadow: t.cardShadow }}>
           <form onSubmit={handleEmailSubmit} style={{ marginBottom: isSignup ? 0 : 24 }}>
             {isSignup && (
               <Field label={tr("auth.name")} icon={<Icon.user />} t={t}>
@@ -162,7 +162,7 @@ export default function LoginPage({ mode = "login", onAuthenticated, onNeedsEmai
               </div>
             )}
 
-            <button type="submit" disabled={loading} style={{ width: "100%", background: t.accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, padding: "12px 14px", cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: loading ? 0.7 : 1, transition: "all 0.12s" }}>
+            <button type="submit" disabled={loading} style={{ width: "100%", background: t.accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, padding: "12px 14px", cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: loading ? 0.7 : 1, transition: "all 0.12s" }}>
               {loading ? tr("auth.connecting") : <>{isSignup ? tr("auth.createAccount") : tr("auth.signIn")} <Icon.arrow /></>}
             </button>
           </form>
@@ -242,7 +242,7 @@ export default function LoginPage({ mode = "login", onAuthenticated, onNeedsEmai
           padding: "0 12px",
           fontSize: 12,
           fontFamily: "inherit",
-          fontWeight: 650,
+          fontWeight: 550,
           zIndex: 9999,
         }}
         aria-label={tr("language.switchTo", { language: i18n.language?.startsWith("pt") ? tr("language.english") : tr("language.portuguese") })}

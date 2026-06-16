@@ -1,7 +1,7 @@
 "use server"
 
 import { StudyPlanQueries } from "./studyPlan.queries.js"
-import type { createSubtask, createSubject, updateSubject, updateSubtask } from "./studyPlan.type.js"
+import type { createStudyPlan, createSubtask, createSubject, updateSubject, updateSubtask } from "./studyPlan.type.js"
 
 export const StudyPlanService = {
     async getStudyPlans(userId: number) {
@@ -11,6 +11,36 @@ export const StudyPlanService = {
         } catch (error) {
             console.error(error)
             return { error: "could not load study plans" }
+        }
+    },
+
+    async createStudyPlan(userId: number, data: createStudyPlan) {
+        try {
+            await StudyPlanQueries.createStudyPlan(userId, data)
+            return { message: "study plan created!" }
+        } catch (error) {
+            console.error(error)
+            return { error: "could not create study plan." }
+        }
+    },
+
+    async updateStudyPlan(userId: number, data: createStudyPlan) {
+        try {
+            await StudyPlanQueries.updateStudyPlan(userId, data)
+            return { message: "study plan updated!" }
+        } catch (error) {
+            console.error(error)
+            return { error: "could not update study plan." }
+        }
+    },
+
+    async deleteStudyPlan(userId: number, studyPlanId: string) {
+        try {
+            await StudyPlanQueries.deleteStudyPlan(userId, studyPlanId)
+            return { message: "study plan deleted!" }
+        } catch (error) {
+            console.error(error)
+            return { error: "could not delete study plan." }
         }
     },
 

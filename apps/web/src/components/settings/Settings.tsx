@@ -239,7 +239,7 @@ function PasswordUpdatedPanel({ onClose, s, t }) {
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.38)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 18 }}>
       <section style={{ ...s.card, width: "min(360px, 100%)", padding: 24, boxShadow: "0 18px 48px rgba(0,0,0,0.24)", textAlign: "center" }}>
-        <h2 style={{ ...sectionTitle(t), fontSize: 20 }}>{tr("settings.passwordUpdated")}</h2>
+        <h2 style={sectionTitle(t)}>{tr("settings.passwordUpdated")}</h2>
         <button type="button" onClick={onClose} style={{ ...s.btn, width: "100%", marginTop: 22 }}>{tr("common.close")}</button>
       </section>
     </div>
@@ -289,8 +289,8 @@ function SystemTab({ form, setForm, appearance, setAppearance, timeFormat, setTi
                 gap: 14,
                 padding: "0 18px",
                 fontFamily: "inherit",
-                fontSize: 14,
-                fontWeight: 750,
+                fontSize: 15,
+                fontWeight: 600,
               }}
             >
               <span style={{ color: on ? t.accent : t.text, display: "flex" }}><OptionIcon /></span>
@@ -347,8 +347,8 @@ function SystemTab({ form, setForm, appearance, setAppearance, timeFormat, setTi
                 gap: 14,
                 padding: "0 18px",
                 fontFamily: "inherit",
-                fontSize: 14,
-                fontWeight: 750,
+                fontSize: 15,
+                fontWeight: 600,
               }}
             >
               <span style={{ textAlign: "left" }}>{option.label}</span>
@@ -364,11 +364,11 @@ function SystemTab({ form, setForm, appearance, setAppearance, timeFormat, setTi
 }
 
 function sectionTitle(t) {
-  return { margin: 0, color: t.text, fontSize: 18, fontWeight: 800 };
+  return { margin: 0, color: t.text, fontSize: 20, fontWeight: 600 };
 }
 
 function groupTitle(t) {
-  return { margin: "28px 0 8px", color: t.text, fontSize: 16, fontWeight: 800 };
+  return { margin: "28px 0 8px", color: t.text, fontSize: 20, fontWeight: 600 };
 }
 
 function sectionCopy(t) {

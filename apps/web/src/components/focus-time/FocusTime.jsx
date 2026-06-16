@@ -194,12 +194,12 @@ export default function FocusTime({ tasks, setTasks, subjects = [], schedule, t 
             <circle cx="125" cy="125" r={r} fill="none" stroke={t.borderLight} strokeWidth="8" />
             <circle cx="125" cy="125" r={r} fill="none" stroke={mode === "pomodoro" ? t.accent : "#4caf50"} strokeWidth="8" strokeDasharray={c} strokeDashoffset={offset} strokeLinecap="round" transform="rotate(-90 125 125)" style={{ transition: running ? "stroke-dashoffset 1s linear" : "none" }} />
             <text x="125" y="116" textAnchor="middle" fill={t.text} fontSize="40" fontFamily="Inter, SF Pro Text, Segoe UI, system-ui, sans-serif" fontWeight="500">{mm}:{ss}</text>
-            <text x="125" y="142" textAnchor="middle" fill={t.textMutedMore} fontSize="12" fontFamily="Inter, SF Pro Text, Segoe UI, system-ui, sans-serif">{running ? (mode === "pomodoro" ? tr("focus.focusing") : tr("focus.resting")) : tr("focus.ready")}</text>
+            <text x="125" y="142" textAnchor="middle" fill={t.textMutedMore} fontSize="13" fontFamily="Inter, SF Pro Text, Segoe UI, system-ui, sans-serif">{running ? (mode === "pomodoro" ? tr("focus.focusing") : tr("focus.resting")) : tr("focus.ready")}</text>
           </svg>
 
           <div style={{ minHeight: 36, marginTop: 8, textAlign: "center" }}>
-            <div style={{ fontSize: 12, color: t.textMutedMore, marginBottom: 4 }}>{tr("focus.currentTask")}</div>
-            <div style={{ color: selTask ? t.accent : t.textMutedMore, fontSize: 14, fontWeight: 750 }}>{selTask?.text || tr("focus.noTaskSelected")}</div>
+            <div style={{ fontSize: 13, color: t.textMutedMore, marginBottom: 4 }}>{tr("focus.currentTask")}</div>
+            <div style={{ color: selTask ? t.accent : t.textMutedMore, fontSize: 15, fontWeight: 550 }}>{selTask?.text || tr("focus.noTaskSelected")}</div>
           </div>
 
           <div style={{ display: "flex", gap: 10, marginTop: 26, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
@@ -219,7 +219,7 @@ export default function FocusTime({ tasks, setTasks, subjects = [], schedule, t 
             </button>
             <div style={{ display: "flex", flexDirection: "column", gap: 6, overflowY: "auto", paddingRight: 2 }}>
               {selTask ? (
-                <button style={{ display: "flex", alignItems: "center", gap: 10, background: t.hover, border: `1px solid ${t.accent}`, borderRadius: 6, padding: "10px 12px", textAlign: "left", color: t.text, fontSize: 12, fontFamily: "inherit" }}>
+                <button style={{ display: "flex", alignItems: "center", gap: 10, background: t.hover, border: `1px solid ${t.accent}`, borderRadius: 6, padding: "10px 12px", textAlign: "left", color: t.text, fontSize: 15, fontFamily: "inherit" }}>
                   <span style={{ width: 7, height: 7, borderRadius: "50%", background: t.accent, flexShrink: 0 }} />
                   <span>{selTask.text}</span>
                 </button>
@@ -236,12 +236,12 @@ export default function FocusTime({ tasks, setTasks, subjects = [], schedule, t 
             ) : (
               <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 6, maxHeight: 118, overflowY: "auto" }}>
                 {history.map((item) => (
-                  <div key={item.task} style={{ padding: "8px 10px", background: t.hover, border: `1px solid ${t.border}`, borderRadius: 6 }}>
+                  <div key={item.task} style={{ padding: "8px 10px", background: t.card, border: `1px solid ${t.cardBorder}`, borderRadius: 6, boxShadow: t.cardShadow }}>
                     <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 2 }}>
-                      <span style={{ fontSize: 12, color: t.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.task}</span>
-                      <span style={{ fontSize: 11, color: t.accent, fontWeight: 750, flexShrink: 0 }}>{item.mins}m</span>
+                      <span style={{ fontSize: 15, color: t.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.task}</span>
+                      <span style={{ fontSize: 14, color: t.accent, fontWeight: 600, flexShrink: 0 }}>{item.mins}m</span>
                     </div>
-                    <span style={{ fontSize: 10, color: t.textMutedMore }}>{item.count} {tr(item.count === 1 ? "focus.session" : "focus.sessions")}</span>
+                    <span style={{ fontSize: 14, color: t.textMutedMore }}>{item.count} {tr(item.count === 1 ? "focus.session" : "focus.sessions")}</span>
                   </div>
                 ))}
               </div>
@@ -260,17 +260,17 @@ export default function FocusTime({ tasks, setTasks, subjects = [], schedule, t 
 
           {taskOptions.map((section) => (
             <div key={section.label} style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 12, color: t.textMutedMore, fontWeight: 750, marginBottom: 8 }}>{section.label}</div>
+              <div style={{ fontSize: 13, color: t.textMutedMore, fontWeight: 550, marginBottom: 8 }}>{section.label}</div>
               {section.items.length === 0 ? (
-                <div style={{ fontSize: 12, color: t.textMutedMore, marginBottom: 8 }}>{tr("focus.noneYet")}</div>
+                <div style={{ fontSize: 13, color: t.textMutedMore, marginBottom: 8 }}>{tr("focus.noneYet")}</div>
               ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {section.items.map((task) => (
                     <button key={task.id} onClick={() => selectTask(task)} disabled={task.done} style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 9, alignItems: "center", background: selTask?.id === task.id ? t.hover : "transparent", border: `1px solid ${selTask?.id === task.id ? t.accent : t.border}`, borderRadius: 6, padding: "8px 10px", cursor: task.done ? "not-allowed" : "pointer", color: task.done ? t.textMutedMost : t.textMuted, textAlign: "left", fontFamily: "inherit" }}>
                       <span style={{ width: 6, height: 6, borderRadius: "50%", background: selTask?.id === task.id ? t.accent : t.borderLight }} />
                       <span style={{ minWidth: 0 }}>
-                        <span style={{ display: "block", fontSize: 12, color: task.done ? t.textMutedMost : t.text }}>{task.text}</span>
-                        {task.meta && <span style={{ display: "block", fontSize: 10, color: t.textMutedMore, marginTop: 2 }}>{task.meta}</span>}
+                        <span style={{ display: "block", fontSize: 15, color: task.done ? t.textMutedMost : t.text }}>{task.text}</span>
+                        {task.meta && <span style={{ display: "block", fontSize: 14, color: t.textMutedMore, marginTop: 2 }}>{task.meta}</span>}
                       </span>
                     </button>
                   ))}

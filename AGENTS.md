@@ -29,12 +29,14 @@ node --test dist/tests/{test-folder}/{test-file}.js
 - Don't use hardcoded credentials
 - Don't leave mocked data (aside from unit testing)
 - Don't guess, always ask
-- Don't skip test
+- Don't skip tests
+- Don't remove tests
 - Don't add dependecies without asking and justificating
 - Don't do steps beyond what you was told to do.
 ### Do:
 - Use 4 spaces
-- Add tests for new feature
+- Add tests before adding a new feature/iteration
+- Make sure that new feature/iteration passses the tests
 - Run tests before proposing changes
 - Do a regression test after every new iteration
 - Follow existing patterns 

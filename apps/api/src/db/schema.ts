@@ -45,6 +45,24 @@ export const Schedule = pgTable("schedule", {
     unique().on(t.user_id)
 ])
 
+export const StudyPlans = pgTable("study_plans", {
+    id: uuid().primaryKey(),
+    user_id: bigint({ mode: "number" }).references(() => Users.id, {
+        onDelete: 'cascade'
+    }),
+    name: varchar({ length: 100 }).notNull(),
+    day_of_week: varchar({ length: 10 }),
+    start_time: time(),
+    start_period: varchar({ length: 2 }),
+    end_time: time(),
+    end_period: varchar({ length: 2 }),
+    schedule_block_id: uuid("schedule_block").references((): AnyPgColumn => ScheduleItems.id, {
+        onDelete: 'set null'
+    }),
+    created_at: timestamp({ precision: 0, withTimezone: true }).defaultNow(),
+    updated_at: timestamp({ precision: 0, withTimezone: true }).defaultNow()
+})
+
 /*export const dayOfWeekEnum = pgEnum("day_of_week", [
     "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"
 ])*/
@@ -54,7 +72,9 @@ export const ScheduleItems = pgTable("schedule_items", {
     schedule_id: bigint({ mode: "number" }).references(() => Schedule.id, {
         onDelete: 'cascade'
     }),
-    //study_plan_id: uuid("study_plan_id").references((): AnyPgColumn => Subjects.id),
+    study_plan_id: uuid("study_plan_id").references(() => StudyPlans.id, {
+        onDelete: 'set null'
+    }),
     tag: text(),    
     day_of_week: /*dayOfWeekEnum()*/varchar({ length: 10 }).notNull(),
     title: text().notNull(),
@@ -71,7 +91,11 @@ export const Subjects = pgTable("subjects", {
     user_id: bigint({ mode: "number" }).references(() => Users.id, {
         onDelete: 'cascade'
     }),
+    study_plan_id: uuid("study_plan_id").references(() => StudyPlans.id, {
+        onDelete: 'cascade'
+    }),
     name: varchar({ length: 50 }).notNull(),
+    description: text(),
     tag: text(),
     schedule_block_id: uuid("schedule_block").references(() => ScheduleItems.id, {
         onDelete: 'cascade'

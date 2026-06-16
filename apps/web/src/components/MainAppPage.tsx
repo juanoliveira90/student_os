@@ -121,12 +121,12 @@ export default function Studium({ user, onLogout }: StudiumProps) {
 
   return (
     <>
-      <div style={{ display: "flex", minHeight: "100vh", background: t.bg, fontFamily: "'Inter', 'SF Pro Text', 'Segoe UI', system-ui, sans-serif", color: t.text }}>
+      <div style={{ display: "flex", minHeight: "100vh", background: t.bg, fontFamily: "var(--sos-font-ui)", color: t.text }}>
         <Sidebar active={active} setActive={setActive} t={t} collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} onLogout={onLogout} />
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
           <div style={{ minHeight: 72, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 18, flexShrink: 0, background: t.bg, padding: "0 28px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, color: t.textMuted, fontSize: 13, fontWeight: 650 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, color: t.textMuted, fontSize: 13, fontWeight: 550 }}>
               <Icon.cal />
               <span>{todaysDate}</span>
             </div>
@@ -145,7 +145,7 @@ export default function Studium({ user, onLogout }: StudiumProps) {
                 justifyContent: "center",
                 gap: 8,
                 fontSize: 13,
-                fontWeight: 650,
+                fontWeight: 550,
                 fontFamily: "inherit",
                 padding: "0 10px",
               }}
