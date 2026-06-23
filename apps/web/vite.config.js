@@ -1,8 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   server: {
     proxy: {
       "/auth": "http://localhost:3001",
@@ -12,6 +13,6 @@ export default defineConfig({
     },
   },
   preview: {
-    allowedHosts: ['studium-frontend-production.up.railway.app', 'www.studium-web.com']
+    allowedHosts: ['studium-frontend-production.up.railway.app', 'app.studium-web.com']
   }
 });
