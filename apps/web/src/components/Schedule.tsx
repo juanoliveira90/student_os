@@ -1,10 +1,11 @@
-import { type CSSProperties, type KeyboardEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { DAY_LABELS } from "../data.js";
-import { Icon } from "../icons";
-import { getStyles, Modal } from "../ui";
-import { deleteScheduleEvents, saveScheduleEvents, scheduleQueryKey } from "../../fetchs/scheduleFetchs";
+import { DAY_LABELS } from "./data.js";
+import { Icon } from "./icons.js";
+import { Modal, ui } from "./ui.js";
+import { deleteScheduleEvents, saveScheduleEvents, scheduleQueryKey } from "../fetchs/scheduleFetchs.js";
+import { normalizeTimeInput, readTime } from "./time.js";
 
 const PERIODS = ["AM", "PM"];
 const DEFAULT_TAGS = ["study block", "task", "hobby"];
@@ -24,6 +25,25 @@ const TIME_SUGGESTIONS_24H = Array.from({ length: 24 * 12 }, (_, index) => {
 const HOUR_HEIGHT = 64;
 const DEFAULT_START_HOUR = 6;
 const DEFAULT_END_HOUR = 21;
+const DAY_SHORT_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+
+function startOfWeek(date: Date) {
+  const result = new Date(date);
+  const dayIndex = (result.getDay() + 6) % 7;
+  result.setHours(0, 0, 0, 0);
+  result.setDate(result.getDate() - dayIndex);
+  return result;
+}
+
+function addDays(date: Date, amount: number) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + amount);
+  return result;
+}
+
+function isSameDay(a: Date, b: Date) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
 
 type Theme = Record<string, string>;
 type LooseRecord = Record<string, any>;
@@ -50,62 +70,14 @@ type TimeFieldProps = {
   onPeriodChange: (period: string) => void;
   onEnter: () => void;
   timeFormat: string;
-  s: Record<string, CSSProperties>;
-  t: Theme;
 };
 
-function readTime(value: unknown, fallbackPeriod = "") {
-  const rawValue = String(value || "").trim();
-  const periodMatch = rawValue.match(/\s*(am|pm)\s*$/i);
-  const period = periodMatch?.[1]?.toUpperCase() || fallbackPeriod;
-  const rawTime = rawValue.replace(/\s*(am|pm)\s*$/i, "").trim();
-  const hasColon = rawTime.includes(":");
-  const digits = rawTime.replace(/\D/g, "");
-  const match = rawTime.match(/^(\d{1,2})(?::(\d{1,2}))?$/);
-
-  if (!digits) return null;
-
-  const hourValue = hasColon || digits.length <= 2 ? match?.[1] : digits.slice(0, -2);
-  const minuteValue = hasColon ? match?.[2] ?? "0" : digits.length <= 2 ? "0" : digits.slice(-2);
-  const rawHour = Math.max(Number(hourValue), 0);
-  const minute = Math.min(Math.max(Number(minuteValue), 0), 59);
-  const hasExplicitPeriod = Boolean(periodMatch);
-  const hasPeriodContext = hasExplicitPeriod || (PERIODS.includes(period) && rawHour > 0 && rawHour <= 12);
-  const hour12 = Math.min(Math.max(rawHour || 12, 1), 12);
-  const isPm = period === "PM";
-  let hour24 = Math.min(rawHour, 23);
-
-  if (hasPeriodContext) {
-    hour24 = hour12;
-
-    if (isPm && hour12 !== 12) {
-      hour24 = hour12 + 12;
-    } else if (!isPm && hour12 === 12) {
-      hour24 = 0;
-    }
-  }
-
-  const displayHour12 = hour24 % 12 || 12;
-
-  return {
-    time12: `${String(displayHour12).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
-    time24: `${String(hour24).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
-    period: hasPeriodContext ? period : hour24 >= 12 ? "PM" : "AM",
-  };
-}
-
-function normalizeTimeInput(value: unknown, fallbackPeriod = "AM", timeFormat = "12h") {
-  const parsed = readTime(value, timeFormat === "24h" ? "" : fallbackPeriod);
-  if (!parsed) return { time: String(value || "").trim(), period: fallbackPeriod };
-
-  return {
-    time: timeFormat === "24h" ? parsed.time24 : parsed.time12,
-    period: timeFormat === "24h" ? "" : parsed.period,
-  };
+function cssNumber(value: number) {
+  return Number.isFinite(value) ? value : 0;
 }
 
 function formatTime(time: unknown, period: unknown, timeFormat: string) {
-  const parsed = readTime(time, String(period || "AM"));
+  const parsed = readTime(time, timeFormat === "24h" ? "" : String(period || "AM"), { prefer24Hour: timeFormat === "24h" });
   if (!parsed) return String(time || "");
 
   if (timeFormat === "24h") return parsed.time24;
@@ -140,8 +112,9 @@ function minutesToFormTime(totalMinutes: number, timeFormat: string) {
 
 function getEventMinuteRange(event: LooseRecord, timeFormat: string) {
   const { start_time, start_period, end_time, end_period } = getEventTimesFromRecord(event, timeFormat);
-  const start = readTime(start_time, start_period || "AM");
-  const end = readTime(end_time, end_period || start?.period || "AM");
+  const prefer24Hour = timeFormat === "24h";
+  const start = readTime(start_time, prefer24Hour ? "" : start_period || "AM", { prefer24Hour });
+  const end = readTime(end_time, prefer24Hour ? "" : end_period || start?.period || "AM", { prefer24Hour });
 
   if (!start || !end) return null;
 
@@ -169,7 +142,7 @@ function getEventTimesFromRecord(event: LooseRecord, timeFormat: string) {
   return { start_time: start.time, start_period: start.period, end_time: end.time, end_period: end.period };
 }
 
-function TimeField({ id, label, value, period, onChange, onPeriodChange, onEnter, timeFormat, s, t }: TimeFieldProps) {
+function TimeField({ id, label, value, period, onChange, onPeriodChange, onEnter, timeFormat }: TimeFieldProps) {
   const is24Hour = timeFormat === "24h";
 
   function handleChange(nextValue: string) {
@@ -189,8 +162,8 @@ function TimeField({ id, label, value, period, onChange, onPeriodChange, onEnter
 
   return (
     <>
-      <label style={s.label}>{label}</label>
-      <div style={{ display: "grid", gridTemplateColumns: is24Hour ? "1fr" : "1fr auto", gap: 8, marginBottom: 12 }}>
+      <label className={ui.label}>{label}</label>
+      <div className={`mb-3 grid gap-2 ${is24Hour ? "grid-cols-1" : "grid-cols-[1fr_auto]"}`}>
         <input
           value={value}
           onChange={(e) => handleChange(e.target.value)}
@@ -198,30 +171,20 @@ function TimeField({ id, label, value, period, onChange, onPeriodChange, onEnter
           onKeyDown={(e) => e.key === "Enter" && onEnter()}
           placeholder={is24Hour ? "21:32" : "09:32"}
           list={`${id}-suggestions`}
-          style={{ ...s.input, marginBottom: 0 }}
+          className={`${ui.input} mb-0`}
         />
         <datalist id={`${id}-suggestions`}>
           {(is24Hour ? TIME_SUGGESTIONS_24H : TIME_SUGGESTIONS_12H).map((time) => (
             <option key={time} value={time} />
           ))}
         </datalist>
-        {!is24Hour && <div style={{ display: "flex", background: t.select, border: `1px solid ${t.borderAlt}`, borderRadius: 8, overflow: "hidden", height: 42 }}>
+        {!is24Hour && <div className="flex h-[42px] overflow-hidden rounded-lg border border-[var(--sos-border-alt)] bg-[var(--sos-select)]">
           {PERIODS.map((item) => (
             <button
               key={item}
               type="button"
               onClick={() => onPeriodChange(item)}
-              style={{
-                minWidth: 44,
-                border: "none",
-                borderLeft: item === "PM" ? `1px solid ${t.borderAlt}` : "none",
-                background: period === item ? t.accent : "transparent",
-                color: period === item ? "#fff" : t.textMuted,
-                cursor: "pointer",
-                fontFamily: "inherit",
-                fontSize: 12,
-                fontWeight: 600,
-              }}
+              className={`min-w-11 cursor-pointer border-0 bg-transparent font-inherit text-xs font-semibold text-[var(--sos-text-muted)] ${item === "PM" ? "border-l border-[var(--sos-border-alt)]" : ""} ${period === item ? "bg-[var(--sos-accent)] text-white" : ""}`}
             >
               {item}
             </button>
@@ -233,8 +196,7 @@ function TimeField({ id, label, value, period, onChange, onPeriodChange, onEnter
 }
 
 export default function Schedule({ schedule, setSchedule, subjects, setSubjects, isLoading, isError, createAction, onCreateActionHandled, timeFormat, t }: ScheduleProps) {
-  const { t: tr } = useTranslation();
-  const s = getStyles(t);
+  const { t: tr, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const [modal, setModal] = useState(false);
   const emptyForm = { day: "monday", title: "", description: "", tag: "study block", customTag: "", studyPlanId: "", start_time: "", start_period: "AM", end_time: "", end_period: "AM", id: null, originalDay: null };
@@ -244,6 +206,13 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
   const [saveMessage, setSaveMessage] = useState("");
   const [gridStartHour, setGridStartHour] = useState(DEFAULT_START_HOUR);
   const [gridEndHour, setGridEndHour] = useState(DEFAULT_END_HOUR);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const today = new Date();
+  const weekStart = addDays(startOfWeek(today), weekOffset * 7);
+  const weekDates = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
+  const weekEnd = weekDates[6];
+  const sameMonth = weekStart.getMonth() === weekEnd.getMonth();
+  const weekRangeLabel = `${new Intl.DateTimeFormat(i18n.language, { month: "short", day: "numeric" }).format(weekStart)} – ${new Intl.DateTimeFormat(i18n.language, sameMonth ? { day: "numeric", year: "numeric" } : { month: "short", day: "numeric", year: "numeric" }).format(weekEnd)}`;
   const studyPlans = subjects
     .filter((subject) => subject.studyPlanId || subject.isStudyPlanPlaceholder)
     .filter((subject, index, items) => items.findIndex((item) => (item.studyPlanId || item.id) === (subject.studyPlanId || subject.id)) === index);
@@ -459,6 +428,33 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
   const gridEndMinutes = (gridEndHour + 1) * 60;
   const gridHeight = visibleHours.length * HOUR_HEIGHT;
 
+  function getEventLayout(event: LooseRecord) {
+    const range = getEventMinuteRange(event, timeFormat);
+    if (!range || range.endMinutes <= gridStartMinutes || range.startMinutes >= gridEndMinutes) return null;
+
+    const visibleStart = Math.max(range.startMinutes, gridStartMinutes);
+    const inclusiveEndMinutes = (Math.floor(range.endMinutes / 60) + 1) * 60;
+    const visibleEnd = Math.min(inclusiveEndMinutes, gridEndMinutes);
+    const top = ((visibleStart - gridStartMinutes) / 60) * HOUR_HEIGHT;
+    const height = Math.max(((visibleEnd - visibleStart) / 60) * HOUR_HEIGHT, 34);
+
+    return { top: cssNumber(top + 4), height: cssNumber(Math.max(height - 8, 30)) };
+  }
+
+  function eventClassName(day: string, eventId: unknown) {
+    return `schedule-event-${day}-${String(eventId).replace(/[^a-zA-Z0-9_-]/g, "-")}`;
+  }
+
+  const scheduleGridCss = [
+    `.schedule-grid-height{height:${cssNumber(gridHeight)}px}`,
+    ...DAY_LABELS.flatMap((day) => (schedule[day] || []).map((event) => {
+      const layout = getEventLayout(event);
+      if (!layout) return "";
+
+      return `.${eventClassName(day, event.id)}{top:${layout.top}px;height:${layout.height}px}`;
+    })),
+  ].filter(Boolean).join("\n");
+
   function updateGridStart(value: string) {
     const nextHour = Math.max(0, Math.min(Number(value), gridEndHour - 1));
     if (!Number.isNaN(nextHour)) setGridStartHour(nextHour);
@@ -471,90 +467,82 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
 
     return (
       <div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
+        <style>{scheduleGridCss}</style>
+        <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 style={{ fontSize: 40, lineHeight: 1.1, fontWeight: 600, color: t.text, margin: 0 }}>{tr("schedule.title")}</h1>
-            <div style={{ fontSize: 14, color: t.textMutedMore, marginTop: 6 }}>{tr("schedule.description")}</div>
-            {saveMessage && <div style={{ fontSize: 13, color: saveMessage === "saved" ? t.accent : t.textMutedMore, marginTop: 8 }}>{tr(saveMessage === "saved" ? "common.saved" : "common.couldNotSave")}</div>}
-            {isError && <div style={{ fontSize: 13, color: t.textMutedMore, marginTop: 8 }}>{tr("schedule.loadError")}</div>}
+            <h1 className="m-0 text-[34px] font-semibold leading-[1.1] text-[var(--sos-text)]">{tr("schedule.title")}</h1>
+            <div className="mt-1.5 text-sm text-[var(--sos-text-muted-more)]">{tr("schedule.description")}</div>
+            {saveMessage && <div className={`mt-2 text-[13px] ${saveMessage === "saved" ? "text-[var(--sos-accent)]" : "text-[var(--sos-text-muted-more)]"}`}>{tr(saveMessage === "saved" ? "common.saved" : "common.couldNotSave")}</div>}
+            {isError && <div className="mt-2 text-[13px] text-[var(--sos-text-muted-more)]">{tr("schedule.loadError")}</div>}
           </div>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
-            <button
-              onClick={saveSchedule}
-              disabled={!hasChanges || saving}
-              style={{ ...s.btn, opacity: !hasChanges || saving ? 0.55 : 1, cursor: !hasChanges || saving ? "not-allowed" : "pointer" }}
-            >
+          <div className="flex flex-wrap justify-end gap-2.5">
+            <button onClick={saveSchedule} disabled={!hasChanges || saving} className={ui.ghost}>
               {saving ? tr("common.saving") : tr("common.save")}
             </button>
-            <button onClick={() => openAddModal()} style={s.btn}>{tr("schedule.addEvent")}</button>
+            <button onClick={() => openAddModal()} className={`${ui.btn} flex items-center gap-2`}><Icon.plus size={15} /> {tr("schedule.newBlock")}</button>
           </div>
         </div>
-        {isLoading && <div style={{ fontSize: 13, color: t.textMutedMore, marginBottom: 12 }}>{tr("schedule.loading")}</div>}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-          <span style={{ fontSize: 13, color: t.textMutedMore, fontWeight: 550 }}>{tr("schedule.timeRange")}</span>
-          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: t.textMuted }}>
-            {tr("schedule.starts")}
-            <input type="number" min={0} max={gridEndHour - 1} value={gridStartHour} onChange={(e) => updateGridStart(e.target.value)} style={{ ...s.input, width: 68, marginBottom: 0, padding: "8px 9px" }} />
-          </label>
-          <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: t.textMuted }}>
-            {tr("schedule.ends")}
-            <input type="number" min={gridStartHour + 1} max={23} value={gridEndHour} onChange={(e) => updateGridEnd(e.target.value)} style={{ ...s.input, width: 68, marginBottom: 0, padding: "8px 9px" }} />
-          </label>
+        {isLoading && <div className="mb-3 text-[13px] text-[var(--sos-text-muted-more)]">{tr("schedule.loading")}</div>}
+        <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <button onClick={() => setWeekOffset(0)} className={`${ui.ghost} px-3.5 py-2 text-[13px]`}>{tr("schedule.today")}</button>
+            <div className="flex items-center gap-1">
+              <button onClick={() => setWeekOffset((value) => value - 1)} aria-label={tr("schedule.previousWeek")} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-[var(--sos-card-border)] bg-[var(--sos-card)] text-[var(--sos-text-muted)] hover:text-[var(--sos-text)]"><Icon.chevronLeft size={16} /></button>
+              <button onClick={() => setWeekOffset((value) => value + 1)} aria-label={tr("schedule.nextWeek")} className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-[var(--sos-card-border)] bg-[var(--sos-card)] text-[var(--sos-text-muted)] hover:text-[var(--sos-text)]"><Icon.chevronRight size={16} /></button>
+            </div>
+            <span className="font-sos-display text-[17px] font-medium text-[var(--sos-text)]">{weekRangeLabel}</span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="text-[13px] font-medium text-[var(--sos-text-muted-more)]">{tr("schedule.timeRange")}</span>
+            <label className="flex items-center gap-1.5 text-[13px] text-[var(--sos-text-muted)]">
+              {tr("schedule.starts")}
+              <input type="number" min={0} max={gridEndHour - 1} value={gridStartHour} onChange={(e) => updateGridStart(e.target.value)} className={`${ui.input} mb-0 w-[68px] px-[9px] py-2`} />
+            </label>
+            <label className="flex items-center gap-1.5 text-[13px] text-[var(--sos-text-muted)]">
+              {tr("schedule.ends")}
+              <input type="number" min={gridStartHour + 1} max={23} value={gridEndHour} onChange={(e) => updateGridEnd(e.target.value)} className={`${ui.input} mb-0 w-[68px] px-[9px] py-2`} />
+            </label>
+          </div>
         </div>
-        <div style={{ overflowX: "auto", border: `1px solid ${t.cardBorder}`, borderRadius: 8, background: t.card, boxShadow: t.cardShadow }}>
-          <div style={{ minWidth: 920, display: "grid", gridTemplateColumns: "64px repeat(7, minmax(112px, 1fr))" }}>
-            <div style={{ minHeight: 44, borderRight: `1px solid ${t.border}`, borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: t.textMutedMore, fontSize: 13, fontWeight: 600, textTransform: "uppercase" }}>
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
+        <div className="min-w-0 flex-1 overflow-x-auto rounded-lg border border-[var(--sos-card-border)] bg-[var(--sos-card)] shadow-[var(--sos-card-shadow)]">
+          <div className="grid min-w-[920px] grid-cols-[64px_repeat(7,minmax(112px,1fr))]">
+            <div className="flex min-h-11 items-center justify-center border-b border-r border-[var(--sos-border)] text-[13px] font-semibold uppercase text-[var(--sos-text-muted-more)]">
               {tr("schedule.time")}
             </div>
-            {DAY_LABELS.map((day) => (
-              <div key={day} style={{ minHeight: 44, borderRight: day === DAY_LABELS[DAY_LABELS.length - 1] ? "none" : `1px solid ${t.border}`, borderBottom: `1px solid ${t.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: t.text, fontSize: 13, fontWeight: 600, textTransform: "uppercase" }}>
-                {tr(`days.${day}`)}
-              </div>
-            ))}
+            {DAY_LABELS.map((day, dayIndex) => {
+              const date = weekDates[dayIndex];
+              const isToday = isSameDay(date, today);
+              return (
+                <div key={day} className={`flex min-h-11 flex-col items-center justify-center gap-0.5 border-b border-[var(--sos-border)] py-1.5 text-[12px] font-semibold uppercase ${isToday ? "text-[var(--sos-accent)]" : "text-[var(--sos-text)]"} ${day === DAY_LABELS[DAY_LABELS.length - 1] ? "" : "border-r"}`}>
+                  <span>{tr(`dayShort.${DAY_SHORT_KEYS[dayIndex]}`)}</span>
+                  <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[13px] ${isToday ? "bg-[var(--sos-accent)] text-white" : "text-[var(--sos-text-muted)]"}`}>{date.getDate()}</span>
+                </div>
+              );
+            })}
 
-            <div style={{ borderRight: `1px solid ${t.border}`, height: gridHeight }}>
+            <div className="schedule-grid-height border-r border-[var(--sos-border)]">
               {visibleHours.map((hour) => (
-                <div key={hour} style={{ height: HOUR_HEIGHT, borderBottom: hour === visibleHours[visibleHours.length - 1] ? "none" : `1px solid ${t.border}`, color: t.textMutedMore, fontSize: 14, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 8, boxSizing: "border-box" }}>
+                <div key={hour} className={`box-border flex h-16 items-start justify-center pt-2 text-sm text-[var(--sos-text-muted-more)] ${hour === visibleHours[visibleHours.length - 1] ? "" : "border-b border-[var(--sos-border)]"}`}>
                   {formatHourLabel(hour, timeFormat)}
                 </div>
               ))}
             </div>
 
             {DAY_LABELS.map((day, dayIndex) => (
-              <div key={day} style={{ position: "relative", height: gridHeight, borderRight: dayIndex === DAY_LABELS.length - 1 ? "none" : `1px solid ${t.border}` }}>
+              <div key={day} className={`schedule-grid-height relative ${dayIndex === DAY_LABELS.length - 1 ? "" : "border-r border-[var(--sos-border)]"}`}>
                 {visibleHours.map((hour) => (
                   <button
                     key={hour}
                     type="button"
                     onClick={() => openAddModal(day, hour)}
                     aria-label={`${tr("schedule.addEvent")} ${tr(`days.${day}`)} ${formatHourLabel(hour, timeFormat)}`}
-                    style={{
-                      width: "100%",
-                      height: HOUR_HEIGHT,
-                      border: "none",
-                      borderBottom: hour === visibleHours[visibleHours.length - 1] ? "none" : `1px solid ${t.border}`,
-                      background: "transparent",
-                      cursor: "pointer",
-                      display: "block",
-                      padding: 0,
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = t.hover;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = "transparent";
-                    }}
+                    className={`block h-16 w-full cursor-pointer border-0 bg-transparent p-0 hover:bg-[var(--sos-hover)] ${hour === visibleHours[visibleHours.length - 1] ? "" : "border-b border-[var(--sos-border)]"}`}
                   />
                 ))}
                 {(schedule[day] || []).map((ev) => {
-                  const range = getEventMinuteRange(ev, timeFormat);
-                  if (!range || range.endMinutes <= gridStartMinutes || range.startMinutes >= gridEndMinutes) return null;
-
-                  const visibleStart = Math.max(range.startMinutes, gridStartMinutes);
-                  const inclusiveEndMinutes = (Math.floor(range.endMinutes / 60) + 1) * 60;
-                  const visibleEnd = Math.min(inclusiveEndMinutes, gridEndMinutes);
-                  const top = ((visibleStart - gridStartMinutes) / 60) * HOUR_HEIGHT;
-                  const height = Math.max(((visibleEnd - visibleStart) / 60) * HOUR_HEIGHT, 34);
+                  const layout = getEventLayout(ev);
+                  if (!layout) return null;
 
                   return (
                     <div
@@ -565,40 +553,24 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
                       onKeyDown={(event) => {
                         if (event.key === "Enter" || event.key === " ") openEditModal(day, ev);
                       }}
-                      style={{
-                        position: "absolute",
-                        zIndex: 2,
-                        top: top + 4,
-                        left: 8,
-                        right: 8,
-                        height: Math.max(height - 8, 30),
-                        overflow: "hidden",
-                        background: ev.tag === "study block" ? t.hover : t.select,
-                        border: `1px solid ${t.borderAlt}`,
-                        borderLeft: `4px solid ${ev.tag === "study block" ? t.accent : t.accentLight}`,
-                        borderRadius: 7,
-                        padding: "8px 10px",
-                        boxSizing: "border-box",
-                        cursor: "pointer",
-                        boxShadow: "0 8px 22px rgba(0,0,0,0.05)",
-                      }}
+                      className={`${eventClassName(day, ev.id)} absolute left-1.5 right-1.5 z-[2] box-border cursor-pointer overflow-hidden rounded-lg border-l-[3px] p-2.5 py-2 shadow-[0_4px_14px_rgba(0,0,0,0.05)] ${ev.tag === "study block" ? "border-l-[var(--sos-accent)] bg-[color-mix(in_srgb,var(--sos-accent)_14%,var(--sos-card))]" : "border-l-[var(--sos-accent-light)] bg-[var(--sos-bg-alt)]"}`}
                     >
                       <button
                         onClick={(event) => {
                           event.stopPropagation();
                           remove(day, ev.id);
                         }}
-                        style={{ position: "absolute", top: 4, right: 4, background: "none", border: "none", cursor: "pointer", color: t.textMutedMore, padding: 2 }}
+                        className="absolute right-1 top-1 cursor-pointer border-0 bg-transparent p-0.5 text-[var(--sos-text-muted-more)]"
                         aria-label={tr("common.delete")}
                       >
                         <Icon.x />
                       </button>
-                      <div style={{ color: t.text, fontSize: 15, fontWeight: 550, paddingRight: 18, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.title}</div>
-                      <div style={{ color: t.textMutedMore, fontSize: 14, marginTop: 4, display: "flex", alignItems: "center", gap: 5 }}>
+                      <div className="overflow-hidden text-ellipsis whitespace-nowrap pr-[18px] text-[15px] font-medium text-[var(--sos-text)]">{ev.title}</div>
+                      <div className="mt-1 flex items-center gap-[5px] text-sm text-[var(--sos-text-muted-more)]">
                         <Icon.clock /> {formatEventTime(ev)}
                       </div>
-                      {ev.description && <div style={{ color: t.textMutedMore, fontSize: 14, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.description}</div>}
-                      {ev.studyPlanId && <div style={{ color: t.accent, fontSize: 14, marginTop: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{subjects.find((subject) => subject.studyPlanId === ev.studyPlanId || subject.id === ev.studyPlanId)?.studyPlanName || subjects.find((subject) => subject.id === ev.studyPlanId)?.name || tr("schedule.linkedStudyPlan")}</div>}
+                      {ev.description && <div className="mt-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-[var(--sos-text-muted-more)]">{ev.description}</div>}
+                      {ev.studyPlanId && <div className="mt-1 overflow-hidden text-ellipsis whitespace-nowrap text-sm text-[var(--sos-accent)]">{subjects.find((subject) => subject.studyPlanId === ev.studyPlanId || subject.id === ev.studyPlanId)?.studyPlanName || subjects.find((subject) => subject.id === ev.studyPlanId)?.name || tr("schedule.linkedStudyPlan")}</div>}
                     </div>
                   );
                 })}
@@ -606,37 +578,39 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
             ))}
           </div>
         </div>
+        <MiniCalendar weekDates={weekDates} today={today} locale={i18n.language} />
+        </div>
         {modal && (
           <Modal onClose={() => setModal(false)} title={form.id ? tr("schedule.editEvent") : tr("schedule.addEvent")} t={t}>
-            <label style={s.label}>{tr("schedule.day")}</label>
-            <select value={form.day} onChange={(e) => setForm((f) => ({ ...f, day: e.target.value }))} style={s.input}>
+            <label className={ui.label}>{tr("schedule.day")}</label>
+            <select value={form.day} onChange={(e) => setForm((f) => ({ ...f, day: e.target.value }))} className={ui.input}>
               {DAY_LABELS.map((d) => <option key={d} value={d}>{tr(`days.${d}`)}</option>)}
             </select>
-            <label style={s.label}>{tr("schedule.eventTitle")}</label>
-            <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && (form.id ? update() : add())} placeholder={tr("schedule.eventName")} style={s.input} autoFocus />
-            <label style={s.label}>{tr("schedule.eventDescription")}</label>
+            <label className={ui.label}>{tr("schedule.eventTitle")}</label>
+            <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} onKeyDown={(e) => e.key === "Enter" && (form.id ? update() : add())} placeholder={tr("schedule.eventName")} className={ui.input} autoFocus />
+            <label className={ui.label}>{tr("schedule.eventDescription")}</label>
             <textarea
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               placeholder={tr("schedule.optionalNotes")}
               rows={3}
-              style={{ ...s.input, minHeight: 82, resize: "vertical", lineHeight: 1.4 }}
+              className={`${ui.input} min-h-[82px] resize-y leading-[1.4]`}
             />
-            <label style={s.label}>{tr("schedule.tag")}</label>
-            <select value={form.tag} onChange={(e) => setForm((f) => ({ ...f, tag: e.target.value, studyPlanId: e.target.value === "study block" ? f.studyPlanId : "" }))} style={s.input}>
+            <label className={ui.label}>{tr("schedule.tag")}</label>
+            <select value={form.tag} onChange={(e) => setForm((f) => ({ ...f, tag: e.target.value, studyPlanId: e.target.value === "study block" ? f.studyPlanId : "" }))} className={ui.input}>
               {DEFAULT_TAGS.map((tag) => <option key={tag} value={tag}>{tr(`tags.${tag}`)}</option>)}
               <option value="custom">{tr("tags.custom tag")}</option>
             </select>
             {form.tag === "custom" && (
               <>
-                <label style={s.label}>{tr("schedule.customTag")}</label>
-                <input value={form.customTag} onChange={(e) => setForm((f) => ({ ...f, customTag: e.target.value }))} placeholder={tr("schedule.customTagPlaceholder")} style={s.input} />
+                <label className={ui.label}>{tr("schedule.customTag")}</label>
+                <input value={form.customTag} onChange={(e) => setForm((f) => ({ ...f, customTag: e.target.value }))} placeholder={tr("schedule.customTagPlaceholder")} className={ui.input} />
               </>
             )}
             {form.tag === "study block" && (
               <>
-                <label style={s.label}>{tr("schedule.studyPlan")}</label>
-                <select value={form.studyPlanId} onChange={(e) => setForm((f) => ({ ...f, studyPlanId: e.target.value }))} style={s.input}>
+                <label className={ui.label}>{tr("schedule.studyPlan")}</label>
+                <select value={form.studyPlanId} onChange={(e) => setForm((f) => ({ ...f, studyPlanId: e.target.value }))} className={ui.input}>
                   <option value="">{tr("schedule.noLinkedStudyPlan")}</option>
                   {studyPlans.map((subject) => <option key={subject.studyPlanId || subject.id} value={subject.studyPlanId || subject.id}>{subject.studyPlanName || subject.name}</option>)}
                 </select>
@@ -651,8 +625,6 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
               onPeriodChange={(start_period) => setForm((f) => ({ ...f, start_period }))}
               onEnter={form.id ? update : add}
               timeFormat={timeFormat}
-              s={s}
-              t={t}
             />
             <TimeField
               id="end-time"
@@ -663,12 +635,55 @@ export default function Schedule({ schedule, setSchedule, subjects, setSubjects,
               onPeriodChange={(end_period) => setForm((f) => ({ ...f, end_period }))}
               onEnter={form.id ? update : add}
               timeFormat={timeFormat}
-              s={s}
-              t={t}
             />
-            <button onClick={form.id ? update : add} style={s.btn}>{form.id ? tr("schedule.saveChanges") : tr("schedule.addEvent")}</button>
+            <button onClick={form.id ? update : add} className={ui.btn}>{form.id ? tr("schedule.saveChanges") : tr("schedule.addEvent")}</button>
           </Modal>
         )}
       </div>
     );
   }
+
+type MiniCalendarProps = {
+  weekDates: Date[];
+  today: Date;
+  locale: string;
+};
+
+function MiniCalendar({ weekDates, today, locale }: MiniCalendarProps) {
+  const reference = weekDates[0];
+  const year = reference.getFullYear();
+  const month = reference.getMonth();
+  const monthLabel = new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(reference);
+  const firstOfMonth = new Date(year, month, 1);
+  const leadingBlanks = (firstOfMonth.getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const weekKeys = new Set(weekDates.map((date) => date.toDateString()));
+  const cells: (number | null)[] = [...Array(leadingBlanks).fill(null), ...Array.from({ length: daysInMonth }, (_, index) => index + 1)];
+
+  return (
+    <aside className="w-full shrink-0 rounded-lg border border-[var(--sos-card-border)] bg-[var(--sos-card)] p-4 shadow-[var(--sos-card-shadow)] xl:w-[260px]">
+      <div className="mb-3 text-center font-sos-display text-[16px] font-medium capitalize text-[var(--sos-text)]">{monthLabel}</div>
+      <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase text-[var(--sos-text-muted-more)]">
+        {DAY_SHORT_KEYS.map((key) => (
+          <span key={key} className="py-1">{key.charAt(0).toUpperCase()}</span>
+        ))}
+      </div>
+      <div className="mt-1 grid grid-cols-7 gap-1">
+        {cells.map((day, index) => {
+          if (day === null) return <span key={`blank-${index}`} />;
+          const date = new Date(year, month, day);
+          const inWeek = weekKeys.has(date.toDateString());
+          const isToday = isSameDay(date, today);
+          return (
+            <span
+              key={day}
+              className={`flex h-7 items-center justify-center rounded-full text-[12px] ${isToday ? "bg-[var(--sos-accent)] font-semibold text-white" : inWeek ? "bg-[color-mix(in_srgb,var(--sos-accent)_16%,var(--sos-card))] text-[var(--sos-text)]" : "text-[var(--sos-text-muted)]"}`}
+            >
+              {day}
+            </span>
+          );
+        })}
+      </div>
+    </aside>
+  );
+}

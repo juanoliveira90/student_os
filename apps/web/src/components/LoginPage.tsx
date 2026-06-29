@@ -1,11 +1,11 @@
-import { type CSSProperties, type FormEvent, type ReactNode, useEffect, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { getNextTheme, getResolvedTheme, getStoredAppearance, getSystemTheme, isDarkTheme, saveStoredTheme, themes } from "../data.js";
-import { Icon as AppIcon } from "../icons";
-import { getAuthenticatedUser, isEmailVerificationRequiredError, loginWithEmail, registerWithEmail } from "../../fetchs/authFetchs";
-import { saveLanguage } from "../../i18n";
+import { applyThemeVariables, getNextTheme, getResolvedTheme, getStoredAppearance, getSystemTheme, isDarkTheme, saveStoredTheme, themes } from "./data.js";
+import { Icon as AppIcon } from "./icons";
+import { getAuthenticatedUser, isEmailVerificationRequiredError, loginWithEmail, registerWithEmail } from "../fetchs/authFetchs";
+import { saveLanguage } from "../i18n";
 
 const Icon = {
   github: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v 3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>,
@@ -26,32 +26,10 @@ type FieldProps = {
   label: string;
   icon: ReactNode;
   children: ReactNode;
-  t: Record<string, string>;
 };
 
-const ghostButton = (loading: boolean, t: Record<string, string>): CSSProperties => ({
-  width: "100%",
-  background: t.hover,
-  border: `1px solid ${t.borderLight}`,
-  borderRadius: 8,
-  color: t.text,
-  fontSize: 13,
-  padding: "12px 14px",
-  cursor: loading ? "not-allowed" : "pointer",
-  fontFamily: "inherit",
-  fontWeight: 550,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 10,
-  transition: "all 0.12s",
-  opacity: loading ? 0.7 : 1,
-});
-
-const soonButton = (t: Record<string, string>): CSSProperties => ({
-  ...ghostButton(true, t),
-  opacity: 0.72,
-});
+const inputClassName = "flex-1 bg-transparent border-0 text-[13px] px-2.5 py-2.5 outline-none font-[inherit] text-[var(--sos-text)]";
+const disabledGhostButtonClassName = "w-full bg-[var(--sos-hover)] border border-[var(--sos-border-light)] rounded-lg text-[13px] px-3.5 py-3 cursor-not-allowed font-[inherit] font-[550] flex items-center justify-center gap-2.5 opacity-[0.72] transition-all duration-[120ms] text-[var(--sos-text)]";
 
 export default function LoginPage({ mode = "login", onAuthenticated, onNeedsEmailVerification }: LoginPageProps) {
   const { t: tr, i18n } = useTranslation();
@@ -73,10 +51,7 @@ export default function LoginPage({ mode = "login", onAuthenticated, onNeedsEmai
   }, []);
 
   useEffect(() => {
-    const style = document.documentElement.style;
-    style.background = t.bg;
-    style.color = t.text;
-    style.setProperty("--sos-accent", t.accent);
+    applyThemeVariables(t);
     saveStoredTheme(appearance);
   }, [appearance, t]);
 
@@ -132,90 +107,72 @@ export default function LoginPage({ mode = "login", onAuthenticated, onNeedsEmai
   if (!mounted) return null;
 
   return (
-    <div style={{ minHeight: "100vh", background: t.bg, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--sos-font-ui)", color: t.text, transition: "background 0.2s, color 0.2s" }}>
-      <div style={{ width: "100%", maxWidth: 420, padding: "20px" }}>
-        <div style={{ marginBottom: 34, textAlign: "center" }}>
-          <div className="sos-heading" style={{ fontSize: 34, color: t.text, marginBottom: 8, fontWeight: 600 }}>Studium</div>
-          <div style={{ fontSize: 14, color: t.textMutedMore }}>
+    <div className="min-h-screen flex items-center justify-center bg-[var(--sos-bg)] font-[var(--sos-font-ui)] text-[var(--sos-text)] transition-colors duration-200">
+      <div className="w-full max-w-[420px] p-5">
+        <div className="mb-[34px] text-center">
+          <div className="sos-heading mb-2 text-[34px] font-semibold text-[var(--sos-text)]">Studium</div>
+          <div className="text-sm text-[var(--sos-text-muted-more)]">
             {isSignup ? tr("auth.subtitleSignup") : tr("auth.subtitleLogin")}
           </div>
         </div>
 
-        <div style={{ background: t.card, border: `1px solid ${t.cardBorder}`, borderRadius: 12, padding: 28, boxShadow: t.cardShadow }}>
-          <form onSubmit={handleEmailSubmit} style={{ marginBottom: isSignup ? 0 : 24 }}>
+        <div className="rounded-xl border border-[var(--sos-card-border)] bg-[var(--sos-card)] p-7 shadow-[var(--sos-card-shadow)]">
+          <form onSubmit={handleEmailSubmit} className={isSignup ? "mb-0" : "mb-6"}>
             {isSignup && (
-              <Field label={tr("auth.name")} icon={<Icon.user />} t={t}>
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={tr("auth.namePlaceholder")} required style={inputStyle(t)} />
+              <Field label={tr("auth.name")} icon={<Icon.user />}>
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder={tr("auth.namePlaceholder")} required className={inputClassName} />
               </Field>
             )}
 
-            <Field label={tr("auth.email")} icon={<Icon.mail />} t={t}>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={tr("auth.emailPlaceholder")} required style={inputStyle(t)} />
+            <Field label={tr("auth.email")} icon={<Icon.mail />}>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={tr("auth.emailPlaceholder")} required className={inputClassName} />
             </Field>
-            <Field label={tr("auth.password")} icon={<Icon.lock />} t={t}>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={tr("auth.passwordPlaceholder")} minLength={isSignup ? 8 : undefined} required style={inputStyle(t)} />
+            <Field label={tr("auth.password")} icon={<Icon.lock />}>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={tr("auth.passwordPlaceholder")} minLength={isSignup ? 8 : undefined} required className={inputClassName} />
             </Field>
 
             {serverError && (
-              <div role="alert" style={{ background: t.hover, border: `1px solid ${t.danger || "#dc2626"}`, borderRadius: 8, color: t.danger || "#dc2626", fontSize: 12, lineHeight: 1.4, marginBottom: 16, padding: "10px 12px" }}>
+              <div role="alert" className="mb-4 rounded-lg border border-[var(--sos-danger)] bg-[var(--sos-hover)] px-3 py-2.5 text-xs leading-[1.4] text-[var(--sos-danger)]">
                 {serverError}
               </div>
             )}
 
-            <button type="submit" disabled={loading} style={{ width: "100%", background: t.accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 13, padding: "12px 14px", cursor: loading ? "not-allowed" : "pointer", fontFamily: "inherit", fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, opacity: loading ? 0.7 : 1, transition: "all 0.12s" }}>
+            <button type="submit" disabled={loading} className={`w-full rounded-lg border-0 bg-[var(--sos-accent)] px-3.5 py-3 text-[13px] font-semibold text-white transition-all duration-[120ms] flex items-center justify-center gap-2 ${loading ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`}>
               {loading ? tr("auth.connecting") : <>{isSignup ? tr("auth.createAccount") : tr("auth.signIn")} <Icon.arrow /></>}
             </button>
           </form>
 
           {!isSignup && (
             <>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-                <div style={{ flex: 1, height: 1, background: t.border }} />
-                <span style={{ fontSize: 10, color: t.textMutedMost }}>{tr("auth.or")}</span>
-                <div style={{ flex: 1, height: 1, background: t.border }} />
+              <div className="mb-6 flex items-center gap-3">
+                <div className="h-px flex-1 bg-[var(--sos-border)]" />
+                <span className="text-[10px] text-[var(--sos-text-muted-most)]">{tr("auth.or")}</span>
+                <div className="h-px flex-1 bg-[var(--sos-border)]" />
               </div>
 
               <div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                  <button type="button" disabled style={soonButton(t)}><Icon.github /> {tr("auth.github")}</button>
-                  <button type="button" disabled style={soonButton(t)}><Icon.google /> {tr("auth.google")}</button>
+                <div className="flex flex-col gap-2.5">
+                  <button type="button" disabled className={disabledGhostButtonClassName}><Icon.github /> {tr("auth.github")}</button>
+                  <button type="button" disabled className={disabledGhostButtonClassName}><Icon.google /> {tr("auth.google")}</button>
                 </div>
               </div>
             </>
           )}
         </div>
 
-        <div style={{ marginTop: 24, textAlign: "center", fontSize: 11, color: t.textMutedMore }}>
-          <div style={{ marginBottom: 8 }}>
+        <div className="mt-6 text-center text-[11px] text-[var(--sos-text-muted-more)]">
+          <div className="mb-2">
             {isSignup ? `${tr("auth.alreadyAccount")} ` : `${tr("auth.newHere")} `}
-            <Link to={isSignup ? "/login" : "/signup"} style={{ color: t.accent, textDecoration: "none" }}>
+            <Link to={isSignup ? "/login" : "/signup"} className="text-[var(--sos-accent)] no-underline">
               {isSignup ? tr("auth.signIn") : tr("auth.createAccount")}
             </Link>
           </div>
-          {/*!isSignup && <div><a href="#" style={{ color: t.accent, textDecoration: "none" }}>Forgot password?</a></div>*/}
         </div>
       </div>
 
       <button
         onClick={() => setAppearance(getNextTheme(theme))}
-        style={{
-          position: "fixed",
-          bottom: 20,
-          right: 20,
-          width: 40,
-          height: 40,
-          borderRadius: "50%",
-          background: t.accent,
-          border: "none",
-          color: "#fff",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 9999,
-          transition: "all 0.2s",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-        }}
+        className="fixed bottom-5 right-5 z-[9999] flex h-10 w-10 cursor-pointer items-center justify-center rounded-full border-0 bg-[var(--sos-accent)] text-white shadow-[0_2px_8px_rgba(0,0,0,0.2)] transition-all duration-200"
         aria-label={tr("common.cycleTheme")}
         title={`theme: ${appearance}`}
       >
@@ -228,23 +185,7 @@ export default function LoginPage({ mode = "login", onAuthenticated, onNeedsEmai
           void i18n.changeLanguage(nextLanguage);
           saveLanguage(nextLanguage);
         }}
-        style={{
-          position: "fixed",
-          bottom: 20,
-          left: "50%",
-          transform: "translateX(-50%)",
-          height: 32,
-          borderRadius: 999,
-          background: t.hover,
-          border: `1px solid ${t.borderLight}`,
-          color: t.textMuted,
-          cursor: "pointer",
-          padding: "0 12px",
-          fontSize: 12,
-          fontFamily: "inherit",
-          fontWeight: 550,
-          zIndex: 9999,
-        }}
+        className="fixed bottom-5 left-1/2 z-[9999] h-8 -translate-x-1/2 cursor-pointer rounded-full border border-[var(--sos-border-light)] bg-[var(--sos-hover)] px-3 text-xs font-[550] text-[var(--sos-text-muted)]"
         aria-label={tr("language.switchTo", { language: i18n.language?.startsWith("pt") ? tr("language.english") : tr("language.portuguese") })}
         title={tr("language.switchTo", { language: i18n.language?.startsWith("pt") ? tr("language.english") : tr("language.portuguese") })}
       >
@@ -254,25 +195,14 @@ export default function LoginPage({ mode = "login", onAuthenticated, onNeedsEmai
   );
 }
 
-function Field({ label, icon, children, t }: FieldProps) {
+function Field({ label, icon, children }: FieldProps) {
   return (
-    <div style={{ marginBottom: 16 }}>
-      <label style={{ fontSize: 11, color: t.textMutedMore, display: "block", marginBottom: 6 }}>{label}</label>
-      <div style={{ display: "flex", alignItems: "center", background: t.select, border: `1px solid ${t.borderAlt}`, borderRadius: 8, padding: "0 10px", color: t.textMuted }}>
+    <div className="mb-4">
+      <label className="mb-1.5 block text-[11px] text-[var(--sos-text-muted-more)]">{label}</label>
+      <div className="flex items-center rounded-lg border border-[var(--sos-border-alt)] bg-[var(--sos-select)] px-2.5 text-[var(--sos-text-muted)]">
         {icon}
         {children}
       </div>
     </div>
   );
 }
-
-const inputStyle = (t: Record<string, string>): CSSProperties => ({
-  flex: 1,
-  background: "transparent",
-  border: "none",
-  color: t.text,
-  fontSize: 13,
-  padding: "10px 10px",
-  outline: "none",
-  fontFamily: "inherit",
-});

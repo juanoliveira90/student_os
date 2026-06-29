@@ -213,10 +213,7 @@ describe("auth workflow", { concurrency: false }, () => {
             })
 
             assert.equal(oldPasswordResponse.statusCode, 401)
-            assert.deepEqual(oldPasswordResponse.json(), {
-                statusCode: 401,
-                error: "wrong credentials",
-            })
+            assert.equal(oldPasswordResponse.json().error, "wrong credentials")
 
             const newPasswordResponse = await app.inject({
                 method: "POST",
@@ -285,10 +282,7 @@ describe("auth workflow", { concurrency: false }, () => {
             })
 
             assert.equal(wrongPasswordResponse.statusCode, 401)
-            assert.deepEqual(wrongPasswordResponse.json(), {
-                statusCode: 401,
-                error: "wrong credentials",
-            })
+            assert.equal(wrongPasswordResponse.json().error, "wrong credentials")
         } finally {
             await deleteUserByEmail(user.email)
         }

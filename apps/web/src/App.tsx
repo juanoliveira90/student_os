@@ -9,11 +9,10 @@ import {
 } from "@tanstack/react-router";
 import { QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import LandingPage from "./components/landing/LandingPage";
-import LoginPage from "./components/login/LoginPage";
-import VerifyEmailPage from "./components/login/VerifyEmailPage";
+import LoginPage from "./components/LoginPage";
+import VerifyEmailPage from "./components/VerifyEmailPage";
 import Studium from "./components/MainAppPage";
-import { getResolvedTheme, getStoredAppearance, getSystemTheme, themes } from "./components/data.js";
+import { applyThemeVariables, getResolvedTheme, getStoredAppearance, getSystemTheme, themes } from "./components/data.js";
 import { getAuthenticatedUser, isEmailVerificationRequiredError } from "./fetchs/authFetchs";
 import { scheduleQueryOptions } from "./fetchs/scheduleFetchs";
 import { studyPlanQueryOptions } from "./fetchs/studyPlanFetchs";
@@ -35,12 +34,6 @@ const rootRoute = createRootRouteWithContext<AppRouteContext>()({
   component: () => <Outlet />,
 });
 
-const indexRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/",
-  component: LandingRoute,
-});
-
 const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
@@ -59,11 +52,11 @@ const verifyEmailRoute = createRoute({
   component: VerifyEmailRoute,
 });
 
-const publicPaths = new Set(["/", "/login", "/signup", "/verify-email"]);
+const publicPaths = new Set(["/login", "/signup", "/verify-email"]);
 
 const appRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/app",
+  path: "/",
   beforeLoad: async ({ context }) => {
     if (context.needsEmailVerification) {
       throw redirect({ to: "/verify-email", replace: true });
@@ -89,7 +82,7 @@ const appRoute = createRoute({
   component: AppRoute,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, loginRoute, signupRoute, verifyEmailRoute, appRoute]);
+const routeTree = rootRoute.addChildren([loginRoute, signupRoute, verifyEmailRoute, appRoute]);
 
 const router = createRouter({
   routeTree,
@@ -139,10 +132,7 @@ function AuthLoadingPage({ label }: { label: string }) {
   const t = themes[theme];
 
   useEffect(() => {
-    const style = document.documentElement.style;
-    style.background = t.bg;
-    style.color = t.text;
-    style.setProperty("--sos-accent", t.accent);
+    applyThemeVariables(t);
   }, [t]);
 
   useEffect(() => {
@@ -160,25 +150,12 @@ function AuthLoadingPage({ label }: { label: string }) {
       aria-busy="true"
       aria-label={label}
       role="status"
-      style={{
-        minHeight: "100vh",
-        background: t.bg,
-        color: t.text,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "var(--sos-font-ui)",
-        transition: "background 0.2s, color 0.2s",
-      }}
+      className="flex min-h-screen items-center justify-center bg-[var(--sos-bg)] font-sos-ui text-[var(--sos-text)] transition-colors duration-200"
     >
       <div
-        className="sos-auth-loader"
-        style={{
-          borderColor: t.borderAlt,
-          borderTopColor: t.accent,
-        }}
+        className="sos-auth-loader border-[var(--sos-border-alt)] border-t-[var(--sos-accent)]"
       />
-      <span style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>{label}</span>
+      <span className="sr-only">{label}</span>
     </div>
   );
 }
@@ -200,11 +177,6 @@ function LoginRoute() {
       }}
     />
   );
-}
-
-function LandingRoute() {
-  const { user } = rootRoute.useRouteContext();
-  return <LandingPage isAuthenticated={Boolean(user)} />;
 }
 
 function SignupRoute() {

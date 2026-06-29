@@ -1,41 +1,41 @@
 export const themes = {
   dark: {
-    bg: "#1c1a18",
-    bgAlt: "#1c1a18",
-    border: "#302c28",
-    borderAlt: "#403a34",
-    borderLight: "#4a433d",
-    text: "#f3eee8",
-    textMuted: "#c2b8ae",
-    textMutedMore: "#8f857c",
-    textMutedMost: "#625950",
-    accent: "#f28c28",
-    accentDark: "#c86815",
-    accentLight: "#ffad5c",
-    card: "#1c1a18",
-    cardBorder: "#2a2723",
-    cardShadow: "0 10px 28px rgba(0,0,0,0.10)",
-    hover: "#2b2723",
-    select: "#191715",
+    bg: "#16201a",
+    bgAlt: "#1a261d",
+    border: "#2a3a2d",
+    borderAlt: "#35493a",
+    borderLight: "#425846",
+    text: "#eef3ec",
+    textMuted: "#b6c4b8",
+    textMutedMore: "#869085",
+    textMutedMost: "#5b6a5d",
+    accent: "#5aa473",
+    accentDark: "#43855b",
+    accentLight: "#7cc294",
+    card: "#1a261d",
+    cardBorder: "#2a3a2d",
+    cardShadow: "0 10px 28px rgba(0,0,0,0.22)",
+    hover: "#223129",
+    select: "#16201a",
   },
   light: {
-    bg: "#f7f4ef",
-    bgAlt: "#f7f4ef",
-    border: "#e6ded4",
-    borderAlt: "#d8cec1",
-    borderLight: "#c9bdae",
-    text: "#25211d",
-    textMuted: "#6f665d",
-    textMutedMore: "#968b80",
-    textMutedMost: "#c8beb2",
-    accent: "#e77918",
-    accentDark: "#b85b0f",
-    accentLight: "#ff9d42",
-    card: "#f7f4ef",
-    cardBorder: "#e4ddd3",
-    cardShadow: "0 10px 28px rgba(37,33,29,0.05)",
-    hover: "#eee8df",
-    select: "#fbf8f3",
+    bg: "#f5f0e8",
+    bgAlt: "#efe8dc",
+    border: "#e3d9c7",
+    borderAlt: "#d6cab3",
+    borderLight: "#c8bba1",
+    text: "#2a2a24",
+    textMuted: "#6b6456",
+    textMutedMore: "#938a78",
+    textMutedMost: "#c0b6a1",
+    accent: "#2f6b3e",
+    accentDark: "#234f2e",
+    accentLight: "#5a9168",
+    card: "#fbf8f2",
+    cardBorder: "#e6ddcc",
+    cardShadow: "0 10px 28px rgba(42,42,36,0.06)",
+    hover: "#ece4d6",
+    select: "#fbf8f2",
   },
 };
 
@@ -101,19 +101,34 @@ export function isDarkTheme(theme) {
   return theme === "dark";
 }
 
+export function applyThemeVariables(themeValues, options = {}) {
+  if (typeof document === "undefined") return;
+
+  const style = document.documentElement.style;
+  style.background = themeValues.bg;
+  style.color = themeValues.text;
+
+  Object.entries(themeValues).forEach(([key, value]) => {
+    const cssKey = key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+    style.setProperty(`--sos-${cssKey}`, value);
+  });
+
+  style.setProperty("--sos-ok", "#4caf50");
+  style.setProperty("--sos-danger", themeValues.danger || "#dc2626");
+  style.setProperty("--landing-soft", options.landingSoft || themeValues.card);
+}
+
 export const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 export const DAY_LABELS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
 export const productivityData = [];
 
 export const NAV_ITEMS = [
-  { id: "dashboard", label: "Home", description: "Your day at a glance", key: "1" },
+  { id: "dashboard", label: "Overview", description: "Your day at a glance", key: "1" },
   { id: "schedule", label: "Schedule", description: "Classes and study blocks", key: "2" },
   { id: "studyplans", label: "Study Plan", description: "Subjects and weekly goals", key: "3" },
-  { id: "habits", label: "Habits", description: "Daily routines", key: "4" },
-  { id: "focustime", label: "Focus", description: "Timer and sessions", key: "5" },
-  { id: "documents", label: "Notes", description: "Study documents", key: "6" },
-  { id: "settings", label: "Settings", description: "Profile and system", key: "7" },
+  { id: "documents", label: "Notes", description: "Study documents", key: "4" },
+  { id: "settings", label: "Settings", description: "Profile and system", key: "5" },
 ];
 
 export const PRESETS = [

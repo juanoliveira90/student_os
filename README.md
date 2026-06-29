@@ -14,8 +14,6 @@ Studium currently supports:
 - Dashboard with daily overview and quick actions.
 - Weekly schedule for classes, deadlines, and study blocks.
 - Study plans with subjects, subtasks, and linked schedule blocks.
-- Habit tracking.
-- Focus timer with task selection and session history.
 - Notes / document workspace.
 - Dark and light mode.
 - English and Portuguese localization.
@@ -63,6 +61,6 @@ Studium is in active development. Features, database schema, API routes, and UI 
 
 ## Author
 
-Developed by ju4ngoat.
+Developed by Juan Oliveira.
 
 GitHub: [@juanoliveira90](https://github.com/juanoliveira90)

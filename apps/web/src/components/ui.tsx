@@ -1,4 +1,4 @@
-import { type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, useEffect } from "react";
+import { type KeyboardEvent as ReactKeyboardEvent, type ReactNode, useEffect } from "react";
 import { Icon } from "./icons";
 
 type Theme = Record<string, string>;
@@ -39,61 +39,58 @@ type ModalProps = {
   t: Theme;
 };
 
-export function getStyles(t: Theme): Record<string, CSSProperties> {
-  return {
-    card: { background: t.card, border: `1px solid ${t.cardBorder}`, borderRadius: 8, padding: "18px", boxShadow: t.cardShadow },
-    input: { width: "100%", background: t.select, border: `1px solid ${t.borderAlt}`, borderRadius: 8, color: t.text, fontSize: 16, padding: "11px 12px", outline: "none", marginBottom: 12, boxSizing: "border-box", fontFamily: "inherit" },
-    label: { fontSize: 13, color: t.textMuted, display: "block", marginBottom: 6, fontWeight: 500 },
-    btn: { background: t.accent, border: "none", borderRadius: 8, color: "#fff", fontSize: 15, padding: "10px 16px", cursor: "pointer", fontFamily: "inherit", fontWeight: 550 },
-    ghost: { background: t.card, border: `1px solid ${t.cardBorder}`, borderRadius: 8, color: t.textMuted, fontSize: 15, padding: "10px 16px", cursor: "pointer", fontFamily: "inherit", fontWeight: 500 },
-  };
-}
+export const ui = {
+  card: "rounded-lg border border-[var(--sos-card-border)] bg-[var(--sos-card)] p-[18px] shadow-[var(--sos-card-shadow)]",
+  input: "mb-3 w-full rounded-lg border border-[var(--sos-border-alt)] bg-[var(--sos-select)] px-3 py-[11px] text-base text-[var(--sos-text)] outline-none",
+  label: "mb-1.5 block text-[13px] font-medium text-[var(--sos-text-muted)]",
+  btn: "cursor-pointer rounded-lg border-0 bg-[var(--sos-accent)] px-4 py-2.5 text-[15px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-65",
+  ghost: "cursor-pointer rounded-lg border border-[var(--sos-card-border)] bg-[var(--sos-card)] px-4 py-2.5 text-[15px] font-medium text-[var(--sos-text-muted)]",
+};
 
 export function Divider({ t }: { t: Theme }) {
-  return <div style={{ height: 1, background: t.border, margin: "10px 0" }} />;
+  return <div className="my-2.5 h-px bg-[var(--sos-border)]" />;
 }
 
 export function Stat({ label, value, accent, ok, t }: BasicStatProps) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "4px 0" }}>
-      <span style={{ fontSize: 13, color: t.textMutedMore }}>{label}</span>
-      <span style={{ fontSize: 14, color: accent ? t.accent : ok ? "#4caf50" : t.textMuted }}>{value}</span>
+    <div className="flex items-center justify-between py-1">
+      <span className="text-[13px] text-[var(--sos-text-muted-more)]">{label}</span>
+      <span className={`text-sm ${accent ? "text-[var(--sos-accent)]" : ok ? "text-[var(--sos-ok)]" : "text-[var(--sos-text-muted)]"}`}>{value}</span>
     </div>
   );
 }
 
 export function MiniStat({ label, value, accent, ok, t }: BasicStatProps) {
   return (
-    <div style={{ background: t.card, border: `1px solid ${t.cardBorder}`, borderRadius: 8, padding: "12px", boxShadow: t.cardShadow }}>
-      <div style={{ fontSize: 13, color: t.textMutedMore, marginBottom: 4 }}>{label}</div>
-      <div className={accent || ok ? "sos-highlight" : undefined} style={{ fontSize: 18, color: accent ? t.accent : ok ? "#4caf50" : t.text, fontWeight: 600 }}>{value}</div>
+    <div className="rounded-lg border border-[var(--sos-card-border)] bg-[var(--sos-card)] p-3 shadow-[var(--sos-card-shadow)]">
+      <div className="mb-1 text-[13px] text-[var(--sos-text-muted-more)]">{label}</div>
+      <div className={`${accent || ok ? "sos-highlight" : ""} text-lg font-semibold ${accent ? "text-[var(--sos-accent)]" : ok ? "text-[var(--sos-ok)]" : "text-[var(--sos-text)]"}`}>{value}</div>
     </div>
   );
 }
 
 export function SecHdr({ icon, label, t }: SecHdrProps) {
   return (
-    <div className="sos-heading" style={{ display: "flex", alignItems: "center", gap: 8, color: t.text, fontSize: 20, fontWeight: 600 }}>
+    <div className="sos-heading flex items-center gap-2 text-xl font-semibold text-[var(--sos-text)]">
       {icon} {label}
     </div>
   );
 }
 
 export function PageHdr({ label, description, action, t }: PageHdrProps) {
-  const s = getStyles(t);
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
+    <div className="mb-5 flex items-start justify-between gap-4">
       <div>
-        <h1 style={{ fontSize: 40, lineHeight: 1.1, fontWeight: 600, color: t.text, margin: 0 }}>{label}</h1>
-        {description && <div style={{ fontSize: 14, color: t.textMutedMore, marginTop: 6 }}>{description}</div>}
+        <h1 className="m-0 text-[40px] font-semibold leading-[1.1] text-[var(--sos-text)]">{label}</h1>
+        {description && <div className="mt-1.5 text-sm text-[var(--sos-text-muted-more)]">{description}</div>}
       </div>
-      {action && <button onClick={action.onClick} style={s.btn}>{action.label}</button>}
+      {action && <button className={ui.btn} onClick={action.onClick}>{action.label}</button>}
     </div>
   );
 }
 
 export function Kbd({ k, t }: KbdProps) {
-  return <kbd style={{ background: t.bgAlt, border: `1px solid ${t.borderLight}`, borderRadius: 3, padding: "1px 5px", fontFamily: "inherit", fontSize: 10, color: t.textMutedMore }}>{k}</kbd>;
+  return <kbd className="rounded-[3px] border border-[var(--sos-border-light)] bg-[var(--sos-bg-alt)] px-[5px] py-px font-inherit text-[10px] text-[var(--sos-text-muted-more)]">{k}</kbd>;
 }
 
 export function Modal({ onClose, title, children, t }: ModalProps) {
@@ -106,11 +103,11 @@ export function Modal({ onClose, title, children, t }: ModalProps) {
   }, [onClose]);
 
   return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.42)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200 }}>
-      <div style={{ background: t.card, border: `1px solid ${t.borderLight}`, borderRadius: 12, padding: 24, minWidth: 320, maxWidth: 440, width: "90%", boxShadow: "0 24px 70px rgba(0,0,0,0.24)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 18, alignItems: "center" }}>
-          <span className="sos-heading" style={{ fontSize: 20, color: t.text, fontWeight: 600 }}>{title}</span>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: t.textMutedMore }}><Icon.x /></button>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/40">
+      <div className="w-[90%] min-w-80 max-w-[440px] rounded-xl border border-[var(--sos-border-light)] bg-[var(--sos-card)] p-6 shadow-[0_24px_70px_rgba(0,0,0,0.24)]">
+        <div className="mb-[18px] flex items-center justify-between">
+          <span className="sos-heading text-xl font-semibold text-[var(--sos-text)]">{title}</span>
+          <button className="cursor-pointer border-0 bg-transparent text-[var(--sos-text-muted-more)]" onClick={onClose}><Icon.x /></button>
         </div>
         {children}
       </div>

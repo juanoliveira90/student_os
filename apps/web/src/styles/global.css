@@ -1,96 +1,94 @@
 @import url("https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap");
+@import "tailwindcss";
 
-:root {
-  --sos-font-ui: "Inter", "SF Pro Text", "Segoe UI", system-ui, sans-serif;
-  --sos-font-display: "EB Garamond", Georgia, "Times New Roman", serif;
+@theme {
+    --font-sos-ui: "Inter", "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    --font-sos-display: "EB Garamond", Georgia, "Times New Roman", serif;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+@layer base {
+    :root {
+        --sos-font-ui: "Inter", "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+        --sos-font-display: "EB Garamond", Georgia, "Times New Roman", serif;
+
+        /* Sidebar is always dark forest green, independent of the active theme. */
+        --sos-sidebar: #1c2b1e;
+        --sos-sidebar-alt: #20331f;
+        --sos-sidebar-text: #e8efe5;
+        --sos-sidebar-muted: #9db39b;
+        --sos-sidebar-hover: #273a29;
+        --sos-sidebar-active: #2f4a31;
+        --sos-sidebar-active-text: #ffffff;
+        --sos-sidebar-border: #2c3e2e;
+        --sos-sidebar-accent: #7fc08f;
+    }
+
+    html,
+    body,
+    #root {
+        @apply min-h-full m-0;
+    }
+
+    body {
+        @apply bg-[#16201a] text-base text-[#eef3ec];
+        font-family: var(--sos-font-ui);
+    }
+
+    h1,
+    h2,
+    h3,
+    .sos-heading,
+    .sos-highlight {
+        @apply font-sos-display;
+        font-family: var(--sos-font-display);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+        font: inherit;
+    }
+
+    button:focus-visible {
+        @apply outline-offset-2;
+        outline: 1px solid var(--sos-accent, #2f6b3e);
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+        border-color: var(--sos-accent, #2f6b3e) !important;
+        box-shadow: 0 0 0 1px color-mix(in srgb, var(--sos-accent, #2f6b3e) 18%, transparent);
+    }
+
+    ::-webkit-scrollbar {
+        @apply size-1;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        @apply rounded-[2px] bg-[#6f665d];
+    }
 }
 
-html,
-body,
-#root {
-  min-height: 100%;
-  margin: 0;
-}
+@layer components {
+    .sos-auth-loader {
+        @apply size-12 animate-spin rounded-full border-4;
+    }
 
-body {
-  font-family: var(--sos-font-ui);
-  font-size: 16px;
-  background: #1c1a18;
-  color: #f3eee8;
-}
+    .sos-md h1,
+    .sos-md h2,
+    .sos-md h3 {
+        @apply font-sos-display font-normal text-inherit;
+        font-family: var(--sos-font-display);
+    }
 
-h1,
-h2,
-h3,
-.sos-heading,
-.sos-highlight {
-  font-family: var(--sos-font-display);
-}
+    .sos-md pre {
+        @apply overflow-auto rounded-md p-3;
+        background: color-mix(in srgb, var(--sos-accent, #2f6b3e) 4%, #1c1a18);
+    }
 
-::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-  border-radius: 2px;
-  background: #6f665d;
-}
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
-.sos-auth-loader {
-  width: 48px;
-  height: 48px;
-  border: 4px solid;
-  border-radius: 999px;
-  animation: sos-auth-spin 0.8s linear infinite;
-}
-
-@keyframes sos-auth-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-button:focus-visible {
-  outline: 1px solid var(--sos-accent, #f28c28);
-  outline-offset: 2px;
-}
-
-input:focus,
-select:focus,
-textarea:focus {
-  border-color: var(--sos-accent, #f28c28) !important;
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--sos-accent, #f28c28) 18%, transparent);
-}
-
-.sos-md h1,
-.sos-md h2,
-.sos-md h3 {
-  font-family: var(--sos-font-display);
-  font-weight: 400;
-  color: inherit;
-}
-
-.sos-md pre {
-  overflow: auto;
-  padding: 12px;
-  border-radius: 6px;
-  background: color-mix(in srgb, var(--sos-accent, #f28c28) 4%, #1c1a18);
-}
-
-.sos-md code {
-  color: var(--sos-accent, #f28c28);
+    .sos-md code {
+        color: var(--sos-accent, #2f6b3e);
+    }
 }

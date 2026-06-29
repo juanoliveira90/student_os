@@ -1,10 +1,10 @@
 import { type FormEvent, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { DAY_LABELS } from "../data.js";
-import { Icon } from "../icons";
-import { getStyles, Modal } from "../ui";
-import { saveStudyPlanChanges, studyPlanQueryKey } from "../../fetchs/studyPlanFetchs";
+import { DAY_LABELS } from "./data.js";
+import { Icon } from "./icons.js";
+import { Modal, ui } from "./ui.js";
+import { saveStudyPlanChanges, studyPlanQueryKey } from "../fetchs/studyPlanFetchs.js";
 
 type Theme = Record<string, string>;
 type LooseRecord = Record<string, any>;
@@ -153,19 +153,18 @@ function formatPlanSchedule(plan: LooseRecord, studyBlocks: LooseRecord[], tr: (
   if (plan.scheduleBlockId) {
     const block = studyBlocks.find((item) => item.id === plan.scheduleBlockId);
     if (block) return `${tr(`days.${block.day}`)} - ${block.title}`;
-    return "Linked study block";
+    return tr("studyPlans.linkedStudyBlock");
   }
 
-  if (!plan.day) return "No scheduled day";
+  if (!plan.day) return tr("studyPlans.noScheduledDay");
   const time = [plan.startTime, plan.endTime].filter(Boolean).join(" - ");
   const period = [plan.startPeriod, plan.endPeriod].filter(Boolean).join("/");
   const suffix = period ? ` ${period}` : "";
   return `${tr(`days.${plan.day}`)}${time ? `, ${time}${suffix}` : ""}`;
 }
 
-export default function StudyPlans({ subjects, setSubjects, schedule, setSchedule, createAction, onCreateActionHandled, timeFormat, t }: StudyPlansProps) {
+export default function StudyPlans({ subjects, setSubjects, schedule, setSchedule, createAction, onCreateActionHandled, t }: StudyPlansProps) {
   const { t: tr } = useTranslation();
-  const s = getStyles(t);
   const queryClient = useQueryClient();
   const studyBlocks = getStudyBlocks(schedule);
   const studyPlans = getStudyPlans(subjects);
@@ -453,32 +452,32 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, marginBottom: 20 }}>
+      <div className="mb-5 flex items-start justify-between gap-4">
         <div>
-          <h1 style={{ fontSize: 40, lineHeight: 1.1, fontWeight: 600, color: t.text, margin: 0 }}>{tr("studyPlans.title")}</h1>
-          <div style={{ fontSize: 14, color: t.textMutedMore, marginTop: 6 }}>{tr("studyPlans.description")}</div>
-          {saveMessage && <div style={{ fontSize: 13, color: saveMessage === "saved" ? t.accent : t.textMutedMore, marginTop: 8 }}>{tr(saveMessage === "saved" ? "common.saved" : "common.couldNotSave")}</div>}
+          <h1 className="m-0 text-[40px] font-semibold leading-[1.1] text-[var(--sos-text)]">{tr("studyPlans.title")}</h1>
+          <div className="mt-1.5 text-sm text-[var(--sos-text-muted-more)]">{tr("studyPlans.description")}</div>
+          {saveMessage && <div className={`mt-2 text-[13px] ${saveMessage === "saved" ? "text-[var(--sos-accent)]" : "text-[var(--sos-text-muted-more)]"}`}>{tr(saveMessage === "saved" ? "common.saved" : "common.couldNotSave")}</div>}
         </div>
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
-          <button onClick={saveChanges} disabled={!hasChanges || saving} style={{ ...s.btn, opacity: !hasChanges || saving ? 0.55 : 1 }}>{saving ? tr("common.saving") : tr("common.save")}</button>
+        <div className="flex flex-wrap justify-end gap-2.5">
+          <button onClick={saveChanges} disabled={!hasChanges || saving} className={ui.btn}>{saving ? tr("common.saving") : tr("common.save")}</button>
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "360px minmax(0, 1fr)", gap: 16, alignItems: "start" }}>
-        <aside style={s.card}>
-          <button onClick={() => openPlanModal()} style={{ width: "100%", background: "transparent", border: "none", borderRadius: 8, color: t.textMuted, fontSize: 15, padding: "10px 12px", cursor: "pointer", fontFamily: "inherit", fontWeight: 600, textAlign: "left", marginBottom: 12 }}>+ New Plan</button>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div className="grid items-start gap-4 lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)_340px]">
+        <aside className={`${ui.card} flex flex-col`}>
+          <button onClick={() => openPlanModal()} className={`${ui.btn} mb-3 flex items-center justify-center gap-2`}><Icon.plus size={15} /> {tr("studyPlans.newPlan")}</button>
+          <div className="flex flex-col gap-1.5">
             {studyPlans.map((plan) => (
-              <div key={plan.id} style={{ position: "relative", background: selectedPlan?.id === plan.id ? t.hover : "transparent", borderRadius: 8 }}>
-                <button onClick={() => { setSelectedPlanId(plan.id); setSelectedSubjectId(""); }} style={{ width: "100%", background: "transparent", border: "none", borderRadius: 8, color: t.textMuted, fontSize: 15, padding: "10px 34px 10px 12px", cursor: "pointer", fontFamily: "inherit", fontWeight: 600, textAlign: "left" }}>
-                  <span style={{ display: "block", color: t.text, fontFamily: "var(--sos-font-display)", fontSize: 18, fontWeight: 500 }}>{plan.name}</span>
-                  <span style={{ display: "block", color: t.textMutedMore, fontSize: 14, marginTop: 3 }}>{formatPlanSchedule(plan, studyBlocks, tr)}</span>
+              <div key={plan.id} className={`relative rounded-lg border ${selectedPlan?.id === plan.id ? "border-[var(--sos-accent)] bg-[color-mix(in_srgb,var(--sos-accent)_10%,var(--sos-card))]" : "border-transparent hover:bg-[var(--sos-hover)]"}`}>
+                <button onClick={() => { setSelectedPlanId(plan.id); setSelectedSubjectId(""); }} className="w-full cursor-pointer rounded-lg border-0 bg-transparent py-2.5 pl-3 pr-[34px] text-left font-inherit">
+                  <span className="block font-[family:var(--sos-font-display)] text-[17px] font-medium text-[var(--sos-text)]">{plan.name}</span>
+                  <span className="mt-[3px] block truncate text-[13px] text-[var(--sos-text-muted-more)]">{formatPlanSchedule(plan, studyBlocks, tr)}</span>
                 </button>
-                <button onClick={() => setPlanMenuId(planMenuId === plan.id ? "" : plan.id)} style={{ position: "absolute", right: 6, top: 8, background: "none", border: "none", color: t.textMutedMost, cursor: "pointer" }}>...</button>
+                <button onClick={() => setPlanMenuId(planMenuId === plan.id ? "" : plan.id)} aria-label={tr("common.edit")} className="absolute right-1.5 top-2.5 flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-[var(--sos-text-muted-most)] hover:text-[var(--sos-text)]"><Icon.more size={16} /></button>
                 {planMenuId === plan.id && (
-                  <div style={{ position: "absolute", right: 4, top: 34, zIndex: 3, background: t.bgAlt, border: `1px solid ${t.border}`, borderRadius: 8, padding: 6, boxShadow: "0 10px 30px rgba(0,0,0,0.12)" }}>
-                    <button onClick={() => openPlanModal(plan)} style={{ ...s.ghost, width: 100 }}>Update</button>
-                    <button onClick={() => deletePlan(plan.id)} style={{ ...s.ghost, width: 100 }}>Delete</button>
+                  <div className="absolute right-1 top-[38px] z-[3] rounded-lg border border-[var(--sos-border)] bg-[var(--sos-card)] p-1.5 shadow-[0_10px_30px_rgba(0,0,0,0.16)]">
+                    <button onClick={() => openPlanModal(plan)} className="flex w-[120px] cursor-pointer items-center gap-2 rounded-md border-0 bg-transparent px-2.5 py-2 text-left font-inherit text-[13px] text-[var(--sos-text)] hover:bg-[var(--sos-hover)]"><Icon.edit size={14} /> {tr("common.edit")}</button>
+                    <button onClick={() => deletePlan(plan.id)} className="flex w-[120px] cursor-pointer items-center gap-2 rounded-md border-0 bg-transparent px-2.5 py-2 text-left font-inherit text-[13px] text-[var(--sos-accent)] hover:bg-[var(--sos-hover)]"><Icon.trash size={14} /> {tr("common.delete")}</button>
                   </div>
                 )}
               </div>
@@ -486,143 +485,141 @@ export default function StudyPlans({ subjects, setSubjects, schedule, setSchedul
           </div>
         </aside>
 
-        <main style={s.card}>
-          {!selectedPlan && <div style={{ color: t.textMutedMore }}>Create a Study Plan to start adding topics.</div>}
+        <main className={ui.card}>
+          {!selectedPlan && <div className="flex min-h-[200px] items-center justify-center text-[var(--sos-text-muted-more)]">{tr("studyPlans.createPlanEmptyState")}</div>}
           {selectedPlan && (
             <>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr minmax(240px, 360px)", gap: 18, alignItems: "center", marginBottom: 22 }}>
-                <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
-                  <div style={{ width: 44, height: 44, background: t.hover, border: `1px solid ${t.borderAlt}`, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", color: t.accent }}><Icon.book /></div>
-                  <div>
-                    <h2 style={{ color: t.text, fontSize: 28, fontWeight: 600, margin: 0 }}>{selectedPlan.name}</h2>
-                    <div style={{ color: t.textMutedMore, fontSize: 14, marginTop: 5, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                      <span>{formatPlanSchedule(selectedPlan, studyBlocks, tr)}</span>
-                      <span style={{ width: 4, height: 4, borderRadius: 999, background: t.textMutedMore }} />
-                      <span>{planStats.topicCount} topics</span>
-                      <span style={{ width: 4, height: 4, borderRadius: 999, background: t.textMutedMore }} />
-                      <span>{planStats.taskCount} tasks</span>
-                    </div>
+              <div className="flex items-center gap-3.5">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] bg-[color-mix(in_srgb,var(--sos-accent)_14%,var(--sos-card))] text-[var(--sos-accent)]"><Icon.book size={20} /></div>
+                <div className="min-w-0">
+                  <h2 className="m-0 truncate text-[26px] font-semibold text-[var(--sos-text)]">{selectedPlan.name}</h2>
+                  <div className="mt-[5px] flex flex-wrap items-center gap-2 text-[13px] text-[var(--sos-text-muted-more)]">
+                    <span>{formatPlanSchedule(selectedPlan, studyBlocks, tr)}</span>
+                    <span className="h-1 w-1 rounded-full bg-[var(--sos-text-muted-more)]" />
+                    <span>{tr("studyPlans.topicsCount", { count: planStats.topicCount })}</span>
+                    <span className="h-1 w-1 rounded-full bg-[var(--sos-text-muted-more)]" />
+                    <span>{tr("studyPlans.tasksCount", { count: planStats.taskCount })}</span>
                   </div>
-                </div>
-                <div style={{ transform: "translateX(-36%)", width: "120%" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", color: t.text, fontSize: 13, fontWeight: 400, marginBottom: 8 }}><span>Overall Progress</span><span style={{ fontFamily: "var(--sos-font-display)", fontSize: 15, fontWeight: 400 }}>{planStats.progress}%</span></div>
-                  <div style={{ height: 8, background: t.hover, borderRadius: 999 }}><div style={{ width: `${planStats.progress}%`, height: "100%", background: t.accent, borderRadius: 999 }} /></div>
                 </div>
               </div>
 
-              <div>
-                <section style={{ borderTop: `1px solid ${t.border}`, paddingTop: 12 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                    <h3 style={{ color: t.text, fontSize: 15, fontWeight: 600, margin: 0, paddingLeft: "1ch" }}>Topics</h3>
-                    <button onClick={() => openSubjectModal()} style={{ background: "transparent", border: "none", borderRadius: 8, color: t.textMuted, fontSize: 15, padding: "10px 12px", cursor: "pointer", fontFamily: "inherit", fontWeight: 600 }}>+ Topic</button>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.2fr) minmax(280px, 0.8fr)", gap: 18, alignItems: "stretch" }}>
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                      {topics.map((subject, index) => {
-                        const stats = getSubjectProgress(subject);
-                        return (
-                          <button key={subject.id} onClick={() => setSelectedSubjectId(subject.id)} style={{ display: "grid", gridTemplateColumns: "34px 1fr 72px 90px 42px", gap: 12, alignItems: "center", background: t.card, border: `1px solid ${t.cardBorder}`, borderRadius: 0, padding: "14px 16px", cursor: "pointer", textAlign: "left" }}>
-                            <span style={{ width: 22, height: 22, borderRadius: 999, border: `1px solid ${selectedSubject?.id === subject.id ? t.accent : t.borderAlt}`, background: selectedSubject?.id === subject.id ? t.accent : "transparent", display: "inline-flex", alignItems: "center", justifyContent: "center", color: selectedSubject?.id === subject.id ? "#fff" : t.textMutedMore, fontSize: 13 }}>{index + 1}</span>
-                            <span style={{ color: t.text, fontSize: 18, fontWeight: 500, fontFamily: "var(--sos-font-display)" }}>{subject.name}</span>
-                            <span style={{ color: t.textMutedMore, fontSize: 11, textAlign: "right" }}>{stats.done} / {stats.total} tasks</span>
-                            <span style={{ height: 6, background: t.hover, borderRadius: 999 }}><span style={{ display: "block", width: `${stats.progress}%`, height: "100%", background: t.accent, borderRadius: 999 }} /></span>
-                            <span style={{ color: t.textMutedMore, fontSize: 13, fontFamily: "var(--sos-font-display)", fontWeight: 500 }}>{stats.progress}%</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <aside style={{ border: `1px solid ${t.cardBorder}`, borderRadius: 10, padding: 16, background: t.card, boxShadow: t.cardShadow }}>
-                  {!selectedSubject && <div style={{ color: t.textMutedMore, fontSize: 13 }}>Select a topic to manage its tasks.</div>}
-                  {selectedSubject && (
-                    <>
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: 10, marginBottom: 14 }}>
-                        <div>
-                          <h3 style={{ color: t.text, fontSize: 22, fontWeight: 600, margin: 0 }}>{selectedSubject.name}</h3>
-                          <p style={{ color: t.textMutedMore, fontSize: 12, lineHeight: 1.5, margin: "8px 0 0" }}>{selectedSubject.description || "No description yet."}</p>
-                        </div>
-                        <div style={{ display: "flex", gap: 4 }}>
-                          <button onClick={() => openSubjectModal(selectedSubject)} style={{ background: "none", border: "none", color: t.textMutedMost, cursor: "pointer" }}><Icon.settings /></button>
-                          <button onClick={() => deleteSubject(selectedSubject.id)} style={{ background: "none", border: "none", color: t.textMutedMost, cursor: "pointer" }}><Icon.x /></button>
-                        </div>
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "space-between", color: t.textMutedMore, marginBottom: 6 }}><span style={{ fontSize: 13 }}>Progress</span><span style={{ fontSize: 11 }}>{subjectStats.done} / {subjectStats.total} tasks</span></div>
-                      <div style={{ height: 8, background: t.hover, borderRadius: 999, marginBottom: 14 }}><div style={{ width: `${subjectStats.progress}%`, height: "100%", background: t.accent, borderRadius: 999 }} /></div>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 20, marginBottom: 10 }}>
-                        <h4 style={{ color: t.text, fontSize: 15, fontWeight: 600, margin: 0 }}>Tasks</h4>
-                        <button onClick={() => openSubtaskModal()} style={{ ...s.ghost, fontSize: 12, padding: "7px 10px" }}>+ Task</button>
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                        {(selectedSubject.subtasks || []).map((subtask) => (
-                          <div key={subtask.id} style={{ display: "grid", gridTemplateColumns: "auto 1fr auto auto", gap: 8, alignItems: "center", padding: "8px 0" }}>
-                            <input type="checkbox" checked={Boolean(subtask.done)} onChange={() => toggleSubtask(subtask)} style={{ width: "1em", height: "1em", margin: 0 }} />
-                            <span style={{ minWidth: 0 }}>
-                              <span style={{ display: "block", color: subtask.done ? t.textMutedMore : t.text, fontSize: 15, textDecoration: subtask.done ? "line-through" : "none" }}>{subtask.text || subtask.name}</span>
-                            </span>
-                            <button onClick={() => openSubtaskModal(subtask)} style={{ background: "none", border: "none", color: t.textMutedMost, cursor: "pointer" }}><Icon.settings /></button>
-                            <button onClick={() => deleteSubtask(subtask.id)} style={{ background: "none", border: "none", color: t.textMutedMost, cursor: "pointer" }}><Icon.x /></button>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                    </aside>
-                  </div>
-                </section>
+              <div className="mt-5 rounded-lg border border-[var(--sos-card-border)] bg-[var(--sos-bg-alt)] p-4">
+                <div className="mb-2 flex justify-between text-[13px] text-[var(--sos-text)]"><span>{tr("studyPlans.overallProgress")}</span><span className="font-[family:var(--sos-font-display)] text-[15px]">{planStats.progress}%</span></div>
+                <progress value={planStats.progress} max={100} className="block h-2 w-full overflow-hidden rounded-full accent-[var(--sos-accent)] [&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-[var(--sos-accent)] [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-[var(--sos-hover)] [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-[var(--sos-accent)]" />
               </div>
+
+              <section className="mt-5 border-t border-[var(--sos-border)] pt-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="m-0 text-[15px] font-semibold text-[var(--sos-text)]">{tr("studyPlans.topics")}</h3>
+                  <button onClick={() => openSubjectModal()} className={`${ui.ghost} flex items-center gap-1.5 px-3 py-2 text-[13px]`}><Icon.plus size={14} /> {tr("studyPlans.topic")}</button>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {topics.map((subject, index) => {
+                    const stats = getSubjectProgress(subject);
+                    const on = selectedSubject?.id === subject.id;
+                    return (
+                      <button key={subject.id} onClick={() => setSelectedSubjectId(subject.id)} className={`grid w-full cursor-pointer grid-cols-[28px_1fr_84px_56px_44px] items-center gap-3 rounded-lg border px-3.5 py-3 text-left transition-colors ${on ? "border-[var(--sos-accent)] bg-[color-mix(in_srgb,var(--sos-accent)_10%,var(--sos-card))]" : "border-[var(--sos-card-border)] bg-[var(--sos-card)] hover:bg-[var(--sos-hover)]"}`}>
+                        <span className={`inline-flex h-[24px] w-[24px] items-center justify-center rounded-full text-[12px] font-semibold ${on ? "bg-[var(--sos-accent)] text-white" : "bg-[var(--sos-bg-alt)] text-[var(--sos-text-muted)]"}`}>{index + 1}</span>
+                        <span className="min-w-0 truncate font-[family:var(--sos-font-display)] text-[17px] font-medium text-[var(--sos-text)]">{subject.name}</span>
+                        <span className="text-right text-[11px] text-[var(--sos-text-muted-more)]">{tr("dashboard.tasksCount", { done: stats.done, total: stats.total })}</span>
+                        <progress value={stats.progress} max={100} className="block h-1.5 w-full overflow-hidden rounded-full accent-[var(--sos-accent)] [&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-[var(--sos-accent)] [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-[var(--sos-hover)] [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-[var(--sos-accent)]" />
+                        <span className="text-right font-[family:var(--sos-font-display)] text-[13px] font-medium text-[var(--sos-text-muted-more)]">{stats.progress}%</span>
+                      </button>
+                    );
+                  })}
+                  {!topics.length && <div className="py-6 text-center text-[13px] text-[var(--sos-text-muted-more)]">{tr("studyPlans.createPlanEmptyState")}</div>}
+                </div>
+              </section>
             </>
           )}
         </main>
+
+        <aside className={`${ui.card} xl:sticky xl:top-4`}>
+          {!selectedSubject && <div className="flex min-h-[200px] items-center justify-center text-center text-[13px] text-[var(--sos-text-muted-more)]">{tr("studyPlans.selectTopic")}</div>}
+          {selectedSubject && (
+            <>
+              <div className="mb-4 flex justify-between gap-2.5">
+                <div className="min-w-0">
+                  <h3 className="m-0 truncate text-[20px] font-semibold text-[var(--sos-text)]">{selectedSubject.name}</h3>
+                  <p className="m-0 mt-2 text-xs leading-normal text-[var(--sos-text-muted-more)]">{selectedSubject.description || tr("studyPlans.noDescriptionYet")}</p>
+                </div>
+                <div className="flex shrink-0 gap-1">
+                  <button onClick={() => openSubjectModal(selectedSubject)} aria-label={tr("common.edit")} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-[var(--sos-text-muted-most)] hover:text-[var(--sos-text)]"><Icon.edit size={15} /></button>
+                  <button onClick={() => deleteSubject(selectedSubject.id)} aria-label={tr("common.delete")} className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border-0 bg-transparent text-[var(--sos-text-muted-most)] hover:text-[var(--sos-accent)]"><Icon.trash size={15} /></button>
+                </div>
+              </div>
+              <div className="mb-1.5 flex justify-between text-[var(--sos-text-muted-more)]"><span className="text-[13px]">{tr("studyPlans.progress")}</span><span className="text-[11px]">{tr("dashboard.tasksCount", { done: subjectStats.done, total: subjectStats.total })}</span></div>
+              <progress value={subjectStats.progress} max={100} className="mb-4 block h-2 w-full overflow-hidden rounded-full accent-[var(--sos-accent)] [&::-moz-progress-bar]:rounded-full [&::-moz-progress-bar]:bg-[var(--sos-accent)] [&::-webkit-progress-bar]:rounded-full [&::-webkit-progress-bar]:bg-[var(--sos-hover)] [&::-webkit-progress-value]:rounded-full [&::-webkit-progress-value]:bg-[var(--sos-accent)]" />
+              <div className="mb-2.5 flex items-center justify-between">
+                <h4 className="m-0 text-[15px] font-semibold text-[var(--sos-text)]">{tr("studyPlans.tasks")}</h4>
+                <button onClick={() => openSubtaskModal()} className={`${ui.ghost} flex items-center gap-1.5 px-2.5 py-[7px] text-xs`}><Icon.plus size={13} /> {tr("studyPlans.task")}</button>
+              </div>
+              <div className="flex flex-col gap-1">
+                {(selectedSubject.subtasks || []).map((subtask) => (
+                  <div key={subtask.id} className="group grid grid-cols-[auto_1fr_auto_auto] items-center gap-2 rounded-md px-1 py-1.5 hover:bg-[var(--sos-hover)]">
+                    <input type="checkbox" checked={Boolean(subtask.done)} onChange={() => toggleSubtask(subtask)} className="m-0 h-[16px] w-[16px] accent-[var(--sos-accent)]" />
+                    <span className="min-w-0">
+                      <span className={`block truncate text-[14px] ${subtask.done ? "text-[var(--sos-text-muted-more)] line-through" : "text-[var(--sos-text)]"}`}>{subtask.text || subtask.name}</span>
+                    </span>
+                    <button onClick={() => openSubtaskModal(subtask)} aria-label={tr("common.edit")} className="cursor-pointer border-0 bg-transparent text-[var(--sos-text-muted-most)] hover:text-[var(--sos-text)]"><Icon.edit size={14} /></button>
+                    <button onClick={() => deleteSubtask(subtask.id)} aria-label={tr("common.delete")} className="cursor-pointer border-0 bg-transparent text-[var(--sos-text-muted-most)] hover:text-[var(--sos-accent)]"><Icon.trash size={14} /></button>
+                  </div>
+                ))}
+                {!(selectedSubject.subtasks || []).length && <div className="py-4 text-center text-[12px] text-[var(--sos-text-muted-more)]">{tr("studyPlans.selectTopic")}</div>}
+              </div>
+            </>
+          )}
+        </aside>
       </div>
 
       {planModal && (
-        <Modal onClose={() => setPlanModal(false)} title={planForm.id ? "Update Study Plan" : "New Study Plan"} t={t}>
-          <label style={s.label}>Study Plan name</label>
-          <input value={planForm.name} onChange={(event) => setPlanForm((form) => ({ ...form, name: event.target.value }))} placeholder="Final Exams Preparation" style={s.input} autoFocus />
-          <label style={s.label}>Existing study block</label>
-          <select value={planForm.scheduleBlockId} onChange={(event) => setPlanForm((form) => ({ ...form, scheduleBlockId: event.target.value }))} style={s.input}>
-            <option value="">No linked block</option>
+        <Modal onClose={() => setPlanModal(false)} title={planForm.id ? tr("studyPlans.editPlan") : tr("studyPlans.newPlan")} t={t}>
+          <label className={ui.label}>{tr("studyPlans.planName")}</label>
+          <input value={planForm.name} onChange={(event) => setPlanForm((form) => ({ ...form, name: event.target.value }))} placeholder={tr("studyPlans.planNamePlaceholder")} className={ui.input} autoFocus />
+          <label className={ui.label}>{tr("studyPlans.existingStudyBlock")}</label>
+          <select value={planForm.scheduleBlockId} onChange={(event) => setPlanForm((form) => ({ ...form, scheduleBlockId: event.target.value }))} className={ui.input}>
+            <option value="">{tr("studyPlans.noLinkedBlock")}</option>
             {studyBlocks.map((block) => <option key={block.id} value={block.id}>{tr(`days.${block.day}`)} - {block.title}</option>)}
           </select>
           {!planForm.scheduleBlockId && (
             <>
-              <label style={s.label}>Optional day</label>
-              <select value={planForm.day} onChange={(event) => setPlanForm((form) => ({ ...form, day: event.target.value }))} style={s.input}>
-                <option value="">No scheduled day</option>
+              <label className={ui.label}>{tr("studyPlans.optionalDay")}</label>
+              <select value={planForm.day} onChange={(event) => setPlanForm((form) => ({ ...form, day: event.target.value }))} className={ui.input}>
+                <option value="">{tr("studyPlans.noScheduledDay")}</option>
                 {DAY_LABELS.map((day) => <option key={day} value={day}>{tr(`days.${day}`)}</option>)}
               </select>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 96px", gap: 8 }}>
-                <input value={planForm.startTime} onChange={(event) => setPlanForm((form) => ({ ...form, startTime: event.target.value }))} placeholder="09:00" style={s.input} />
-                <select value={planForm.startPeriod} onChange={(event) => setPlanForm((form) => ({ ...form, startPeriod: event.target.value }))} style={s.input}><option>AM</option><option>PM</option></select>
-                <input value={planForm.endTime} onChange={(event) => setPlanForm((form) => ({ ...form, endTime: event.target.value }))} placeholder="10:00" style={s.input} />
-                <select value={planForm.endPeriod} onChange={(event) => setPlanForm((form) => ({ ...form, endPeriod: event.target.value }))} style={s.input}><option>AM</option><option>PM</option></select>
+              <div className="grid grid-cols-[1fr_96px] gap-2">
+                <input value={planForm.startTime} onChange={(event) => setPlanForm((form) => ({ ...form, startTime: event.target.value }))} placeholder="09:00" className={ui.input} />
+                <select value={planForm.startPeriod} onChange={(event) => setPlanForm((form) => ({ ...form, startPeriod: event.target.value }))} className={ui.input}><option>AM</option><option>PM</option></select>
+                <input value={planForm.endTime} onChange={(event) => setPlanForm((form) => ({ ...form, endTime: event.target.value }))} placeholder="10:00" className={ui.input} />
+                <select value={planForm.endPeriod} onChange={(event) => setPlanForm((form) => ({ ...form, endPeriod: event.target.value }))} className={ui.input}><option>AM</option><option>PM</option></select>
               </div>
             </>
           )}
-          <button onClick={savePlan} style={s.btn}>{planForm.id ? "Update" : "Create"}</button>
+          <button onClick={savePlan} className={ui.btn}>{tr("common.save")}</button>
         </Modal>
       )}
 
       {subjectModal && (
-        <Modal onClose={() => setSubjectModal(false)} title={subjectForm.id ? "Update Topic" : "New Topic"} t={t}>
+        <Modal onClose={() => setSubjectModal(false)} title={subjectForm.id ? tr("studyPlans.editTopic") : tr("studyPlans.newTopic")} t={t}>
           <form onSubmit={saveSubject}>
-            <label style={s.label}>Topic name</label>
-            <input value={subjectForm.name} onChange={(event) => setSubjectForm((form) => ({ ...form, name: event.target.value }))} placeholder="Calculus I" style={s.input} autoFocus />
-            <label style={s.label}>Description</label>
-            <textarea value={subjectForm.description} onChange={(event) => setSubjectForm((form) => ({ ...form, description: event.target.value }))} placeholder="Limits, derivatives, integrals..." rows={4} style={{ ...s.input, minHeight: 96, resize: "vertical" }} />
-            <label style={s.label}>Tag</label>
-            <input value={subjectForm.tag} onChange={(event) => setSubjectForm((form) => ({ ...form, tag: event.target.value }))} placeholder="math" style={s.input} />
-            <button type="submit" style={s.btn}>{subjectForm.id ? "Update" : "Create"}</button>
+            <label className={ui.label}>{tr("studyPlans.topicName")}</label>
+            <input value={subjectForm.name} onChange={(event) => setSubjectForm((form) => ({ ...form, name: event.target.value }))} placeholder={tr("studyPlans.topicNamePlaceholder")} className={ui.input} autoFocus />
+            <label className={ui.label}>{tr("common.description")}</label>
+            <textarea value={subjectForm.description} onChange={(event) => setSubjectForm((form) => ({ ...form, description: event.target.value }))} placeholder={tr("studyPlans.topicDescriptionPlaceholder")} rows={4} className={`${ui.input} min-h-24 resize-y`} />
+            <label className={ui.label}>{tr("studyPlans.tag")}</label>
+            <input value={subjectForm.tag} onChange={(event) => setSubjectForm((form) => ({ ...form, tag: event.target.value }))} placeholder={tr("studyPlans.tagPlaceholder")} className={ui.input} />
+            <button type="submit" className={ui.btn}>{tr("common.save")}</button>
           </form>
         </Modal>
       )}
 
       {subtaskModal && (
-        <Modal onClose={() => setSubtaskModal(false)} title={subtaskForm.id ? "Update Task" : "New Task"} t={t}>
+        <Modal onClose={() => setSubtaskModal(false)} title={subtaskForm.id ? tr("studyPlans.editTask") : tr("studyPlans.newTask")} t={t}>
           <form onSubmit={saveSubtask}>
-            <label style={s.label}>Task name</label>
-            <input value={subtaskForm.name} onChange={(event) => setSubtaskForm((form) => ({ ...form, name: event.target.value }))} placeholder="Practice derivatives" style={s.input} autoFocus />
-            <button type="submit" style={s.btn}>{subtaskForm.id ? "Update" : "Create"}</button>
+            <label className={ui.label}>{tr("studyPlans.taskName")}</label>
+            <input value={subtaskForm.name} onChange={(event) => setSubtaskForm((form) => ({ ...form, name: event.target.value }))} placeholder={tr("studyPlans.taskNamePlaceholder")} className={ui.input} autoFocus />
+            <button type="submit" className={ui.btn}>{tr("common.save")}</button>
           </form>
         </Modal>
       )}
